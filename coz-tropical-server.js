@@ -1,4 +1,10 @@
-/* COZ TROPICAL SERVER · TSA1.2 (Stage 2A, Sep 28 2026)
+/* COZ TROPICAL SERVER · TSA1.3 (DTC2, Oct 14 2026, offline, not deployed)
+   DTC2: one tester password for the whole Demo (see the DTC2 block below). The start no longer asks with a box: with no
+   password the run is marked "access" and every section shows the tester line, which the reader taps to enter it. A
+   refused password is never deleted. A job id and its passed sections are never cleared by an access problem; a run that
+   has a job is only ever followed, never started again. A verified password entered for a run that never got a job starts
+   that run's reading once (the start the reader asked for). Nothing else changed.
+   TSA1.2 (Stage 2A, Sep 28 2026)
    TSA1.2 also: a device can be pointed at the Netlify "test" BRANCH deploy of the same server for free testing, by
    setting localStorage "cozTropicalServerBase" to https://test--cozalyze-tropical-server.netlify.app (that exact
    address only, matching index.html's CSP; anything else falls back to production). A job keeps the server it was
@@ -27,8 +33,8 @@
    FINISH: when all six sections have passed, writes "cozTropicalReading" in the existing reading
    contract with this run's identity, so the reading page, Saved and the Tropical library work
    exactly as before. A reading with a section that could not be completed is not written there.
-   DEMO ACCESS: the tester key is entered once on this device and kept in localStorage
-   "cozTropicalServerKey". Production authentication is a later stage. */
+   DEMO ACCESS (DTC2): one tester password for the whole Demo, entered by tapping the tester line and kept in localStorage
+   "cozDemoTesterCode"; the old names are still read. Production authentication is a later stage. */
 (function () {
   if (window.CozTropicalServer) return;
   var BASE = "https://cozalyze-tropical-server.netlify.app/.netlify/functions";
@@ -36,7 +42,7 @@
     var o = null; try { o = localStorage.getItem("cozTropicalServerBase"); } catch (e) {}
     return (o === "https://test--cozalyze-tropical-server.netlify.app") ? o + "/.netlify/functions" : BASE;
   }
-  var JOB = "cozTropicalServerJob", KEY = "cozTropicalServerKey", LOCK = "cozTropicalServerPoll";
+  var JOB = "cozTropicalServerJob", OWN_OLD = "cozTropicalServerKey", OTHER_OLD = "cozVedicServerKey", LOCK = "cozTropicalServerPoll";   /* DTC2 */
   var POLL_MS = 4000, LOCK_STALE_MS = 12000;
   var OWNER = "tsa-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 7);
   var SECTIONS = [
@@ -53,6 +59,55 @@
   function lsSet(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } }
   function log(m){ try { console.log("[TROPICAL SERVER] " + m); } catch (e) {} }
   function notify(){ try { window.dispatchEvent(new CustomEvent("COZ_TROPICAL_SERVER_UPDATE")); } catch (e) {} }
+  /* ---------- DTC2: one tester password for the whole Demo (identical block in coz-tropical-server.js and coz-vedic-server.js) ----------
+     Saved once as "cozDemoTesterCode"; the old per-reading names are still read. A job keeps only a short fingerprint of the
+     password that started it (never the password) and is always followed with that same password, so a newer saved password
+     never cuts off an existing job. A job id and its released text are never cleared by an access problem, and a reading that
+     already has a job is never started again. The password is entered by tapping the tester line itself (no new element):
+     it is checked with the server first (a status request for a job that does not exist; no reading, no charge) and saved
+     only if accepted. The password it replaces is kept for the jobs it started. An existing job is continued only with a
+     password that job itself accepts (checked with that job's own status), and that password is then bound to it. */
+  var CODE_KEY = "cozDemoTesterCode", PREV_KEY = "cozDemoTesterCodePrevious";   /* the one before a change, kept for its jobs */
+  var LINE = { access: "This device needs the tester password. Tap here to enter it.",
+               ready: "Tester password saved. Open this reading again to continue.",
+               other: "This reading was started with a different tester password. Tap here to enter that one." };
+  function lsGet(k){ try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function credOf(s){ var h = 0x811c9dc5; s = String(s); for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return "c-" + ("0000000" + (h >>> 0).toString(16)).slice(-8); }
+  function codeForNew(){ return lsGet(CODE_KEY) || lsGet(OWN_OLD) || lsGet(OTHER_OLD) || null; }
+  function codeForJob(j){
+    if (j && j.cred) { var n = [CODE_KEY, OWN_OLD, OTHER_OLD, PREV_KEY]; for (var i = 0; i < n.length; i++) { var v = lsGet(n[i]); if (v && credOf(v) === j.cred) return v; } return null; }
+    return lsGet(OWN_OLD) || lsGet(OTHER_OLD) || lsGet(CODE_KEY) || null;     /* a job saved before DTC2: the order used before */
+  }
+  function lineFor(j){ return j.state === "ready" ? LINE.ready : (j.reason === "other" ? LINE.other : LINE.access); }
+  function wireCodeEntry(){
+    if (window.__cozCodeEntry) return; window.__cozCodeEntry = true;
+    if (!/-reading\.html$/.test(location.pathname) || /pregen=1/.test(location.search)) return;   /* only the visible reading pages */
+    var mark = function () { try { var ps = document.querySelectorAll("p"); for (var i = 0; i < ps.length; i++) {
+      var tx = ps[i].textContent.trim(); if ((tx === LINE.access || tx === LINE.other) && !ps[i].hasAttribute("data-coz-code")) { ps[i].setAttribute("data-coz-code", "1"); ps[i].setAttribute("role", "button"); ps[i].setAttribute("tabindex", "0"); } } } catch (e) {} };
+    var hit = function (t) { return t && t.closest ? t.closest("[data-coz-code]") : null; };
+    document.addEventListener("click", function (e) { if (hit(e.target)) { e.preventDefault(); enterCode(); } }, true);
+    document.addEventListener("keydown", function (e) { if ((e.key === "Enter" || e.key === " ") && hit(e.target)) { e.preventDefault(); enterCode(); } }, true);
+    try { new MutationObserver(mark).observe(document.documentElement, { childList: true, subtree: true }); } catch (e) {}
+    mark();
+  }
+  function findJobCode(j, entered, done){                                /* which password does this job itself accept? */
+    var c = [], add = function (v) { if (v && c.indexOf(v) < 0) c.push(v); };
+    if (j.cred) { if (credOf(entered) === j.cred) add(entered); add(codeForJob(j)); }   /* only the one it was bound to */
+    else { add(entered); add(lsGet(OWN_OLD)); add(lsGet(OTHER_OLD)); add(lsGet(CODE_KEY)); add(lsGet(PREV_KEY)); }   /* a job from before DTC2 */
+    (function next(i){ if (i >= c.length) return done(null);
+      jobStatus(j, c[i]).then(function (s) { if (s === 200) done(c[i]); else next(i + 1); }); })(0);   /* 200 only for the job's own password */
+  }
+  function say(m){ try { window.alert(m); } catch (e) {} }
+  function enterCode(){
+    var t = ""; try { t = (window.prompt("Tester password for the CozAlyze Demo (this device only):") || "").trim(); } catch (e) { t = ""; }
+    if (!t) return;
+    probe(t).then(function (s) {
+      if (s === 404) { try { var was = localStorage.getItem(CODE_KEY); if (was && was !== t) localStorage.setItem(PREV_KEY, was); localStorage.setItem(CODE_KEY, t); } catch (e) {} afterCode(t); }
+      else if (s === 401) say("That tester password wasn\u2019t accepted. Nothing was saved.");
+      else say("The tester password couldn\u2019t be checked right now. Nothing was saved. Try again in a moment.");
+    });
+  }
+  /* ---------- end of the DTC2 block ---------- */
 
   /* the current run, and the chart that belongs to it */
   function currentRun(){ var bd = lsJSON("emergeBirthData"); return bd && bd.runId && bd.fingerprint ? { runId: bd.runId, fingerprint: bd.fingerprint } : null; }
@@ -67,13 +122,28 @@
     var r = lsJSON("cozTropicalReading");
     return !!(r && r.run && run && r.run.runId === run.runId && r.run.fingerprint === run.fingerprint && Array.isArray(r.sections) && r.sections.length === 6);
   }
-  function key(ask){
-    var k = null; try { k = localStorage.getItem(KEY); } catch (e) {}
-    if (!k && ask) { try { k = (window.prompt("Tester key for the Tropical reading (this device only):") || "").trim(); } catch (e) { k = ""; } if (k) try { localStorage.setItem(KEY, k); } catch (e) {} }
-    return k || null;
+  function probe(code){                                                 /* DTC2: a status request for a job that does not exist */
+    var rec = record(), base = (rec && rec.base) ? rec.base : chosenBase();
+    return fetch(base + "/tropical-status?job=00000000000000000000000000000000", { method: "GET", headers: { "Authorization": "Bearer " + code }, cache: "no-store" })
+      .then(function (r) { return r.status; }, function () { return 0; });
+  }
+  function jobStatus(j, code){                                           /* DTC2: this job's own status with one password */
+    return fetch((j.base || chosenBase()) + "/tropical-status?job=" + encodeURIComponent(j.jobId), { method: "GET", headers: { "Authorization": "Bearer " + code }, cache: "no-store" })
+      .then(function (r) { return r.status; }, function () { return 0; });
+  }
+  function afterCode(code){                                              /* DTC2: never clears a job, never starts one again */
+    var j = record();
+    if (j && j.jobId) {                                                 /* the job is continued with its own password, or not at all */
+      findJobCode(j, code, function (k) { var c = record(); if (!c || c.jobId !== j.jobId) return;
+        if (k) { c.cred = credOf(k); c.state = "writing"; c.reason = null; } else { c.state = "access"; c.reason = "other"; }
+        c.updatedAt = new Date().toISOString(); lsSet(JOB, c); notify(); if (k) follow(); });
+      return;
+    }
+    if (j && j.state === "access") { start(); return; }                   /* this run never got a job: its first start, once */
+    notify();
   }
   function api(path, opt){
-    var k = key(false); opt = opt || {};
+    opt = opt || {}; var k = opt.code || "";                             /* DTC2: the caller names the password */
     var rec = record(), base = (rec && rec.base) ? rec.base : chosenBase();   /* a job (and any retried start) stays on its own server */
     var h = { "Authorization": "Bearer " + (k || "") }; if (opt.body) h["Content-Type"] = "application/json";
     return fetch(base + path, { method: opt.method || "GET", headers: h, body: opt.body || undefined, cache: "no-store" })
@@ -90,17 +160,17 @@
     if (rec && rec.jobId) { log("job already exists for this run; following it"); follow(); return; }
     var chart = chartFor(run);
     if (!chart) { log("no Tropical chart for this run; nothing started"); return; }
-    if (!key(true)) { log("no tester key on this device; nothing started"); return; }
-    lsSet(JOB, { v: 1, runId: run.runId, fingerprint: run.fingerprint, jobId: null, state: "starting", sections: {}, base: (rec && rec.base) || chosenBase(), startedAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+    var code = codeForNew();
+    if (!code) { lsSet(JOB, { v: 1, runId: run.runId, fingerprint: run.fingerprint, jobId: null, state: "access", reason: "missing", sections: {}, base: (rec && rec.base) || chosenBase(), updatedAt: new Date().toISOString() }); notify(); log("no tester password on this device; nothing started"); return; }   /* DTC2 */
+    lsSet(JOB, { v: 1, runId: run.runId, fingerprint: run.fingerprint, jobId: null, state: "starting", sections: {}, base: (rec && rec.base) || chosenBase(), cred: credOf(code), startedAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
     notify();
-    api("/tropical-start", { method: "POST", body: JSON.stringify({ chart: chart }) }).then(function (r) {
+    api("/tropical-start", { method: "POST", body: JSON.stringify({ chart: chart }), code: code }).then(function (r) {
       var j = record(); if (!j) return;
       if ((r.status === 200 || r.status === 201) && r.body && r.body.jobId) {
         j.jobId = r.body.jobId; j.state = "writing"; j.updatedAt = new Date().toISOString(); lsSet(JOB, j); notify();
         log((r.status === 201 ? "new job " : "existing job ") + "started"); follow();
       } else if (r.status === 401) {
-        try { localStorage.removeItem(KEY); } catch (e) {}
-        j.state = "access"; lsSet(JOB, j); notify(); log("tester key refused; it will be asked for again next time");
+        j.state = "access"; j.reason = "refused"; lsSet(JOB, j); notify(); log("tester password refused; nothing deleted (DTC2)");
       } else {
         j.state = "refused"; j.detail = String((r.body && r.body.error) || ("HTTP " + r.status)).slice(0, 200); lsSet(JOB, j); notify();
         log("start refused before any writing: " + j.detail);
@@ -118,7 +188,7 @@
     if (l && l.owner !== OWNER && now - l.at < LOCK_STALE_MS) return false;
     lsSet(LOCK, { owner: OWNER, at: now }); return true;
   }
-  function done(state){ return state === "complete" || state === "finished" || state === "refused" || state === "access"; }
+  function done(state){ return state === "complete" || state === "finished" || state === "refused" || state === "access"; }   /* DTC2: unchanged */
   var lastSeen = null;
   function tick(){
     timer = null;
@@ -131,9 +201,12 @@
     if (!haveLock()) { timer = setTimeout(tick, POLL_MS); return; }
     if (j.state === "retry" && !j.jobId) { lsSet(JOB, Object.assign(j, { state: "starting" })); restart(); return; }
     if (!j.jobId) { timer = setTimeout(tick, POLL_MS); return; }
-    api("/tropical-status?job=" + encodeURIComponent(j.jobId)).then(function (r) {
+    var kc = codeForJob(j);                                                 /* DTC2 */
+    if (!kc) { j.state = "access"; j.reason = j.cred ? "other" : "missing"; lsSet(JOB, j); notify(); return; }
+    api("/tropical-status?job=" + encodeURIComponent(j.jobId), { code: kc }).then(function (r) {
       var cur = record(); if (!cur || cur.jobId !== j.jobId) return;
-      if (r.status === 200 && r.body && Array.isArray(r.body.sections)) apply(cur, r.body);
+      if (r.status === 200 && r.body && Array.isArray(r.body.sections)) { if (!cur.cred) cur.cred = credOf(kc); apply(cur, r.body); }   /* DTC2: bind a job from before DTC2 */
+      else if (r.status === 401) { cur.state = "access"; cur.reason = "refused"; lsSet(JOB, cur); notify(); }   /* DTC2: no endless retry; job kept */
       else if (r.status === 404) { cur.state = "refused"; cur.detail = "job no longer on the server"; lsSet(JOB, cur); notify(); }
       if (!done((record() || {}).state)) timer = setTimeout(tick, POLL_MS);
     }).catch(function () { timer = setTimeout(tick, POLL_MS * 2); });
@@ -146,6 +219,7 @@
     var secs = {};
     view.sections.forEach(function (s) {
       if (s.state === "passed" && Array.isArray(s.body)) secs[s.id] = { state: "passed", body: s.body };
+      else if (j.sections && j.sections[s.id] && j.sections[s.id].state === "passed") secs[s.id] = j.sections[s.id];   /* DTC2 */
       else secs[s.id] = { state: final ? "failed" : "pending" };
     });
     j.sections = secs; j.state = final ? (view.state === "complete" ? "complete" : "finished") : "writing"; j.updatedAt = new Date().toISOString();
@@ -169,9 +243,10 @@
   function sectionView(id){
     var j = record();
     if (!j) return null;                                           /* no server job for this run */
-    if (j.state === "refused" || j.state === "access") return { state: "failed", paragraphs: [COPY.failed] };
     var s = j.sections && j.sections[id];
     if (s && s.state === "passed") return { state: "passed", paragraphs: s.body };
+    if (j.state === "access") return { state: "access:" + (j.reason || ""), paragraphs: [lineFor(j)] };   /* DTC2: the reason is in the state, so the page redraws when it changes */
+    if (j.state === "refused") return { state: "failed", paragraphs: [COPY.failed] };
     if (s && s.state === "failed") return { state: "failed", paragraphs: [COPY.failed] };
     if (!j.sections || !Object.keys(j.sections).length) return { state: "writing", paragraphs: [COPY.writing] };
     return { state: "pending", paragraphs: [COPY.pending] };
@@ -184,4 +259,5 @@
 
   window.CozTropicalServer = { start: start, resume: follow, sectionView: sectionView, record: record, COPY: COPY };
   follow();                                                         /* pick up a job already under way */
+  wireCodeEntry();                                                  /* DTC2 */
 })();
