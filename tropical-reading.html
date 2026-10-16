@@ -599,7 +599,7 @@ body[data-view="reading"] .vedic-reading-page { animation: none; }
   </div>
 </div>
 
-<div class="vedic-stamp" aria-hidden="true">TROPICAL READING · T4.5 · server reading · ADD-ONS D1.1</div>
+<div class="vedic-stamp" aria-hidden="true">TROPICAL READING · T4.5 · server reading</div>
 
 <script src="ascendant-library.js"></script>
 <script>
@@ -844,9 +844,7 @@ function goDashboard() {
 function finishReading() {
   try { localStorage.setItem("cozTropicalReadingComplete", new Date().toISOString()); } catch (e) {}
   try { window.dispatchEvent(new CustomEvent("COZ_TROPICAL_READING_COMPLETE")); } catch (e) {}
-  /* ADD-ONS D1.1: after the last section, the preview Thank You screen instead of the dashboard;
-     its Not Now returns to the dashboard. Nothing is bought, stored or unlocked there. */
-  location.href = "addons-thanks.html#/?from=t&own=t";
+  goDashboard();
 }
 
 /* ============================================================

@@ -3,15 +3,27 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Thank You · CozAlyze</title>
+<title>Add-ons · CozAlyze</title>
 <!--
-  ADD-ONS · FULL RUN · D1.1 (Oct 15 2026) · CozAlyze/Demo. The Test full run A1.1 (CozAlyze/Test/nav, reviewed by Chat and
-  checked by Jason on his iPhone Oct 15) carried over unchanged except: no Test guard (a Test-only file), this header, the stamp.
-  Opens at the end of a reading: Finish Reading on the last section of the Vedic or Tropical reading, and FINISH READING on
-  Your Birth Charts, the last page of the Compare chain. Rulings (Jason + Chat, Oct 15): only after the reading is finished,
-  never before or during chart generation; clearly a preview; Add only steps through the mock flow and never claims anything
-  was purchased or unlocked; the reading just finished decides the offers, and that ownership is labelled simulated.
-  Address: addons-thanks.html#/?from=v|t|c&own=<v,t,c>[&x=1][&new=<add>]   (from = the reading to return to)
+  ADD-ONS · D1.2 (Oct 15 2026) · CozAlyze/Demo. Built from the approved Test A1.4 (Test/nav/addons.html), Test guard removed.
+  The approved add-on preview (Test P0.4 r2 / Demo D1.0: prices, wording, layout, Jason's four symbols) as the "Add-ons" screen,
+  opened from the entry points Jason approved on Oct 15 (visual proposal, solid buttons on the water):
+    Saved Charts (below the list) ......................... addons.html#/?from=s
+    Account (Add-ons button, when Account comes into the Demo) addons.html#/?from=a
+    end of the Vedic / Tropical birth chart ............... addons.html#/?from=v&own=v  /  from=t&own=t
+    end of a saved Vedic / Tropical chart ................. addons.html#/?from=vs&id=<record>  /  from=ts&id=<record>
+    Compare, Your Birth Charts ............................ addons.html#/?from=c&own=c
+  Rulings (Jason + Chat, Oct 15): "Thank You" is kept for real completed purchases, so this screen is titled Add-ons and is
+  clearly a preview: no payment, no unlock. The Demo has no purchase records, so what is owned is always labelled
+  "Simulated" and only sets the preview prices. Add only steps the simulation forward. Not Now returns to where it was opened.
+  A1.3 (Jason + Chat, Oct 15, approved from mockups r1-r3): the cards and prices show straight away. With nothing simulated,
+  Your Vedic $49, Your Tropical $49 and Your Combined $75 at base price, and Compatibility $25 "Available after you own a
+  reading" (no Add). The Vedic / Tropical / Combined selector is removed (redundant with the cards); when something is
+  simulated (opened from the end of a reading, or after Add) one line says "Simulated: you own ...", and the cards show
+  the add-on prices. Each card has a What's included drop-down (the Compare pages' accordion and chevron) listing the
+  approved section titles and dashboard labels of the live pages; Compatibility shows only its approved offer line.
+  A1.4 (Jason, Oct 15): this page is always the add-on view. Saved Charts, Account and a saved Vedic chart open it with
+  Your Vedic Reading simulated (a saved Tropical chart: Your Tropical Reading), exactly as from the end of the Vedic chart.
   Nothing is stored (the state lives in the address). No payment, no sign-in, no Stripe, no account.
 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -35,7 +47,7 @@ h1{font-family:var(--head);font-weight:500;font-size:max(30px,calc(98 * var(--K)
 .div{display:flex;align-items:center;height:calc(30 * var(--K));margin:calc(30 * var(--K)) calc(231 * var(--K)) 0}
 .div::before,.div::after{content:"";flex:1;height:1px;background:var(--line)}
 .div svg{width:calc(28 * var(--K));height:calc(28 * var(--K));margin:0 calc(12 * var(--K));color:var(--gold);flex:none}
-.panel{position:relative;background:url("/Demo/sc-mid.png?v=1") center top/100% 1px repeat-y #00050f;text-align:center;
+.panel{position:relative;background:url("sc-mid.png?v=1") center top/100% 1px repeat-y #00050f;text-align:center;
   padding:calc(40 * var(--K)) calc(120 * var(--K)) calc(50 * var(--K))}
 .panel .div{margin:0 calc(111 * var(--K)) calc(50 * var(--K))}   /* same width as the heading's divider (231 less the panel's 120 padding) */
 .ttlrow{display:flex;align-items:center;justify-content:center;gap:calc(32 * var(--K))}   /* P0.4 r1: his symbol beside the offer's title */
@@ -51,6 +63,21 @@ h1{font-family:var(--head);font-weight:500;font-size:max(30px,calc(98 * var(--K)
   display:inline-flex;align-items:center;margin-top:calc(30 * var(--K));-webkit-tap-highlight-color:transparent;text-decoration:none}
 .pill::after{content:"";position:absolute;left:-6px;right:-6px;top:50%;height:44px;transform:translateY(-50%)}      /* 44 px tap area, nothing drawn */
 .pill:focus-visible{outline:1px solid var(--gold);outline-offset:2px}
+.pill.solid{background:#D6B98C;border-color:#D6B98C;color:#040B18;font-weight:400}   /* A1.2: solid champagne gold (approved Oct 15) */
+/* A1.3: what each reading includes sits in a drop-down under the price (the Compare pages' accordion and chevron) */
+.more{display:inline-flex;align-items:center;gap:calc(14 * var(--K));background:none;border:0;cursor:pointer;margin-top:calc(26 * var(--K));min-height:44px;
+  font-family:var(--sans);font-weight:300;font-size:max(13px,calc(33 * var(--K)));color:var(--gold);-webkit-tap-highlight-color:transparent}
+.more svg{width:max(16px,calc(34 * var(--K)));height:max(16px,calc(34 * var(--K)));transition:transform .45s ease}
+.more[aria-expanded="true"] svg{transform:rotate(180deg)}
+.more:focus-visible{outline:1px solid var(--gold);outline-offset:3px}
+.acc{display:grid;grid-template-rows:0fr;transition:grid-template-rows .45s ease}
+.acc.open{grid-template-rows:1fr}
+.acc > div{overflow:hidden}
+.acc .sub{margin-top:0;padding-top:calc(6 * var(--K))}
+.inc{padding:calc(4 * var(--K)) 0 calc(10 * var(--K))}
+.inc .mark{margin:calc(26 * var(--K)) 0 calc(8 * var(--K))}
+.inc .mark:first-child{margin-top:calc(8 * var(--K))}
+.inc .ln{font-family:var(--sans);font-weight:300;font-size:max(13px,calc(33 * var(--K)));line-height:1.4;color:var(--cream);margin-top:calc(10 * var(--K))}
 .stamp{position:absolute;right:6px;bottom:4px;font-family:var(--sans);font-size:9px;letter-spacing:.08em;color:rgba(214,185,140,.45);pointer-events:none}
 
 /* ---------- test control: test page only (same plain style as test-setup.html) ---------- */
@@ -103,6 +130,11 @@ h1{font-family:var(--head);font-weight:500;font-size:max(30px,calc(98 * var(--K)
   /* the add-ons offered for what the customer now owns */
   function offers(own, nw){
     var out = [], r = readings(own), hasC = own.indexOf("c") >= 0;
+    if (!key(own)) return [                                                              /* A1.3: nothing owned, base prices first */
+      { add: "v", ttl: NAME.v, sub: "The complete six-part Vedic reading of your chart." },
+      { add: "t", ttl: NAME.t, sub: "The complete six-part Tropical reading of your chart." },
+      { add: "c", ttl: NAME.c, sub: COMPARE_SUB },
+      { add: "x", ttl: NAME.x, sub: "Your chart and one other person’s, read together.", later: true } ];
     if (r.length === 1) {
       var other = r[0] === "v" ? "t" : "v";
       out.push({ add: other, ttl: "See Yourself Through Another Perspective", sub: NAME[other] + ", from the same birth details." });
@@ -114,49 +146,86 @@ h1{font-family:var(--head);font-weight:500;font-size:max(30px,calc(98 * var(--K)
     if (key(own) && nw !== "x") out.push({ add: "x", ttl: NAME.x, sub: "Your chart and one other person’s, read together." });   /* P0.4: not offered again right after a Compatibility purchase */
     return out;
   }
-  /* ---------- full run (A1.0): the Thank You screen at the end of a reading, preview only ---------- */
-  var BACK = { v: "vedic-reading.html#/dashboard", t: "tropical-reading.html#/dashboard", c: "compare-reading.html" };
+  /* ---------- A1.2: the Add-ons screen, preview only ---------- */
+  function back(st){
+    var id = st.id ? "&id=" + st.id : "";
+    return { v: "vedic-birth-chart.html", t: "tropical-birth-chart.html", c: "compare-birth-charts.html",
+             vs: st.id ? "vedic-birth-chart.html?saved=1" + id : "saved-charts.html",
+             ts: st.id ? "tropical-birth-chart.html?saved=1" + id : "saved-charts.html",
+             s: "saved-charts.html", a: "account.html" }[st.from];
+  }
   function parse(){
     var m = /^#\/?(?:\?(.*))?$/.exec(location.hash || "#/") || [];
     var q = {}; (m[1] || "").split("&").forEach(function(p){ var i = p.indexOf("="); if (i > 0) q[p.slice(0, i)] = p.slice(i + 1); });
-    var from = /^[vtc]$/.test(q.from || "") ? q.from : "";
-    var own = key(((q.own || "") + from).replace(/[^vtc]/g, ""));
-    return { from: from, own: own, x: q.x === "1", nw: /^[vtcx]$/.test(q["new"] || "") ? q["new"] : "" };
+    var from = /^(v|t|c|vs|ts|s|a)$/.test(q.from || "") ? q.from : "s";
+    /* A1.4 (Jason, Oct 15): the Add-ons page is always the add-on view. Opened from Saved Charts, Account or a saved Vedic
+       chart it simulates Your Vedic Reading (a saved Tropical chart: Your Tropical Reading), labelled "Simulated", so
+       nothing claims a purchase. An address that already says what is simulated (own=) keeps it. */
+    var dflt = { s: "v", a: "v", vs: "v", ts: "t" }[from] || "";
+    return { from: from, id: /^[A-Za-z0-9_-]{1,80}$/.test(q.id || "") ? q.id : "", own: key(("own" in q ? q.own : dflt).replace(/[^vtc]/g, "")),
+             x: q.x === "1", nw: /^[vtcx]$/.test(q["new"] || "") ? q["new"] : "" };
   }
-  function go(st){ location.hash = "#/?from=" + st.from + "&own=" + st.own + (st.x ? "&x=1" : "") + (st.nw ? "&new=" + st.nw : ""); }
-  /* Add only steps the simulation forward to the next screen; nothing is bought, stored or unlocked */
-  function step(st, add){ go({ from: st.from, own: add === "x" ? st.own : key(st.own + add), x: st.x || add === "x", nw: add }); }
-  function owned(st){
-    var names = ["v", "t", "c"].filter(function(k){ return st.own.indexOf(k) >= 0; }).map(function(k){ return NAME[k]; });
-    if (st.x) names.push(NAME.x);
-    return names.length < 3 ? names.join(" and ") : names.slice(0, -1).join(", ") + " and " + names[names.length - 1];
+  function go(st){ location.hash = "#/?from=" + st.from + (st.id ? "&id=" + st.id : "") + "&own=" + st.own + (st.x ? "&x=1" : "") + (st.nw ? "&new=" + st.nw : ""); }
+  /* Add only steps the simulation forward; nothing is bought, stored or unlocked */
+  function step(st, add){ go({ from: st.from, id: st.id, own: add === "x" ? st.own : key(st.own + add), x: st.x || add === "x", nw: add }); }
+  var CHEV = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 9l7 7 7-7"/></svg>';
+  /* A1.3 r3: what each reading includes, in the approved section titles and dashboard labels of the live pages
+     (vedic-reading.html SECTIONS and dashboard, tropical-reading.html SECTIONS and dashboard, Compare's dashboard,
+     combined-reading.html and your-ascendants.html). Compatibility: only the approved offer line. */
+  var INC = {
+    v: [["Your Vedic Reading, six parts", ["1. Your Essential Nature & Guiding Planet", "2. Your Mind, Intuition & Spiritual Patterning",
+          "3. Relationships, Desire & Karmic Exchange", "4. Dharma, Work & Life Direction", "5. Rahu & Ketu \u2014 Growth, Release & Balance", "6. Your Essential Takeaway"]],
+        ["Also on your Vedic dashboard", ["Your Ascendant \u2013 Lagna", "Your Current Life Cycle", "Your Birth Chart"]]],
+    t: [["Your Tropical Reading, six parts", ["1. At Your Core", "2. Love, Desire & Creativity", "3. Work, Money & Expression",
+          "4. Wisdom, Purpose & Legacy", "5. Challenges & Resilience", "6. Your Essential Takeaway"]],
+        ["Also on your Tropical dashboard", ["Your Ascendant (your Rising Sign)", "Your Current Transits", "Your Birth Chart"]]],
+    c: [["Your Combined Reading", ["Shared Themes", "Different Emphases", "Your Integrated View"]],
+        ["Also on your Compare dashboard", ["Your Ascendants: your Tropical and Vedic Ascendant readings, with How They Work Together", "Your Current Timing", "Your Birth Charts, Vedic and Tropical"]],
+        ["", ["It does not include either six-part individual reading."]]],
+    x: [["", ["Your chart and one other person\u2019s, read together."]]]
+  };
+  function more(o){
+    return '<button type="button" class="more" aria-expanded="false" aria-controls="inc-' + o.add + '">What’s included' + CHEV + '</button>' +
+      '<div class="acc" id="inc-' + o.add + '"><div><div class="inc">' + INC[o.add].map(function(g){
+        return (g[0] ? '<p class="mark">' + esc(g[0]) + '</p>' : '') + g[1].map(function(l){ return '<p class="ln">' + esc(l) + '</p>'; }).join("");
+      }).join("") + '</div></div></div>';
   }
-  function thanks(st){
-    var list = offers(st.own, st.nw), h = '<main class="page">' +
-      '<div class="top"><img class="art" src="/Demo/sc-top.jpg?v=1" alt=""><div class="head">' +
-      '<h1>Thank You</h1><p class="lead">Preview only. Nothing was purchased or unlocked.</p>' +
-      '<div class="div" aria-hidden="true">' + STAR + '</div></div></div>' +
-      '<section class="panel"><p class="sub" data-simulated>Simulated: you own ' + esc(owned(st)) + '.</p></section>';   /* below the header art, so a long list never runs over it */
-    list.forEach(function(o){
+  function screen(st){
+    var list = offers(st.own, st.nw), note,
+        names = ["v", "t", "c"].filter(function(k){ return st.own.indexOf(k) >= 0; }).map(function(k){ return NAME[k]; }).concat(st.x ? [NAME.x] : []),
+        owned = names.length < 3 ? names.join(" and ") : names.slice(0, -1).join(", ") + " and " + names[names.length - 1];
+    if (st.nw) note = "Simulated: " + NAME[st.nw] + " added. Nothing was purchased or unlocked.";
+    var h = '<main class="page">' +
+      '<div class="top"><img class="art" src="sc-top.jpg?v=1" alt=""><div class="head">' +
+      '<h1>Add-ons</h1><p class="lead">Preview only. No payment or unlock.</p>' +
+      '<div class="div" aria-hidden="true">' + STAR + '</div></div></div>' + (owned ? '<section class="panel" data-simulated>' + (st.nw ? '<p class="sub" data-note>' + esc(note) + '</p>' : '') +
+      '<p class="sub">Simulated: you own ' + esc(owned) + '.</p></section>' : '');
+    list.forEach(function(o, n){
       var p = priceOf(st.own, o.add), m = kind(st.own, o.add);
-      h += '<section class="panel" data-offer="' + o.add + '"><div class="div" aria-hidden="true">' + STAR + '</div>' +
-        '<div class="ttlrow"><img class="ico" src="' + ICON[o.add] + '" alt=""><p class="ttl">' + esc(o.ttl) + '</p></div><p class="sub">' + esc(o.sub) + '</p>' +
-        '<p class="price">$' + p + '</p>' + (m.save ? '<p class="save">' + m.save + '</p>' : '') + '<p class="mark">' + m.mark + '</p>' +
-        '<button type="button" class="pill" data-add="' + o.add + '" aria-label="Add ' + esc(NAME[o.add]) + ' for $' + p + ', preview only, no payment">Add</button></section>';
+      h += '<section class="panel" data-offer="' + o.add + '">' + (n || owned ? '<div class="div" aria-hidden="true">' + STAR + '</div>' : '') +   /* no second divider under the heading's */
+        '<div class="ttlrow"><img class="ico" src="' + ICON[o.add] + '" alt=""><p class="ttl">' + esc(o.ttl) + '</p></div>' +
+        (o.later ? '<p class="price">$' + COMPAT + '</p><p class="save">Available after you own a reading</p>' + more(o) + '</section>' :
+        '<p class="price">$' + p + '</p>' + (m.save ? '<p class="save">' + m.save + '</p>' : '') + '<p class="mark">' + m.mark + '</p>' + more(o) +
+        '<button type="button" class="pill solid" data-add="' + o.add + '" aria-label="Add ' + esc(NAME[o.add]) + ' for $' + p + ', preview only, no payment">Add</button></section>');
     });
     h += '<section class="panel"><div class="div" aria-hidden="true">' + STAR + '</div>' +
-      '<a class="pill" href="' + BACK[st.from] + '">Not Now</a>' +
-      '<div class="stamp">ADD-ONS FULL RUN · D1.1 · NO PAYMENT</div></section></main>';
+      '<a class="pill solid" href="' + back(st) + '">Not Now</a>' +
+      '<div class="stamp">ADD-ONS · D1.2 · NO PAYMENT</div></section></main>';
     app.innerHTML = h;
     Array.prototype.forEach.call(app.querySelectorAll("[data-add]"), function(b){
       b.addEventListener("click", function(){ step(st, b.getAttribute("data-add")); });
     });
+    Array.prototype.forEach.call(app.querySelectorAll(".more"), function(b){
+      b.addEventListener("click", function(){
+        var open = b.getAttribute("aria-expanded") !== "true";
+        b.setAttribute("aria-expanded", String(open)); document.getElementById(b.getAttribute("aria-controls")).classList.toggle("open", open);
+      });
+    });
   }
   function render(){
-    var st = parse();
-    if (!st.from) { app.innerHTML = '<div class="ctl"><p class="muted">This preview opens from Finish Reading at the end of a reading.</p></div>'; return; }
-    thanks(st);
-    window.scrollTo(0, 0);
+    var st = parse(), y = window.scrollY, kept = render.st && render.st.nw === st.nw && !st.nw;
+    screen(st); render.st = st;
+    window.scrollTo(0, kept ? y : 0);   /* a selector tap keeps the place; Add starts at the top */
   }
   window.addEventListener("hashchange", render);
   render();

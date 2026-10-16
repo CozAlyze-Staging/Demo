@@ -704,7 +704,7 @@ body[data-view="reading"] .vedic-reading-page { animation: none; }
   </div>
 </div>
 
-<div class="vedic-stamp" aria-hidden="true">VEDIC READING · R5.2 · quiet pre-write · VD1.2 diagnostic · VW1 waiting · VSP1.2 server switch · DV1 load order · DV2 tap guard · ADD-ONS D1.1</div>
+<div class="vedic-stamp" aria-hidden="true">VEDIC READING · R5.2 · quiet pre-write · VD1.2 diagnostic · VW1 waiting · VSP1.2 server switch · DV1 load order · DV2 tap guard</div>
 
 <script src="ascendant-library.js"></script>
 <script src="dev-review-engine.js?v=6"></script>
@@ -1196,9 +1196,7 @@ function finishReading() {
     try { localStorage.setItem("cozVedicReadingComplete", new Date().toISOString()); } catch (e) {}
     try { window.dispatchEvent(new CustomEvent("COZ_VEDIC_READING_COMPLETE")); } catch (e) {}
   }
-  /* ADD-ONS D1.1: after the last section, the preview Thank You screen instead of the dashboard;
-     its Not Now returns to the dashboard. Nothing is bought, stored or unlocked there. */
-  location.href = "addons-thanks.html#/?from=v&own=v";
+  goDashboard();
 }
 
 /* ============================================================
