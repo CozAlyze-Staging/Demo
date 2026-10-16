@@ -542,6 +542,11 @@
     line-height:1.3; color:#B9B6F2; margin-top:clamp(8px,2vw,14px);
     padding-top:clamp(6px,1.6vw,10px); border-top:1px solid rgba(150,150,230,.25); }
   .east .sc-tag { color:#E4C79A; border-top-color:rgba(224,178,110,.3); }
+  /* v20.6 (Jason, Oct 15): the card's bottom line is a solid button so it reads as the place to tap,
+     purple on Western Tropical, gold on Vedic Sidereal, dark navy text. The whole card stays tappable. */
+  .sc-tag { background:#B9B6F2; color:#040B18; border:1.5px solid #B9B6F2; border-radius:22px;
+    padding:clamp(8px,2.2vw,12px) 4px; margin-top:clamp(12px,3vw,18px); }
+  .east .sc-tag { background:#E4C79A; color:#040B18; border-color:#E4C79A; }
   .sys-cards { padding-bottom:calc(48px + env(safe-area-inset-bottom,0px)); }  /* Earth exits before this scene: nothing to clear */
   /* staged reveal — brand+heading, intro, west glides, east glides, emblems breathe up, foot */
   #systembar .sys-logo, #systembar .sys-heading,

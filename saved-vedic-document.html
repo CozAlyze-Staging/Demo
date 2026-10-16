@@ -34,6 +34,30 @@
 .doc-links a{color:var(--coz-gold); text-decoration:none}
 .doc-links .here{color:var(--coz-ink-soft)}
 @media print{ .doc-links{display:none} .doc-footer{break-inside:avoid; page-break-inside:avoid} }   /* r2: the footer prints whole */
+
+/* v20.6 (Jason, Oct 15): the Home / Saved / Account bar stays on screen the whole time, so a saved
+   reading can always be left. Same bar as the Vedic birth chart (v20.1 shared reading footer). */
+#cozFoot{
+  position:fixed; left:0; right:0; bottom:0; z-index:40;
+  padding-bottom:env(safe-area-inset-bottom);
+  background:rgb(8 11 17 / .86);
+  backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+  border-top:1px solid rgb(201 161 94 / .18);
+}
+#cozFoot .coz-foot-tag{
+  text-align:center; font-style:italic; font-size:13px; letter-spacing:.04em;
+  color:#8b8272; padding:11px 20px 3px;
+}
+#cozFoot .coz-foot-links{display:flex; height:64px}
+#cozFoot a{
+  flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:4px; text-decoration:none; color:#8b8272; font-size:10.5px; letter-spacing:.06em;
+  -webkit-tap-highlight-color:transparent;
+}
+#cozFoot a svg{width:21px; height:21px; stroke:currentColor; fill:none; stroke-width:1.4; stroke-linecap:round; stroke-linejoin:round}
+#cozFoot a:active{color:var(--coz-gold,#b88a55)}
+@media print{ #cozFoot{display:none !important} }
+.doc-shell{padding-bottom:calc(env(safe-area-inset-bottom) + 124px)}   /* the bar owns the bottom of the screen */
 </style>
 <script src="coz-saved.js?v=3"></script>
 <script src="saved-vedic-library.js?v=3"></script>
@@ -260,6 +284,19 @@
   document.getElementById("savedNote").textContent = "These are your saved results. No animation. No rewrite." + (savedAt ? " \u00B7 Saved " + longDate(savedAt) : "");
   cozAutoPrint();
 })();
+</script>
+<div id="cozFoot">
+  <div class="coz-foot-tag">CozAlyze helps you see it all</div>
+  <div class="coz-foot-links">
+    <a href="vedic-reading.html#/dashboard"><svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9h13v-9"/></svg>Home</a>
+    <a href="saved-charts.html" aria-label="Saved Charts"><svg viewBox="0 0 24 24"><path d="M7 4h10v16l-5-4-5 4z"/></svg>Saved</a>
+    <a href="#" data-foot="account"><svg viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 19.5c1.2-3.4 3.9-5 7-5s5.8 1.6 7 5"/></svg>Account</a>
+  </div>
+</div>
+<script>
+/* v20.6: Account mirrors the other Demo pages (decorative until the Account page comes into the Demo) */
+document.querySelectorAll('#cozFoot a[data-foot="account"]').forEach(function(a){ a.addEventListener("click", function(ev){ ev.preventDefault();
+  try { window.dispatchEvent(new CustomEvent("COZ_DASH_ACCOUNT")); } catch (e) {} }); });
 </script>
 </body>
 </html>

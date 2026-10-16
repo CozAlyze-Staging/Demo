@@ -226,7 +226,7 @@ button{font:inherit}
 .report-shell{padding-bottom:calc(env(safe-area-inset-bottom) + 124px)}
 
 /* BC2.4 saved mode */
-body.saved-mode #cozFoot,body.saved-mode .toolbar-left p{display:none}
+body.saved-mode .toolbar-left p{display:none}   /* v20.6 (Jason): the Home / Saved / Account bar stays on a saved chart too */
 .saved-readings{margin-top:2rem}
 .saved-readings-sub{margin:-.4rem 0 .9rem; color:var(--coz-ink-soft); font-size:.8rem}
 .saved-readings-links{display:grid; grid-template-columns:repeat(auto-fit,minmax(14rem,1fr)); gap:.75rem}
@@ -318,7 +318,7 @@ body.embed-compare .report-shell{min-height:0; padding:0 0 1rem}
     <a href="#" data-foot="account"><svg viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 19.5c1.2-3.4 3.9-5 7-5s5.8 1.6 7 5"/></svg>Account</a>
   </div>
 </div>
-<div class="build-stamp">BIRTH CHART · BC2.7 · presentation fixes · ADD-ONS D1.2</div>
+<div class="build-stamp">BIRTH CHART · BC2.7 · presentation fixes · ADD-ONS D1.2 · BAR D1.3</div>
 <script>
 "use strict";
 /* Renderer only. This page never calculates astronomy; every value comes from

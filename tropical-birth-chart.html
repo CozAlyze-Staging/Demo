@@ -255,6 +255,31 @@ body.embed-compare .report-shell{min-height:0; padding:0 0 1rem}
   .cusps-table{font-size:.66rem}
   .report-footer{font-size:.6rem}
 }
+
+/* v20.6 (Jason, Oct 15): the Home / Saved / Account bar stays on screen the whole time, so a saved
+   reading can always be left. Same bar as the Vedic birth chart (v20.1 shared reading footer). */
+#cozFoot{
+  position:fixed; left:0; right:0; bottom:0; z-index:40;
+  padding-bottom:env(safe-area-inset-bottom);
+  background:rgb(8 11 17 / .86);
+  backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+  border-top:1px solid rgb(201 161 94 / .18);
+}
+#cozFoot .coz-foot-tag{
+  text-align:center; font-style:italic; font-size:13px; letter-spacing:.04em;
+  color:#8b8272; padding:11px 20px 3px;
+}
+#cozFoot .coz-foot-links{display:flex; height:64px}
+#cozFoot a{
+  flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:4px; text-decoration:none; color:#8b8272; font-size:10.5px; letter-spacing:.06em;
+  -webkit-tap-highlight-color:transparent;
+}
+#cozFoot a svg{width:21px; height:21px; stroke:currentColor; fill:none; stroke-width:1.4; stroke-linecap:round; stroke-linejoin:round}
+#cozFoot a:active{color:var(--coz-gold,#b88a55)}
+@media print{ #cozFoot{display:none !important} }
+.report-shell{padding-bottom:calc(env(safe-area-inset-bottom) + 124px)}   /* the bar owns the bottom of the screen */
+body.embed-compare #cozFoot{display:none !important}
 </style>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400&display=swap" rel="stylesheet">
 <style>
@@ -303,7 +328,22 @@ body.embed-compare .report-shell{min-height:0; padding:0 0 1rem}
   })();
   </script>
 </div>
-<div class="build-stamp">BIRTH CHART · TBC1.9 · birth details · ADD-ONS D1.2</div>
+<div id="cozFoot">
+  <div class="coz-foot-tag">CozAlyze helps you see it all</div>
+  <div class="coz-foot-links">
+    <a href="tropical-reading.html"><svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9h13v-9"/></svg>Home</a>
+    <a href="#" data-foot="saved"><svg viewBox="0 0 24 24"><path d="M7 4h10v16l-5-4-5 4z"/></svg>Saved</a>
+    <a href="#" data-foot="account"><svg viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 19.5c1.2-3.4 3.9-5 7-5s5.8 1.6 7 5"/></svg>Account</a>
+  </div>
+</div>
+<script>
+/* v20.6: Account mirrors the other Demo pages (decorative until the Account page comes into the Demo) */
+document.querySelectorAll('#cozFoot a[data-foot="account"]').forEach(function(a){ a.addEventListener("click", function(ev){ ev.preventDefault();
+  try { window.dispatchEvent(new CustomEvent("COZ_DASH_ACCOUNT")); } catch (e) {} }); });
+/* inside Compare (from=compare, in=compare) this chart has no bar of its own */
+if (/[?&](from|in)=compare\b/.test(location.search)) { var cf = document.getElementById("cozFoot"); if (cf) cf.parentNode.removeChild(cf); }
+</script>
+<div class="build-stamp">BIRTH CHART · TBC1.9 · birth details · ADD-ONS D1.2 · BAR D1.3</div>
 <script>
 "use strict";
 /* Renderer only. This page never calculates astronomy; every value comes from
