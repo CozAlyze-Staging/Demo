@@ -1,4 +1,13 @@
-/* COZ TROPICAL SERVER · TSA1.3 (DTC2, Oct 14 2026, offline, not deployed)
+/* COZ TROPICAL SERVER · TSA1.4 (TS1.1.7 review package r2, Oct 16 2026, offline, not deployed)
+   TSA1.4: (1) a timing record per run in localStorage "cozTropicalTiming" for the Section 1 readiness test, written by
+   this file and by tropical-reading.html through CozTropicalServer.timing. It holds the run identity and job id, phone-clock
+   marks (jobStart, s1Seen, s1Failed), one record per reveal attempt (door tap, reveal done, any entry wait, first view of
+   Section 1, Section 1 shown) and a PERMANENT timing-failure flag: once any attempt waited for Section 1, or opened it
+   unready, the run stays failed whatever happens later. Attempts are never deleted. Nothing the customer sees changes.
+   (2) A section the server reports "failed" is shown as could-not-be-completed at once instead of "still being written"
+   until the whole job ends: the server never changes a failed section again (TS1.1.7: a failed early Section 1 repair is
+   final), so the reading entry is not held for a section that will never arrive.
+   TSA1.3 (DTC2, Oct 14 2026)
    DTC2: one tester password for the whole Demo (see the DTC2 block below). The start no longer asks with a box: with no
    password the run is marked "access" and every section shows the tester line, which the reader taps to enter it. A
    refused password is never deleted. A job id and its passed sections are never cleared by an access problem; a run that
@@ -54,6 +63,25 @@
     { id: "essential-takeaway",     number: 6, title: "Your Essential Takeaway" }
   ];
   var timer = null;
+  /* ---------- TSA1.4: the timing record for this run (phone clock throughout) ---------- */
+  var TIMING = "cozTropicalTiming";
+  function timingRec(){
+    var run = currentRun(); if (!run) return null;
+    var t = lsJSON(TIMING);
+    if (!t || t.v !== 2 || t.runId !== run.runId || t.fingerprint !== run.fingerprint) t = { v: 2, runId: run.runId, fingerprint: run.fingerprint, jobId: null, marks: {}, attempts: [], failure: null, direct: null };
+    return t;
+  }
+  function timingEdit(fn){ var t = timingRec(); if (!t) return null; fn(t); lsSet(TIMING, t); return t; }
+  var timing = {
+    get: function () { return timingRec(); },
+    mark: function (name, extra) { timingEdit(function (t) { if (t.marks[name]) return; var m = { at: Date.now() }; if (extra) for (var k in extra) m[k] = extra[k]; t.marks[name] = m; }); },
+    jobId: function (id) { timingEdit(function (t) { if (!t.jobId) t.jobId = id; }); },
+    attemptStart: function () { timingEdit(function (t) { t.attempts.push({ n: t.attempts.length + 1, doorTap: Date.now() }); }); },
+    attemptMark: function (name, extra) { timingEdit(function (t) { var a = t.attempts[t.attempts.length - 1]; if (!a || a[name]) return; var m = { at: Date.now() }; if (extra) for (var k in extra) m[k] = extra[k]; a[name] = m; }); },
+    fail: function (reason) { timingEdit(function (t) { if (t.failure) return; t.failure = { at: Date.now(), reason: reason, attempt: t.attempts.length }; }); },
+    direct: function (state) { timingEdit(function (t) { if (!t.direct) t.direct = { at: Date.now(), state: state }; }); },
+    restored: restored
+  };
 
   function lsJSON(k){ try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } }
   function lsSet(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } }
@@ -163,11 +191,12 @@
     var code = codeForNew();
     if (!code) { lsSet(JOB, { v: 1, runId: run.runId, fingerprint: run.fingerprint, jobId: null, state: "access", reason: "missing", sections: {}, base: (rec && rec.base) || chosenBase(), updatedAt: new Date().toISOString() }); notify(); log("no tester password on this device; nothing started"); return; }   /* DTC2 */
     lsSet(JOB, { v: 1, runId: run.runId, fingerprint: run.fingerprint, jobId: null, state: "starting", sections: {}, base: (rec && rec.base) || chosenBase(), cred: credOf(code), startedAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+    timing.mark("jobStart");                                              /* TSA1.4 */
     notify();
     api("/tropical-start", { method: "POST", body: JSON.stringify({ chart: chart }), code: code }).then(function (r) {
       var j = record(); if (!j) return;
       if ((r.status === 200 || r.status === 201) && r.body && r.body.jobId) {
-        j.jobId = r.body.jobId; j.state = "writing"; j.updatedAt = new Date().toISOString(); lsSet(JOB, j); notify();
+        j.jobId = r.body.jobId; j.state = "writing"; j.updatedAt = new Date().toISOString(); lsSet(JOB, j); timing.jobId(j.jobId); notify();   /* TSA1.4 */
         log((r.status === 201 ? "new job " : "existing job ") + "started"); follow();
       } else if (r.status === 401) {
         j.state = "access"; j.reason = "refused"; lsSet(JOB, j); notify(); log("tester password refused; nothing deleted (DTC2)");
@@ -220,8 +249,12 @@
     view.sections.forEach(function (s) {
       if (s.state === "passed" && Array.isArray(s.body)) secs[s.id] = { state: "passed", body: s.body };
       else if (j.sections && j.sections[s.id] && j.sections[s.id].state === "passed") secs[s.id] = j.sections[s.id];   /* DTC2 */
+      else if (s.state === "failed") secs[s.id] = { state: "failed" };    /* TSA1.4: final on the server, shown at once */
       else secs[s.id] = { state: final ? "failed" : "pending" };
     });
+    timing.jobId(j.jobId);                                                /* TSA1.4: a job followed from before the record existed */
+    if (secs["at-your-core"] && secs["at-your-core"].state === "passed") timing.mark("s1Seen");
+    else if (secs["at-your-core"] && secs["at-your-core"].state === "failed") timing.mark("s1Failed");
     j.sections = secs; j.state = final ? (view.state === "complete" ? "complete" : "finished") : "writing"; j.updatedAt = new Date().toISOString();
     lsSet(JOB, j); lastSeen = (j.jobId || "") + "|" + j.state + "|" + j.updatedAt;
     if (j.state === "complete") writeFinal(j);
@@ -257,7 +290,7 @@
   /* another page wrote progress: tell this page */
   window.addEventListener("storage", function (ev) { if (ev && (ev.key === JOB || ev.key === "cozTropicalReading")) notify(); });
 
-  window.CozTropicalServer = { start: start, resume: follow, sectionView: sectionView, record: record, COPY: COPY };
+  window.CozTropicalServer = { start: start, resume: follow, sectionView: sectionView, record: record, COPY: COPY, timing: timing };   /* TSA1.4 */
   follow();                                                         /* pick up a job already under way */
   wireCodeEntry();                                                  /* DTC2 */
 })();
