@@ -6,7 +6,7 @@
 <title>Your Ascendant · CozAlyze</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Montserrat:wght@400&display=swap" rel="stylesheet">
 <style>
 /* COZALYZE · ASCENDANT FULL READING · R1.2
    One template for all three readings: ?sys=western, ?sys=vedic or ?sys=combined
@@ -48,6 +48,16 @@ main{position:relative;z-index:1;max-width:640px;margin:0 auto;padding:max(22px,
 .pager .next{text-align:right}
 .combined .frame{display:none}
 .stamp{position:fixed;right:6px;bottom:2px;z-index:2;font:8px/1 var(--head);letter-spacing:.08em;color:rgba(204,164,102,.45);pointer-events:none}
+/* ADD-ONS D1.3 (Jason + Chat, Oct 18): one Add-ons button at the end of How They Work Together only. The solid button is
+   the approved D1.2 one from compare-birth-charts.html, rules copied verbatim; --k gives the same sizes as that page's
+   640 px column (100cqw / 932 there) and Montserrat is its font. */
+.chart-end{--k:calc(min(100vw, 640px) / 932);--sans:"Montserrat","Helvetica Neue",Arial,sans-serif}
+.chart-end[hidden]{display:none}
+.chart-end{display:flex;justify-content:center;gap:calc(40 * var(--k));margin-top:calc(46 * var(--k))}   /* ADD-ONS D1.2: solid, they sit on the water */
+.chart-end .pl{font-family:var(--sans);font-weight:400;font-size:max(13px,calc(30 * var(--k)));line-height:1;color:#040B18;background:#D6B98C;
+  border:1.5px solid #D6B98C;border-radius:999px;height:max(40px,calc(78 * var(--k)));padding:0 calc(48 * var(--k));display:inline-flex;align-items:center;
+  text-decoration:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.chart-end .pl:focus-visible{outline:1px solid var(--gold);outline-offset:3px}
 </style>
 <!-- Oct 2: ?v=5 so this page loads coz-saved.js CS1.6, not a cached copy -->
 <script src="coz-saved.js?v=5"></script>
@@ -66,12 +76,14 @@ main{position:relative;z-index:1;max-width:640px;margin:0 auto;padding:max(22px,
   <p class="meet" id="meet">HOW YOU MEET THE WORLD</p>
   <article class="reading" id="reading"></article>
   <p class="note">These themes describe possible patterns—not fixed outcomes.</p>
+  <!-- ADD-ONS D1.3: How They Work Together only (shown by the script below); opens the approved add-on view, Not Now returns here -->
+  <div class="chart-end" id="cozAddons" hidden><a class="pl" href="addons.html#/?from=ca&amp;own=c">Add-ons</a></div>
   <div class="pager">
     <a class="back" id="back" href="your-ascendants.html">&lsaquo; BACK TO YOUR ASCENDANTS</a>
     <a class="back next" id="next" href="#" hidden></a>
   </div>
 </main>
-<div class="stamp">ASCENDANT READING · R1.4 · early readings</div>
+<div class="stamp">ASCENDANT READING · R1.4 · early readings · ADD-ONS D1.3</div>
 
 <script src="dev-review-engine.js?v=8"></script>
 <script src="ascendant-library.js?v=5"></script>
@@ -87,6 +99,7 @@ main{position:relative;z-index:1;max-width:640px;margin:0 auto;padding:max(22px,
   if(page==="combined"){
     document.getElementById("your").textContent="YOUR ASCENDANTS";
     document.getElementById("meet").textContent="HOW THEY WORK TOGETHER";
+    document.getElementById("cozAddons").hidden=false;   /* ADD-ONS D1.3 */
   }
   var label=page==="vedic"?"Vedic":"Western";
   var g=document.getElementById("glyph"), h=document.getElementById("sign"), r=document.getElementById("reading");
