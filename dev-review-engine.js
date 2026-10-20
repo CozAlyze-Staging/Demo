@@ -29,7 +29,16 @@
   var CODE_TO_NAME = { su:"Sun", mo:"Moon", ma:"Mars", me:"Mercury", jp:"Jupiter", ve:"Venus", sa:"Saturn", ra:"Rahu", ke:"Ketu" };
   var NAME_TO_CODE = { Sun:"su", Moon:"mo", Mars:"ma", Mercury:"me", Jupiter:"jp", Venus:"ve", Saturn:"sa", Rahu:"ra", Ketu:"ke" };
 
-  function nakKey(name) { return String(name || "").toLowerCase().trim().replace(/\s+/g, "-"); }
+  /* SR1 (Oct 10 2026): the chart exporter spells this nakshatra "Dhanishtha"; every claim file keys it
+     "dhanishta". The alias lets the existing records match. Chart calculations and claim wording unchanged. */
+  var NAK_KEY_ALIAS = { "dhanishtha": "dhanishta" };
+  var NAK_NAME_ALIAS = { "Dhanishtha": ["Dhanishta"] };   /* claim prose uses the claim-file spelling */
+  /* SR1 bridge (Oct 19 2026): the six-section reading (generateDevReview) uses the alias only when its page asks with
+     { sr1: true }. A page that doesn't ask, such as a copy cached before this change, gets the Sections 1-2 it always
+     assembled. The Ascendant evidence and the Compare records always use it: those readings are reused by keys that
+     don't include the evidence, so nothing is written again. */
+  var aliasOn = true;
+  function nakKey(name) { var k = String(name || "").toLowerCase().trim().replace(/\s+/g, "-"); return (aliasOn && NAK_KEY_ALIAS[k]) || k; }
   function signName(signNumber) { return SIGN_NAMES[(signNumber - 1 + 12) % 12]; }
   function findPlanet(chart, name) {
     for (var i = 0; i < chart.planets.length; i++) if (chart.planets[i].name === name) return chart.planets[i];
@@ -113,7 +122,12 @@
   }
 
   /* ---------- Public API ---------- */
-  function generateDevReview(chart, claimData, snippets36, firstName) {
+  /* SR1 bridge: the alias applies to this draft only when the page passes { sr1: true } */
+  function generateDevReview(chart, claimData, snippets36, firstName, opts) {
+    var was = aliasOn; aliasOn = !!(opts && opts.sr1);
+    try { return draftReview(chart, claimData, snippets36, firstName); } finally { aliasOn = was; }
+  }
+  function draftReview(chart, claimData, snippets36, firstName) {
     var s1 = computeS1Keys(chart);
     var s1Match = collectSentences(claimData.section1Files, function (rec) { return recordMatchesKeys(rec, s1.keys); });
 
@@ -140,10 +154,11 @@
     var s2Sentences = s2.sentences.filter(function (t) {
       return !/is the Moon's nakshatra, one of the smaller lunar sections/i.test(t);
     }).map(function (t) {
-      if (nakName) {
-        t = t.replace(new RegExp("\\b" + nakName + "'s\\b", "g"), "this nakshatra's");
-        t = t.replace(new RegExp("\\b" + nakName + "\\b", "g"), "this nakshatra");
-      }
+      [nakName].concat((aliasOn && NAK_NAME_ALIAS[nakName]) || []).forEach(function (nm) {
+        if (!nm) return;
+        t = t.replace(new RegExp("\\b" + nm + "'s\\b", "g"), "this nakshatra's");
+        t = t.replace(new RegExp("\\b" + nm + "\\b", "g"), "this nakshatra");
+      });
       /* the claim records say "This pada may give/direct/carry ..."; "pada" is a
          forbidden term and "this part of it" reads like a template, so the
          sentence is rewritten to read as plain prose. */
