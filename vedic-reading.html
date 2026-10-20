@@ -1081,6 +1081,38 @@ function cozBrowserPinned(chart, reading12, firstName) {
   } catch (e) {}
   return null;
 }
+/* SR1 bridge (Oct 19 2026): the Dhanishtha alias (SR1) changes Sections 1-2 only for a chart whose Ascendant or Moon is
+   in Dhanishtha. A run whose Sections 3-6 were already written, or are being written, from the Sections 1-2 assembled
+   before SR1 keeps those Sections 1-2: nothing is written a second time, and its browser draft, its Vedic server job and
+   its saved records still match. A run with nothing written yet gets the corrected Sections 1-2.
+   r2 (Oct 19): the Sections 1-2 a server job was started from are read from the saved-library start stamp, else from
+   this page's own note for the run, written before every server start (one note per run, the newest 12 kept). A job
+   with neither is taken as started by a page from before the bridge, so from the pre-SR1 Sections 1-2. */
+var COZ_JOB_START = "cozVedicJobStart";
+function cozS12(r) { return cozGenHash(JSON.stringify([r["essential-nature"] || [], r["mind-intuition"] || []])); }
+function cozKey(k) { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } }   /* unreadable = absent */
+function cozJobNotes() { var m = cozKey(COZ_JOB_START); return m && m.runs && typeof m.runs === "object" && !Array.isArray(m.runs) ? m : { runs: {} }; }
+function cozJobStartS12(run) {                       /* this device's server job for the run: null (none), its s12, or "unrecorded" */
+  var j = cozKey("cozVedicServerJob");
+  if (!run || !j || !j.jobId || j.runId !== run.runId || j.fingerprint !== run.fingerprint) return null;
+  var cap = cozKey("cozVedicSavedCapture"), e = cap && cap.runs && cap.runs[run.runId], st = e && e.serverStart;
+  if (st && st.runId === run.runId && st.fingerprint === run.fingerprint && st.s12) return st.s12;
+  var n = cozJobNotes().runs[run.runId];
+  if (n && n.fingerprint === run.fingerprint && n.s12) return n.s12;
+  return "unrecorded";
+}
+function cozNoteJobStart(run, reading12) {           /* before a job can start for this run: the Sections 1-2 it starts from */
+  try {
+    if (!run || localStorage.getItem("cozRestoredRunId") === run.runId) return;   /* a reopened saved chart never starts one */
+    var j = cozKey("cozVedicServerJob");
+    if (j && j.jobId && j.runId === run.runId && j.fingerprint === run.fingerprint) return;   /* already started: followed */
+    var m = cozJobNotes();
+    m.runs[run.runId] = { fingerprint: run.fingerprint, s12: cozS12(reading12), at: new Date().toISOString() };
+    Object.keys(m.runs).sort(function (a, b) { return String((m.runs[b] || {}).at).localeCompare(String((m.runs[a] || {}).at)); })
+      .slice(12).forEach(function (id) { delete m.runs[id]; });
+    localStorage.setItem(COZ_JOB_START, JSON.stringify(m));
+  } catch (e) {}
+}
 window.COZ_PARTIAL_READY = new Promise(function (r) { window.__cozPartialResolve = r; });
 var COZ_READING_READY = requestChartData().then(function (chart) {
   if (!chart || !chart.planets) { window.COZ_VEDIC_READING_UNAVAILABLE = true; window.COZ_VEDIC_DEBUG = "No chart in localStorage.cozChartJSON (got: " + JSON.stringify(chart).slice(0,80) + ")"; return; }
@@ -1117,7 +1149,18 @@ var COZ_READING_READY = requestChartData().then(function (chart) {
     var snippets36 = results[2];
     if (!window.CozDevReview) throw new Error("dev-review-engine.js did not load (window.CozDevReview missing)");
     var firstName = chart.person && (chart.person.firstName || String(chart.person.name || "").split(/\s+/)[0]);
-    var result = window.CozDevReview.generateDevReview(chart, claimData, snippets36, firstName);
+    var result = window.CozDevReview.generateDevReview(chart, claimData, snippets36, firstName, { sr1: true });
+    var before = window.CozDevReview.generateDevReview(chart, claimData, snippets36, firstName);   /* SR1 bridge: as assembled before SR1 */
+    var cozSr1Differs = cozS12(before.reading) !== cozS12(result.reading);
+    if (cozSr1Differs) {
+      var job12 = cozJobStartS12(chart.run);
+      var fromNew = !!cozBrowserPinned(chart, result.reading, firstName) || job12 === cozS12(result.reading);
+      var fromOld = !!cozBrowserPinned(chart, before.reading, firstName) || job12 === cozS12(before.reading) || job12 === "unrecorded";
+      if (!fromNew && fromOld) {
+        result = before;
+        try{(window.COZ_DIAG&&COZ_DIAG.log)("sections 1-2","kept as first written: this run's Sections 3-6 were written from them (SR1 bridge)");}catch(_d){}
+      }
+    }
     window.COZ_VEDIC_REVIEW_META = result.meta;
     var hasReviewed = !/no identity match/i.test(String(result.meta.sections3to6Source || ""));
     try{(window.COZ_DIAG&&COZ_DIAG.log)("sections 1-2","assembled (no model call)");}catch(_d){}
@@ -1126,6 +1169,7 @@ var COZ_READING_READY = requestChartData().then(function (chart) {
     /* No hand-reviewed draft for this chart: generate Sections 3-6 as unverified
        development copy so every chart produces all six sections. */
     if (window.CozVedicServer && !CozVedicServer.pinned(chart.run) && cozBrowserPinned(chart, result.reading, firstName)) window.COZ_VEDIC_BROWSER_RUN = { runId: chart.run.runId, fingerprint: chart.run.fingerprint };
+    if (cozVSOn(chart.run)) cozNoteJobStart(chart.run, result.reading);   /* SR1 bridge r2: before any server start */
     if (cozVSOn(chart.run)) { window.COZ_VEDIC_PARTIAL = Object.assign({}, result.reading, { run: { runId: chart.run.runId, fingerprint: chart.run.fingerprint } }); try { window.__cozPartialResolve(); } catch (e) {} }
     return (cozVSOn(chart.run) ? CozVedicServer.write(chart, result.reading, firstName) : generateSections3to6(chart, result.reading, firstName)).then(function (gen) {
       try{(window.COZ_DIAG&&COZ_DIAG.log)("sections 3-6",gen && gen.trace && gen.trace.fromCache ? "received (reused text)" : "received (newly written)");}catch(_d){}
