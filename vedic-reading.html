@@ -704,10 +704,10 @@ body[data-view="reading"] .vedic-reading-page { animation: none; }
   </div>
 </div>
 
-<div class="vedic-stamp" aria-hidden="true">VEDIC READING · R5.2 · quiet pre-write · VD1.2 diagnostic · VW1 waiting · VSP1.2 server switch · DV1 load order · DV2 tap guard</div>
+<div class="vedic-stamp" aria-hidden="true">VEDIC READING · R5.2 · quiet pre-write · VD1.2 diagnostic · VW1 waiting · VSP1.2 server switch · DV1 load order · DV2 tap guard · S2C section 2</div>
 
 <script src="ascendant-library.js"></script>
-<script src="dev-review-engine.js?v=6"></script>
+<script src="dev-review-engine.js?v=9"></script>
 <script src="coz-vedic-server.js?v=1"></script>
 <script>
 /* ============================================================
@@ -1142,11 +1142,18 @@ var COZ_READING_READY = requestChartData().then(function (chart) {
   return Promise.all([
     Promise.all(SECTION1_FILES.map(function (f) { return fetchJSON(f); })),
     Promise.all(SECTION2_FILES.map(function (f) { return fetchJSON(f); })),
-    fetchJSON("section3-6-review-drafts.json")
+    fetchJSON("section3-6-review-drafts.json"),
+    fetchJSON("application-claims-lisbon-s2c.json").catch(function () { return null; })   /* S2C: missing or unreadable = Section 2 as before */
   ]).then(function (results) {
     try{(window.COZ_DIAG&&COZ_DIAG.log)("claim files","loaded");}catch(_d){}
     var claimData = { section1Files: results[0], section2Files: results[1] };
     var snippets36 = results[2];
+    var s2cData = null;                                  /* S2C: the same files, with the corrected Lisbon records after the Moon-sign batch */
+    if (results[3] && Array.isArray(results[3].records)) {
+      var s2cFiles = [];
+      results[1].forEach(function (f, i) { s2cFiles.push(f); if (SECTION2_FILES[i] === "application-claims-moon-signs-phase3-batch2.json") s2cFiles.push(results[3]); });
+      s2cData = { section1Files: results[0], section2Files: s2cFiles };
+    }
     if (!window.CozDevReview) throw new Error("dev-review-engine.js did not load (window.CozDevReview missing)");
     var firstName = chart.person && (chart.person.firstName || String(chart.person.name || "").split(/\s+/)[0]);
     var result = window.CozDevReview.generateDevReview(chart, claimData, snippets36, firstName, { sr1: true });
@@ -1159,6 +1166,23 @@ var COZ_READING_READY = requestChartData().then(function (chart) {
       if (!fromNew && fromOld) {
         result = before;
         try{(window.COZ_DIAG&&COZ_DIAG.log)("sections 1-2","kept as first written: this run's Sections 3-6 were written from them (SR1 bridge)");}catch(_d){}
+      }
+    }
+    /* S2C bridge (Oct 21 2026): the corrected Section 2 (S2C: application-claims-lisbon-s2c.json, with the engine's
+       { s2c: true }) changes Sections 1-2 only for a chart whose Moon is in Leo, or in Uttara Phalguni pada 4 outside the
+       3rd house. As with SR1, a run whose Sections 3-6 were already written, or are being written, from the Sections 1-2
+       chosen above keeps them, and so does a run whose server job was started from them or by a page from before the SR1
+       bridge. A run written from the corrected Sections 1-2, or with nothing written yet, gets the corrected ones.
+       Without the S2C file, or with an engine from before S2C (it has no CozDevReview.s2c), the Sections 1-2 above are
+       used. */
+    if (s2cData && window.CozDevReview.s2c === true) {
+      var corrected = window.CozDevReview.generateDevReview(chart, s2cData, snippets36, firstName, { sr1: true, s2c: true });
+      if (cozS12(corrected.reading) !== cozS12(result.reading)) {
+        var job12s = cozJobStartS12(chart.run);
+        var fromCorrected = !!cozBrowserPinned(chart, corrected.reading, firstName) || job12s === cozS12(corrected.reading);
+        var fromChosen = !!cozBrowserPinned(chart, result.reading, firstName) || job12s === cozS12(result.reading) || job12s === "unrecorded";
+        if (fromCorrected || !fromChosen) result = corrected;
+        else { try{(window.COZ_DIAG&&COZ_DIAG.log)("sections 1-2","kept as first written: this run's Sections 3-6 were written from them (S2C bridge)");}catch(_d){} }
       }
     }
     window.COZ_VEDIC_REVIEW_META = result.meta;

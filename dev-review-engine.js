@@ -38,6 +38,16 @@
      assembled. The Ascendant evidence and the Compare records always use it: those readings are reused by keys that
      don't include the evidence, so nothing is written again. */
   var aliasOn = true;
+  /* S2C (Oct 21 2026, offline): the corrected Section 2, used only when the page asks with { s2c: true }. The page then
+     also passes the corrected Lisbon records (application-claims-lisbon-s2c.json) among the Section 2 files. A page
+     that doesn't ask, such as a copy cached before this change, gets the Section 2 it always assembled. Two rules, for
+     Section 2 only:
+     1. Each record's claimConditions are honored, as compare-evidence.js already honors them: a claim listed there is
+        used only when every claim it "requires", and at least one claim it "requiresAny", is also used in this
+        Section 2. Claims whose conditions fail are dropped until nothing changes.
+     2. The claims a record lists in "presentTogether" stay in one paragraph, in the record's order.
+     Section 1, Sections 3-6 and the Compare selections (selectRecords, selectAscendantEvidence) are unchanged. */
+  var s2cOn = false;
   function nakKey(name) { var k = String(name || "").toLowerCase().trim().replace(/\s+/g, "-"); return (aliasOn && NAK_KEY_ALIAS[k]) || k; }
   function signName(signNumber) { return SIGN_NAMES[(signNumber - 1 + 12) % 12]; }
   function findPlanet(chart, name) {
@@ -93,6 +103,54 @@
     return { sentences: sentences, matchedIds: matchedIds };
   }
 
+  /* S2C: Section 2's records, matched and ordered as collectSentences matches and orders them, then the two S2C rules.
+     Each unit is a list of claim sentences that goes into one paragraph. */
+  function collectS2C(files, matchFn) {
+    var recs = [], seen = {};
+    files.forEach(function (file) {
+      (file.records || []).forEach(function (rec) {
+        if (!matchFn(rec)) return;
+        var id = rec.recordId || rec.modelId || rec.coverageItem;
+        if (seen[id]) return;
+        seen[id] = true;
+        recs.push(rec);
+      });
+    });
+    /* rule 1: claimConditions, checked against the claims used in this Section 2 */
+    var used = {}, cond = {};
+    recs.forEach(function (rec) {
+      (rec.applicationClaims || []).forEach(function (c) { if (c.allowedMeaning && c.claimId) used[c.claimId] = true; });
+      (rec.claimConditions || []).forEach(function (c) { if (c && c.claimId) cond[c.claimId] = c; });
+    });
+    var changed = true;
+    while (changed) {
+      changed = false;
+      Object.keys(used).forEach(function (id) {
+        var c = cond[id]; if (!c) return;
+        var ok = (!c.requires || c.requires.every(function (x) { return used[x]; })) &&
+                 (!c.requiresAny || c.requiresAny.some(function (x) { return used[x]; }));
+        if (!ok) { delete used[id]; changed = true; }
+      });
+    }
+    /* rule 2: a record's presentTogether claims form one unit, at the place of the first of them */
+    var units = [], matchedIds = [];
+    recs.forEach(function (rec) {
+      matchedIds.push(rec.recordId || rec.modelId || rec.coverageItem);
+      var together = Array.isArray(rec.presentTogether) ? rec.presentTogether : [], group = null;
+      (rec.applicationClaims || []).forEach(function (c) {
+        if (!c.allowedMeaning) return;
+        if (c.claimId && !used[c.claimId]) return;          /* its claimConditions failed */
+        if (c.claimId && together.indexOf(c.claimId) >= 0) {
+          if (!group) { group = []; units.push(group); }
+          group.push(c.allowedMeaning);
+          return;
+        }
+        units.push([c.allowedMeaning]);
+      });
+    });
+    return { units: units, matchedIds: matchedIds };
+  }
+
   function toParagraphs(sentences, introSentences) {
     var all = (introSentences || []).concat(sentences);
     if (!all.length) return [];
@@ -111,11 +169,12 @@
       "nakshatra." + nakKey(moon.nakshatra),
       "pada." + nakKey(moon.nakshatra) + "." + moon.pada
     ];
-    var matched = collectSentences(files, function (rec) {
+    var matched = (s2cOn ? collectS2C : collectSentences)(files, function (rec) {
       return recordMatchesKeys(rec, keySet) || recordMatchesSelector(rec, chart);
     });
     return {
       sentences: matched.sentences,
+      units: matched.units,                                  /* S2C only */
       matchedIds: matched.matchedIds,
       moon: moon, moonSign: moonSign
     };
@@ -124,8 +183,8 @@
   /* ---------- Public API ---------- */
   /* SR1 bridge: the alias applies to this draft only when the page passes { sr1: true } */
   function generateDevReview(chart, claimData, snippets36, firstName, opts) {
-    var was = aliasOn; aliasOn = !!(opts && opts.sr1);
-    try { return draftReview(chart, claimData, snippets36, firstName); } finally { aliasOn = was; }
+    var was = aliasOn, wasS2c = s2cOn; aliasOn = !!(opts && opts.sr1); s2cOn = !!(opts && opts.s2c);   /* S2C: { s2c: true } */
+    try { return draftReview(chart, claimData, snippets36, firstName); } finally { aliasOn = was; s2cOn = wasS2c; }
   }
   function draftReview(chart, claimData, snippets36, firstName) {
     var s1 = computeS1Keys(chart);
@@ -151,9 +210,10 @@
        intro. Any later mention of that name, and the word "pada", are removed from
        the claim prose. A claim sentence that only defines the nakshatra is dropped. */
     var nakName = String(s2.moon.nakshatra || "");
-    var s2Sentences = s2.sentences.filter(function (t) {
+    var s2Keep = function (t) {
       return !/is the Moon's nakshatra, one of the smaller lunar sections/i.test(t);
-    }).map(function (t) {
+    };
+    var s2Voice = function (t) {
       [nakName].concat((aliasOn && NAK_NAME_ALIAS[nakName]) || []).forEach(function (nm) {
         if (!nm) return;
         t = t.replace(new RegExp("\\b" + nm + "'s\\b", "g"), "this nakshatra's");
@@ -166,7 +226,11 @@
       t = t.replace(/\b(?:this|the)\s+pada\s+may\s+/g, "your Moon's placement may ");
       t = t.replace(/\b(?:This|The)\s+pada\b/g, "This placement").replace(/\b(?:this|the)\s+pada\b/g, "this placement");
       return t;
-    });
+    };
+    /* S2C: a unit's sentences are kept and voiced one by one, as above, then joined, so the unit stays in one paragraph */
+    var s2Sentences = s2.units ? s2.units.map(function (u) { return u.filter(s2Keep).map(s2Voice); })
+                                         .filter(function (u) { return u.length; }).map(function (u) { return u.join(" "); })
+                               : s2.sentences.filter(s2Keep).map(s2Voice);
 
     var reading = {
       "essential-nature": toParagraphs(s1Match.sentences, introS1),
@@ -260,5 +324,6 @@
     };
   }
 
-  global.CozDevReview = { generateDevReview: generateDevReview, selectAscendantEvidence: selectAscendantEvidence, selectRecords: selectRecords };
+  global.CozDevReview = { generateDevReview: generateDevReview, selectAscendantEvidence: selectAscendantEvidence, selectRecords: selectRecords,
+                          s2c: true };   /* S2C: this engine understands { s2c: true }; a page asks only an engine that says so */
 })(typeof window !== "undefined" ? window : globalThis);

@@ -1,0 +1,71 @@
+{
+ "_label": "S2C CORRECTION (proposed Oct 21 2026 for ChatGPT's review). The three Section 2 records of the Lisbon overlay v2 (application-claims.json, which stays as it is), made matchable and reader-facing: the same recordId or modelId, meanings, claimConditions and restrictions as v2. Read only by the corrected Section 2 (dev-review-engine.js with { s2c: true }), whose page lists this file right after the Moon-sign batch, so these sign, nakshatra and pada claims come where those batches' claims come. v2 was authored by ChatGPT, never by code. The frozen foundation is untouched; this layer joins to it by recordId/modelId. Only applicationClaims reach the writer. internalEvidence and all excluded layers are trace-only.",
+ "environment": "development",
+ "productionEligible": false,
+ "records": [
+  {
+   "recordId": "IR-S2-RQ205-MOON-LEO",
+   "coverageItem": "graha-in-sign.mo.leo",
+   "applicationClaims": [
+    { "claimId": "APP-MOON-LEO-WARMTH", "allowedMeaning": "The emotional temperament may include warmth, generosity, courage and steadiness of mind." },
+    { "claimId": "APP-MOON-LEO-HEAT", "allowedMeaning": "The emotional temperament may also include quick heat or irritation." },
+    { "claimId": "APP-MOON-LEO-MIXED", "allowedMeaning": "Your warmth and emotional heat may be two sides of the same mixed temperament." }
+   ],
+   "compositionRequirements": [
+    "APP-MOON-LEO-WARMTH and APP-MOON-LEO-HEAT must appear together"
+   ],
+   "presentTogether": [ "APP-MOON-LEO-WARMTH", "APP-MOON-LEO-HEAT", "APP-MOON-LEO-MIXED" ],
+   "prohibitedExtensions": [
+    "automatic leadership claim",
+    "automatic confidence claim",
+    "one-sided flattering interpretation",
+    "one-sided negative interpretation"
+   ]
+  },
+  {
+   "modelId": "NAK-10-MAGHA",
+   "coverageItem": "nakshatra.magha",
+   "applicationClaims": [
+    { "claimId": "APP-MAGHA-STEWARDSHIP", "allowedMeaning": "You may feel emotionally oriented toward lineage, inheritance, stewardship and what deserves to be carried forward." },
+    { "claimId": "APP-MAGHA-CONTINUITY", "allowedMeaning": "Questions of continuity, responsibility and what should continue through your choices may hold emotional significance." },
+    { "claimId": "APP-MAGHA-DEVOTION", "allowedMeaning": "You may bring energy and devotion to what feels meaningful and worth preserving." }
+   ],
+   "customerExcludedLayers": [
+    "deity",
+    "symbol",
+    "mythology",
+    "historical doctrine",
+    "source explanation",
+    "throne or royal imagery"
+   ],
+   "prohibitedExtensions": [
+    "claims about the person\u2019s actual family history",
+    "royalty or elevated-status claim",
+    "entitlement claim",
+    "caste claim",
+    "ancestral destiny claim"
+   ]
+  },
+  {
+   "modelId": "PADA-038-MAGHA-2",
+   "coverageItem": "pada.magha.2",
+   "applicationClaims": [
+    { "claimId": "APP-MAGHA-2-STABILITY", "allowedMeaning": "This pada may express Magha's influence with greater steadiness, practicality and patience." },
+    { "claimId": "APP-MAGHA-2-CONTINUITY", "allowedMeaning": "You may remain loyal to what has demonstrated lasting value and may pursue important aims steadily." },
+    { "claimId": "APP-MAGHA-2-RELEASE-TENSION", "allowedMeaning": "Attachment to continuity may make familiar emotional patterns more difficult to release." },
+    { "claimId": "APP-MAGHA-2-DISCERNMENT", "allowedMeaning": "Development may involve distinguishing between preserving what remains supportive and holding on merely because it is familiar." }
+   ],
+   "claimConditions": [
+    { "claimId": "APP-MAGHA-2-RELEASE-TENSION", "requires": ["APP-MOON-12-RELEASE"] },
+    { "claimId": "APP-MAGHA-2-DISCERNMENT", "requires": ["APP-MAGHA-STEWARDSHIP", "APP-MOON-12-RELEASE"] }
+   ],
+   "prohibitedExtensions": [
+    "wealth claim",
+    "possession claim",
+    "guaranteed material stability",
+    "fixed stubbornness claim"
+   ]
+  }
+ ],
+ "traceOnlyDirective": "For this Lisbon development test the Ketu-placement record, Jupiter-aspect record, Mars-aspect fact and Sun-dispositor record remain in the internal trace. Their applicationClaims are empty, so they must not appear in customer prose. Deity, symbol, mythology, source history and technical doctrine are never generation inputs."
+}
