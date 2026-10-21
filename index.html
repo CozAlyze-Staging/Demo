@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' data: https://api.geoapify.com https://api.anthropic.com https://cozalyze-tropical-server.netlify.app https://test--cozalyze-tropical-server.netlify.app; media-src 'self' data: blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://unpkg.com; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' data: https://api.geoapify.com https://api.anthropic.com https://cozalyze-tropical-server.netlify.app https://test--cozalyze-tropical-server.netlify.app https://test--cozalyze-compare-server.netlify.app; media-src 'self' data: blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://unpkg.com; worker-src 'self' blob:;">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>EMERGE — Scene 1</title>
 <style>
@@ -644,6 +644,7 @@
 <script src="emerge-sound.js?v=27"></script>
 <script src="coz-saved.js?v=1"></script>
 <script src="coz-tropical-server.js?v=2"></script>
+<script src="coz-compare-server.js?v=4"></script>
 </head>
 <body>
 <button type="button" class="coz-skip" id="cozSkipIntro" aria-label="Skip the introduction">Skip intro</button>
@@ -3046,10 +3047,32 @@ document.querySelectorAll('.syscard').forEach(card => {
     if (current) patch(current.runId, current.job, { beat: Date.now() });
   }, BEAT_MS);
 
-  function cozLoadScript(src){ return new Promise(function(res, rej){ if (document.querySelector('script[data-coz-src="' + src + '"]')) return res(); var s = document.createElement('script'); s.src = src; s.setAttribute('data-coz-src', src); s.onload = res; s.onerror = function(){ rej(new Error('could not load ' + src)); }; document.head.appendChild(s); }); }
+  /* CI1 (f) (Demo integration, Oct 20 2026): a writer script counts as loaded only once it has really loaded. Each script
+     has one shared load: a second call while it is loading waits for that same load, and a script that failed to load
+     is removed with its tag, so the next call fetches it again. The loader replaced here counted a script as loaded as
+     soon as its tag existed, so after one failed load (a dropped connection, say) every later call answered at once,
+     without the script. A script that has loaded is never loaded twice. */
+  var cozScripts = {};
+  function cozLoadScript(src){
+    if (cozScripts[src]) return cozScripts[src];                                                                        /* CI1 (f) */
+    return cozScripts[src] = new Promise(function(res, rej){
+      var s = document.createElement('script'); s.src = src; s.setAttribute('data-coz-src', src); s.onload = res;
+      s.onerror = function(){ delete cozScripts[src]; try { s.remove(); } catch(e){} rej(new Error('could not load ' + src)); };   /* CI1 (f) */
+      document.head.appendChild(s);
+    });
+  }
+  /* CI1 (b) (Demo integration, Oct 19 2026): one load of the writer scripts at a time. Whenever a Compare request
+     arrives while the purchase's own load is running (always on the Tropical reveal, and on the Vedic reveal when the
+     Compare page asks first), a second load could answer before compare-generator.js had run, because the loader counted
+     a script as loaded once its tag existed (CI1 (f) now waits for each script's real load). The purchase then reached
+     the server start without the generator, and the start failed. A second call now waits for the same load. A failed
+     load is not kept: the next call runs the chain again. */
+  var cozGenLoading = null;
   function loadGen(){
+    if (cozGenLoading) return cozGenLoading;                                                      /* CI1 (b) */
     var chain = Promise.resolve();
     ['ascendant-library.js?v=5', 'dev-review-engine.js?v=8', 'compare-evidence.js?v=3', 'compare-generator.js?v=11'].forEach(function(u){ chain = chain.then(function(){ return cozLoadScript(u); }); });
+    chain = cozGenLoading = chain.then(null, function(e){ cozGenLoading = null; throw e; });       /* CI1 (b) */
     return chain;
   }
   /* background writing never starts while a page is changing (or 15 s at most) */
@@ -3073,8 +3096,79 @@ document.querySelectorAll('.syscard').forEach(card => {
     });
   }
 
+  /* CSA1.1 (staging, package 2b r1): Compare server routing. ONLY the Compare purchase below starts
+     a server job: with the device switch on, cozCmpPurchase() records the server choice for that run
+     (cozCompareWriter:<runId>) before anything is queued, then creates the job. A run with a recorded
+     choice is never written here and is only FOLLOWED afterwards (cozCmpFollow). A run with no recorded
+     choice keeps the browser path, whatever the switch says. r2: every check matches run ID AND the
+     current birth fingerprint (COZ_CMP_SERVER.assignedFor); a stale choice for the same run ID with a
+     different fingerprint counts as no choice, so the browser jobs run as before. */
+  var CMP_SERVER_JOBS = ["combined", "ascTropical", "ascVedic", "ascCombined"];
+  /* the current birth record's verified fingerprint for this run, or null */
+  function cozCmpFingerprint(runId){
+    var bd = lsJSON("emergeBirthData", null);
+    return bd && runId && bd.runId === runId && bd.fingerprint && cozBirthFingerprint(bd) === bd.fingerprint ? bd.fingerprint : null;
+  }
+  function cozCmpRouted(runId){
+    var CS = window.COZ_CMP_SERVER, fp = cozCmpFingerprint(runId);
+    return !!(CS && fp && CS.assignedFor({ runId: runId, fingerprint: fp }));
+  }
+  /* CI1 (a) (Demo integration, Oct 19 2026): a chart reopened from Saved Charts never starts a server job, whether or not
+     it has a server choice (and, by CI1 (e), it is never followed: it is only shown). Any other run with no server
+     choice yet goes to the Compare server only when nothing has been written or started for it in this browser: a run
+     with Compare work here keeps the browser path, so choosing Compare again for it never starts a paid server job.
+     Compare work here is a Compare job queued, running or complete in cozGenJobs, or a Combined or Ascendant reading
+     stored for this run and birth, or (CI1 (d), Oct 20 2026):
+     - a Combined step-one checkpoint stored for this run and birth: Shared Themes and Different Emphases, already paid
+       for. The server can't use it and would write both again. The browser writer resumes from a current one and
+       writes only step two (one from older versions it can't use, so it writes step one again, as today). With no
+       browser test key the run shows its existing unavailable state, and nothing is spent;
+     - a live in-flight marker left by a page writing this run's Combined or one of its Ascendants outside the
+       coordinator (a reading page opened on its own): the generator's marker while its 20 s heartbeat lasts, and the
+       Ascendant library's while it is younger than the library's own 195 s limit.
+     A stored reading or checkpoint counts whatever its version segments: the cautious choice. */
+  function cozCmpRestored(runId){ try { return localStorage.getItem("cozRestoredRunId") === runId; } catch(e){ return true; } }
+  var ASC_FLIGHT_MS = 195000;                                    /* CI1 (d): ascendant-library.js INFLIGHT_MS (90 s x 2 + 15 s) */
+  function cozCmpKeepBrowser(runId, fp){
+    var R = readAll()[runId], J = (R && R.jobs) || {};
+    if (CMP_SERVER_JOBS.some(function(j){ return J[j] && J[j].state !== "failed"; })) return true;
+    var p1 = "cozCombinedReadingDEV:" + runId + "|" + fp + "|", p2 = "cozAscReading:" + runId + "|" + fp + "|";
+    var p3 = "cozCombinedStep1DEV:" + runId + "|" + fp + "|", p4 = "cozAscInFlight:" + p2, now = Date.now();         /* CI1 (d) */
+    try {
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i) || "";
+        if (k.indexOf(p1) === 0 || k.indexOf(p2) === 0 || k.indexOf(p3) === 0) return true;                            /* CI1 (d): p3 */
+        if (k.indexOf(p4) === 0 && now - (+localStorage.getItem(k) || 0) < ASC_FLIGHT_MS) return true;                 /* CI1 (d) */
+      }
+    } catch(e){ return true; }
+    var m = lsJSON("cozCombinedGenInFlight", null);                                                                      /* CI1 (d) */
+    return !!(m && String(m.key || "").indexOf(p1) === 0 && now - (m.beat || 0) < DEAD_MS);                            /* CI1 (d) */
+  }
+  function cozCmpPurchase(runId){
+    var CS = window.COZ_CMP_SERVER, fp = cozCmpFingerprint(runId);
+    if (!CS || !fp) return false;
+    var had = CS.assignedFor({ runId: runId, fingerprint: fp });                                     /* CI1 (a) */
+    if (cozCmpRestored(runId)) { if (had) cozCmpFollow(runId); return !!had; }                       /* CI1 (a) */
+    if (!had && cozCmpKeepBrowser(runId, fp)) return false;                                          /* CI1 (a) */
+    if (!CS.markPurchase(runId, fp)) return false;                                               /* switch off, or a stale choice: browser path */
+    loadGen().then(function(){ return pairFor(runId); })
+      .then(function(res){ return CS.purchaseStart(res).then(function(a){ if (a && a.jobId) CS.followAll(res.pair); return a; }); })
+      .then(function(a){ console.log('[COZ GEN] Compare server ' + (a && a.jobId ? 'job ' + String(a.jobId).slice(0, 8) : (a && (a.message || a.state)))); },
+            function(e){ CS.failStart(runId, fp, e && e.message); console.log('[COZ GEN] Compare server start failed: ' + (e && e.message)); });
+    return true;
+  }
+  /* a run whose choice was recorded at its purchase: keep its finished readings on the device (never starts) */
+  /* CI1 (e) (Demo integration, Oct 20 2026): a chart reopened from Saved Charts is never followed. A read of its job can
+     wake the job's worker and spend the calls it has left. Its pages show only what this device has stored, and the
+     adapter sends nothing for it either (coz-compare-server.js, CI1 (e)). */
+  function cozCmpFollow(runId){
+    var CS = window.COZ_CMP_SERVER; if (!CS) return;
+    try { if (localStorage.getItem("cozRestoredRunId") === runId) return; } catch(e){ return; }                        /* CI1 (e) */
+    pairFor(runId).then(function(res){ return CS.followAll(res.pair); }, function(e){ console.log('[COZ GEN] Compare follow waiting: ' + (e && e.message)); });
+  }
   function enqueue(runId, job, priority, urgent){
     if (!runId) return;
+    if (CMP_SERVER_JOBS.indexOf(job) >= 0 && cozCmpRouted(runId)) return;               /* CSA1.1: chosen for the Compare server at its purchase */
     if (current && current.runId === runId && current.job === job) return;           /* running here now */
     var s = get(runId, job);
     /* Combined is always re-checked (its job returns at once from the cache), so a cleared
@@ -3112,7 +3206,11 @@ document.querySelectorAll('.syscard').forEach(card => {
     }).then(function(){ current = null; pump(); });
   }
 
+  /* CI1 (c) (Demo integration, Oct 19 2026): the routing is checked again when a job runs, not only when it is queued.
+     A Compare job queued before its run was sent to the Compare server (in a tab that was suspended, say) is only
+     followed, never written in this browser. */
   function runJob(c){
+    if (CMP_SERVER_JOBS.indexOf(c.job) >= 0 && cozCmpRouted(c.runId)) { cozCmpFollow(c.runId); return Promise.resolve({ fromServer: true }); }   /* CI1 (c) */
     if (c.job === "vedic36") return runVedic36(c.runId);
     if (c.job === "combined") return runCombined(c.runId);
     return pairFor(c.runId).then(function(res){
@@ -3176,11 +3274,12 @@ document.querySelectorAll('.syscard').forEach(card => {
   }
   function release(product){
     var h = held;
-    if (!h) { if (product === "COMPARE") onCompare(null); return; }   /* no held run (for example the Tropical path): Compare still goes first */
+    if (!h) { if (product === "COMPARE") { cozCmpPurchase(currentRunId()); onCompare(null); } return; }   /* no held run (for example the Tropical path): Compare still goes first · CSA1.1 */
     held = null;
     var order = ORDERS[product];
     if (!order) { console.log('[COZ GEN] unknown purchase ' + product + ' · nothing queued'); return; }
     console.log('[COZ GEN] purchase ' + product + ' · order: ' + (order.join(', ') || 'nothing to write'));
+    if (product === "COMPARE") cozCmpPurchase(h.runId);                                           /* CSA1.1: the only server start */
     order.forEach(function(j){ enqueue(h.runId, j, false, product === "VEDIC" && j === "vedic36"); });
     var A = readAll(), R = A[h.runId] || (A[h.runId] = { jobs: {} }); R.product = product; R.updatedAt = Date.now(); writeAll(A);
   }
@@ -3188,6 +3287,7 @@ document.querySelectorAll('.syscard').forEach(card => {
   function onCompare(runIdHint){
     return (runIdHint ? Promise.resolve(runIdHint) : pairFor(null).then(function(r){ return r.pair.runId; }))
       .then(function(id){
+        if (cozCmpRouted(id)) { cozCmpFollow(id); return; }                                          /* CSA1.1: follow only, never start */
         enqueue(id, "combined", true);
         ["ascTropical", "ascVedic", "ascCombined"].forEach(function(j){ enqueue(id, j, false); });
       }, function(e){ console.log('[COZ GEN] compare request waiting:', e && e.message); });
