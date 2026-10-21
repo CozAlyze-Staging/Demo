@@ -333,6 +333,10 @@
     var key = cacheKey(sys, ctx);
     var hit = getCached(sys, ctx);
     if (hit){ hit.fromCache = true; return Promise.resolve(hit); }
+    /* L2.5 r1 (staging, package 2b): a chart run whose Compare server choice was recorded at its
+       purchase is followed there and never written in this browser. Every other run: unchanged below. */
+    var CS = window.COZ_CMP_SERVER;
+    if (CS && CS.assignedFor(ctx.pair)) return CS.ascReading(sys, ctx, key, signFor(sys, ctx));
     if (inPage[key]) return inPage[key];
     if (flightActive(key)) {
       inPage[key] = waitForOther(sys, ctx, key).then(function(r){ delete inPage[key]; return r || getReading(sys, ctx); });
@@ -405,5 +409,17 @@
 
   window.COZ_ASC = { SIGNS: SIGNS, GLYPH: GLYPH, cap: cap, PAIR_FAIL: PAIR_FAIL, ENGINE_VERSION: ENGINE_VERSION,
     fingerprint: cozBirthFingerprint, currentRun: currentRun, ensurePair: ensurePair, getReading: getReading, getCached: getCached,
-    _prompts: { SYS_VEDIC: SYS_VEDIC, SYS_TROPICAL: SYS_TROPICAL, SYS_COMBINED: SYS_COMBINED } };
+    _prompts: { SYS_VEDIC: SYS_VEDIC, SYS_TROPICAL: SYS_TROPICAL, SYS_COMBINED: SYS_COMBINED },
+    /* L2.5: the existing builders, exposed unchanged so the Compare server receives exactly the
+       evidence and user message this library would send itself */
+    _build: {
+      evidence: function(sys, ctx){
+        return sys === "tropical" ? Promise.resolve(tropicalEvidence(ctx.charts.tropical))
+          : sys === "vedic" ? vedicEvidence(ctx.charts.vedic)
+          : vedicEvidence(ctx.charts.vedic).then(function(v){
+              return { tropical: tropicalEvidence(ctx.charts.tropical), vedic: v, same: ctx.pair.tropical.sign === ctx.pair.vedic.sign };
+            });
+      },
+      user: function(sys, ev){ return sys === "tropical" ? userMsgTropical(ev) : sys === "vedic" ? userMsgVedic(ev) : userMsgCombined(ev); }
+    } };
 })();
