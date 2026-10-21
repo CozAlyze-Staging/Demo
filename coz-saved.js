@@ -1,4 +1,11 @@
-/* COZ SAVED · CS1.8 (Oct 2 2026, local build for review) · library hook
+/* COZ SAVED · CS1.9 (Oct 21 2026, local build for review) · library hook
+   CS1.9 (Chat, CI1 r5): restore() records the reopening itself. Before it sets cozRestoredRunId it
+   adds the record's run ID to the device list "cozCmpReopenedRuns" (the last 50, the same list the
+   Compare server adapter reads on every check), so a Compare page that saw no storage event (kept
+   for Back, or asleep while charts A then B were reopened) still learns A was reopened and never
+   resumes its job. The list is written first so the adapter's own note finds it already there.
+   A write that fails (storage full) is ignored; the reopening itself is unchanged.
+   CS1.8 (Oct 2 2026):
    CS1.8 (Jason): Compare save messages are shown on the page, not with alert() (Safari dropped a
    native dialog on his iPhone before). Styled like the S1.4 remove confirmation: Saved Charts'
    message panel (sc-mid.png strip, .state), .meta text and one .pill button. Wording unchanged.
@@ -61,6 +68,7 @@
 (function () {
   if (window.CozSaved) return;
   var STORE = "cozSavedCharts", RESTORED = "cozRestoredRunId", BACKUP = "cozWorkingBackup";
+  var REOPENED = "cozCmpReopenedRuns", REOPENED_MAX = 50;                                       /* CS1.9 */
   var FIXED = ["emergeBirthData", "cozChartJSON", "cozTropicalChartJSON", "cozTropicalReading", "cozCompareReading",
                "cozAscendantPair", "cozVedicReadingComplete", "cozTropicalReadingComplete"];
   var RUN_PREFIX = ["cozCombinedReadingDEV:", "cozCombinedStep1DEV:", "cozAscReading:"];
@@ -192,6 +200,15 @@
       try { var s = readStore(); s.records = s.records.filter(function (r) { return r.id !== id; }); writeStore(s); res(true); } catch (e) { rej(e); }
     });
   }
+  /* CS1.9: the device list of reopened chart runs, read by the Compare server adapter on every check */
+  function noteReopened(runId){
+    try {
+      var l = lsJSON(REOPENED); if (!Array.isArray(l)) l = [];
+      l = l.filter(function (x) { return typeof x === "string" && x !== runId; });
+      l.push(runId);
+      localStorage.setItem(REOPENED, JSON.stringify(l.slice(-REOPENED_MAX)));
+    } catch (e) {}
+  }
   /* restores one record and returns the page to open; touches no other record */
   function restore(id, target){
     var s = readStore(), rec = null;
@@ -205,6 +222,7 @@
     var snap = rec.snapshot || {};
     FIXED.forEach(function (k) { if (Object.prototype.hasOwnProperty.call(snap, k)) localStorage.setItem(k, snap[k]); else localStorage.removeItem(k); });
     Object.keys(snap).forEach(function (k) { if (FIXED.indexOf(k) < 0) localStorage.setItem(k, snap[k]); });
+    noteReopened(rec.runId);                                                                   /* CS1.9: before the restored key */
     localStorage.setItem(RESTORED, rec.runId);
     /* CS1.2: a Vedic chart record opens its Saved Library landing page (card and Vedic pill alike) */
     var library = "vedic-birth-chart.html?saved=1&id=" + encodeURIComponent(rec.id);
