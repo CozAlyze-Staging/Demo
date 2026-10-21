@@ -126,11 +126,27 @@ h1{font-family:var(--head);font-weight:500;font-size:calc(72 * var(--k));line-he
 <script src="ascendant-library.js?v=5"></script>
 <script src="compare-evidence.js?v=3"></script>
 <script src="compare-generator.js?v=11"></script>
+<script src="coz-compare-server.js?v=4"></script>
 <script>
 (function(){
   var FAIL = "We couldn\u2019t load both charts for this reading. Please return and run your chart again.";
   var status = document.getElementById("status");
   var buttons = [].slice.call(document.querySelectorAll(".rfa"));
+  /* r5 (Compare Report, phone clock only): this opening of Your Combined Reading is recorded with the Shared Themes
+     state at this moment, and so are Shared Themes' text arriving on the page and each time it is opened, with
+     what was on screen. Only for a run whose Compare purchase went to the server; nothing here changes the page. */
+  var TM = window.COZ_CMP_TIMING;
+  function tm(fn){ try { if (TM && TM[fn]) return TM[fn].apply(TM, [].slice.call(arguments, 1)); } catch (e) {} }
+  tm("entry", { page: "CR3.3 r5" });
+  function stParas(b){ return [].slice.call(b.querySelectorAll("p")).filter(function(p){ return !p.classList.contains("dev"); }).map(function(p){ return p.textContent; }); }
+  /* Shared Themes' released text was just put in the page: recorded, and counted as on screen if it is open */
+  function stTrack(b){
+    if (!b || b.getAttribute("data-key") !== "sharedThemes") return;
+    var paras = stParas(b); if (!paras.length) return;
+    tm("rendered", paras);
+    var acc = document.getElementById("acc-shared");
+    if (acc && acc.classList.contains("open")) tm("shown", paras, "arrived while open");
+  }
 
   /* accordion: one section open at a time, nothing regenerates on open or close */
   function setOpen(btn, open){
@@ -143,6 +159,11 @@ h1{font-family:var(--head);font-weight:500;font-size:calc(72 * var(--k));line-he
       var opening = btn.getAttribute("aria-expanded") !== "true";
       buttons.forEach(function(b){ if (b !== btn) setOpen(b, false); });
       setOpen(btn, opening);
+      /* r5: Shared Themes opened: what is on screen now (its text, or a waiting line) */
+      if (opening && btn.getAttribute("aria-controls") === "acc-shared") {
+        var acc = document.getElementById("acc-shared"), body = acc && acc.querySelector(".body");
+        if (acc && acc.classList.contains("open") && body) tm("shown", stParas(body), "opened");
+      }
     });
   });
 
@@ -204,6 +225,7 @@ h1{font-family:var(--head);font-weight:500;font-size:calc(72 * var(--k));line-he
       bodies.forEach(function(b){
         var sct = rec[b.getAttribute("data-key")];
         b.innerHTML = sct.paragraphs.map(function(t){ return "<p>" + esc(t) + "</p>"; }).join("");
+        stTrack(b);                                                            /* r5 */
       });
     }
     /* CR3.0 (Sep 22): this page is a VIEWER. Inside the living page it never sends a model
@@ -276,12 +298,47 @@ h1{font-family:var(--head);font-weight:500;font-size:calc(72 * var(--k));line-he
         })();
       });
     }
+    /* CSA1.1 (staging, package 2b r1): a run whose server choice was recorded at its Compare purchase.
+       This page only follows it: each section is shown the moment the server releases it, without
+       reloading; the others say they are still being written. It never starts a job and never writes. */
+    var CS = window.COZ_CMP_SERVER;
+    function renderServer(st){
+      if (st.refused) { bodies.forEach(function(b, i){ b.innerHTML = i === 0 ? '<p class="dev wait">' + esc(st.message) + '</p>' : ''; }); return; }
+      bodies.forEach(function(b){
+        var x = st.sections[b.getAttribute("data-key")]; if (!x) return;
+        var sig = x.state + ":" + (x.paragraphs ? x.paragraphs.length : x.message);
+        if (b.getAttribute("data-srv") === sig) return;                       /* unchanged: leave the DOM alone */
+        b.setAttribute("data-srv", sig);
+        b.innerHTML = x.state === "released" ? x.paragraphs.map(function(t){ return "<p>" + esc(t) + "</p>"; }).join("")
+                                             : '<p class="dev wait">' + esc(x.message) + '</p>';
+        if (x.state === "released") stTrack(b);                                /* r5 */
+      });
+    }
+    function runServer(){
+      bodies.forEach(function(b){ b.removeAttribute("data-srv"); b.innerHTML = '<p class="dev wait">' + esc(CS.MSG.writing) + '</p>'; });
+      CS.followAll(res.pair);                                    /* keeps the run's Ascendants on the device too (follow only) */
+      return CS.followCombined(res.pair, renderServer)
+        .then(function(fin){ if (fin.record) return fin.record; return null; });
+    }
     function run(){
       bodies.forEach(function(b){ b.innerHTML = '<p class="dev wait">Preparing your reading\u2026</p>'; });
       clearInterval(tick); clearTimeout(watchTimer); t0 = Date.now();
       var man = null;
+      /* r5: a Compare server run draws the text already on this device at once. The evidence manifest (about 1 MB of
+         claim files) is only used by the browser writer and the ?debug=1 trace, so for a server run it is built
+         alongside instead of first. */
+      if (CS && CS.assignedFor(res.pair)) {
+        E.buildManifest(res).then(function(m){ window.COZ_COMBINED_MANIFEST = m; man = m; }, function(){});
+        return runServer().then(function(rec){ if (rec) show(rec); }).catch(function(e){
+          console.log("[COZ COMBINED]", e && e.message);
+          var msg = ((e && e.message) || "DEV: reading unavailable") + " (" + mmss(Date.now() - t0) + " total)";
+          bodies.forEach(function(b, i){ b.innerHTML = '<p class="dev">' + esc(msg) + '</p>' + (i === 0 ? '<p class="dev"><a href="#" class="retry">Try again</a></p>' : ''); });
+          var r = document.querySelector(".body .retry"); if (r) r.addEventListener("click", function(ev){ ev.preventDefault(); run(); });
+        });
+      }
       return E.buildManifest(res).then(function(m){
         window.COZ_COMBINED_MANIFEST = m; man = m;
+        if (CS && CS.assignedFor(res.pair)) return runServer();                                 /* CSA1.1: follow only */
         var hit = G.peek(res.pair, m); if (hit) return hit;
         tick = setInterval(function(){ showWaiting(m); }, 1000); showWaiting(m);
         var c = coordinator();
@@ -289,7 +346,7 @@ h1{font-family:var(--head);font-weight:500;font-size:calc(72 * var(--k));line-he
         /* standalone (opened outside the living page) */
         if (G.inFlight(res.pair, m)) return G.waitForLive(res.pair, m).then(function(r){ return r || G.getCombined(res, m); });
         return G.getCombined(res, m);
-      }).then(function(rec){ clearInterval(tick); show(rec); }).catch(function(e){
+      }).then(function(rec){ clearInterval(tick); if (rec) show(rec); }).catch(function(e){
         clearInterval(tick); clearTimeout(watchTimer);
         console.log("[COZ COMBINED]", e && e.message);
         var msg = ((e && e.message) || "DEV: reading unavailable") + " (" + mmss(Date.now() - t0) + " total)";
