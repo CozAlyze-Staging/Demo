@@ -326,6 +326,7 @@ html.reveal-zooming .stage {
 .reveal.is-on { display: block; }
 .reveal .asc-patch, .reveal .asc-glyph, .reveal .asc-label { transition: opacity 320ms ease-out; }
 .reveal.asc-off .asc-patch, .reveal.asc-off .asc-glyph, .reveal.asc-off .asc-label { opacity: 0; }
+.reveal.is-pulling .asc-patch, .reveal.is-pulling .asc-glyph, .reveal.is-pulling .asc-label { opacity: 0; }   /* CRG2 r5: nothing stays behind the pull-away */
 .reveal-curtain {
   position: absolute;
   inset: 0;
@@ -405,9 +406,21 @@ body[data-view="reading"] .vedic-reading-page { animation: none; }
   transform: translate(-50%, calc(-50% + var(--dash-pan, 0px))) scale(var(--reveal-zoom, var(--dash-zoom, 1)));
   transition: transform 1300ms cubic-bezier(0.33, 0, 0.2, 1);
 }
+/* CRG2 (Oct 14, Jason's ruling): the waiting line, ONLY when Shared Themes is not ready yet.
+   His existing "Calculating your sky" line from index.html, same style (.gn-title .t1) and the same
+   pulse used by "Tap the Sky" (twinkle 3.2s). Nothing else is drawn. */
+@keyframes cozTwinkle { 0%,100%{opacity:1} 50%{opacity:.45} }
+.reveal .coz-wait { position:absolute; left:0; right:0; bottom:14vh; text-align:center; z-index:5;
+  text-shadow:0 2px 14px rgba(0,0,0,.85); pointer-events:none; opacity:0; transition:opacity 1.2s ease; }
+.reveal .coz-wait .t1 { font-family:Georgia,serif; font-size:17px; letter-spacing:.14em; color:#E8C7A6; }
+.reveal .coz-wait.on { opacity:1; }
+.reveal .coz-wait.on .t1 { animation:cozTwinkle 3.2s ease-in-out 1.2s infinite; }
+/* CRG2 r5: with reduced motion there is no clip to recede, so the waiting screen is shown at once, line included */
+@media (prefers-reduced-motion: reduce) { .reveal .coz-wait { transition: none; } }
 </style>
 <!-- Oct 2: ?v=5 so this page loads coz-saved.js CS1.6, not a cached copy -->
 <script src="coz-saved.js?v=5"></script>
+<script src="coz-compare-server.js?v=4"></script>
 </head>
 <body data-view="dashboard">
 
@@ -447,6 +460,7 @@ body[data-view="reading"] .vedic-reading-page { animation: none; }
     <svg viewBox="0 0 30 20" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M29 10H2M9 3 2 10l7 7"/></svg>
   </button>
   <span class="sr-only" aria-live="polite" id="revealLive"></span>
+  <div class="coz-wait" id="cozWait" aria-hidden="true"><div class="t1">Calculating your sky</div></div>
 </div>
 
 <main class="vedic-reading-page" id="vedicPage">
@@ -768,12 +782,14 @@ function lockScroll(on) { document.body.classList.toggle("scroll-locked", on); }
 function startReveal() {
   if (revealActive || !readingReady()) return;
   revealActive = true; revealDone = false;
+  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  try { const P = cmpPairNow(); if (window.COZ_CMP_SERVER && P) window.COZ_CMP_SERVER.watchFirst(P); } catch (e) {}   /* CRG1: start following at the tap */
+  tm("attemptStart", { reduced: reduced, page: CRG_VERSION });                                                        /* r5: every attempt is recorded */
   document.getElementById("hotReading").disabled = true;
   lockScroll(true);
   try { window.dispatchEvent(new CustomEvent("COZ_COMPARE_REVEAL_START", { detail: { ascendant: ASC_SIGN } })); } catch (e) {}
 
-  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  if (reduced) { finishReveal(true); return; }
+  if (reduced) { finishReveal(true, "reduced"); return; }
 
   revealEl.classList.remove("is-closing", "asc-off");
   revealEl.classList.add("is-on");
@@ -783,12 +799,12 @@ function startReveal() {
   document.getElementById("revealLive").textContent = "Opening your Combined reading";
 
   // if the clip cannot even start (no network, blocked), move on rather than trap anyone
-  revealTimers.push(setTimeout(() => { if (!revealStarted) finishReveal(false); }, 7000));
+  revealTimers.push(setTimeout(() => { if (!revealStarted) finishReveal(false, "nostart"); }, 7000));
 
   revealStarted = false;
   try { revealVideo.currentTime = 0; } catch (e) {}
   const p = revealVideo.play();
-  if (p && p.catch) p.catch(() => finishReveal(false));
+  if (p && p.catch) p.catch(() => finishReveal(false, "noplay"));
 }
 
 /* timers that depend on the clip actually running start only once it is playing */
@@ -805,22 +821,171 @@ revealVideo.addEventListener("playing", () => {
   /* Sep 20: the reveal, the drive through the sun, the light and the space flight are now ONE clip
      (compare-reading-reveal-full.mp4). The page just plays it and lands when it ends. */
   // hard cap a little past the clip's 2.5s so a stalled clip never traps anyone
-  revealTimers.push(setTimeout(() => finishReveal(false), 47000));   /* stall guard only: the clip runs 44.5s */
+  revealTimers.push(setTimeout(() => finishReveal(false, "stall"), 47000));   /* stall guard only: the clip runs 44.5s */
 });
 
-function finishReveal(immediate) {
+/* CRG1 (staging, Oct 14 2026): a chart run written by the Compare server lands only once Shared Themes is
+   released for its job (COZ_CMP_SERVER.firstSectionState). Until then the reveal stays exactly where it is
+   (the clip's own last frame, nothing added), then lands. Runs not written by the server, refused, failed
+   or without access land as before. Safety cap: FIRST_WAIT_CAP_MS after the clip, then land anyway
+   (Superseded by CRG2 below: no cap, his ruling.)
+   r3: the wait can be cancelled. Back on the reveal, leaving the page, coming back through history, or a hash
+   change ends it; a cancelled wait never navigates later (each wait has its own token). */
+/* CRG2 (Oct 14, Jason's ruling, replaces the 60 s cap): NO time limit.
+   THE PULL-AWAY AND THE WAITING LINE SHOW ONLY WHEN SHARED THEMES IS NOT READY YET.
+   When Shared Themes is ready (or this run is not written by the Compare server), the clip plays and lands
+   exactly as before and none of this is ever seen.
+   When it is not ready: at 40 s into the clip (planets still in view) the whole picture keeps falling back
+   into the dark until no image is left (about 9 s, the clip keeps playing underneath), then full black and
+   "Calculating your sky" pulses until Shared Themes is released, then the reading opens. */
+/* CRG2 r5 (Oct 17, after Chat's review of r4; his approved movement, timing and line are unchanged):
+   - The pull-away recedes the reveal's dashboard art AND the clip together (pullLayers), the Ascendant overlays go
+     with them (.reveal.is-pulling), a curtain left by a stalled clip is cleared, and at the end the whole reveal
+     stage is hidden, so only black, "Calculating your sky" and Back remain.
+   - With reduced motion (no clip) a wait shows that same final screen at once: black, the line and Back.
+   - After a wait the reading opens straight from the black screen: the dashboard art is not shown again on the way.
+     Back, coming back to this page, and a landing that never leaves (15 s recovery) restore the stage, the art and
+     the overlays; Back and the recovery first stop that page load, so it can never interrupt a later reveal.
+   - Every attempt is recorded for the Compare Report (coz-compare-timing.js, phone clock only). A waiting screen or
+     a held landing fails the run for good. */
+const CRG_VERSION = "CRG2 r5";
+const PULL_AT_S = 40.0, PULL_MS = 9000;
+let crgHold = null, pullRaf = 0, pullOn = false, pullWatch = 0, landedDark = false;
+/* the timing record (never allowed to affect the reveal) */
+function tm(fn) { try { const T = window.COZ_CMP_TIMING; if (T && T[fn]) return T[fn].apply(T, [].slice.call(arguments, 1)); } catch (e) {} }
+function firstState() {
+  const CS = window.COZ_CMP_SERVER, pair = cmpPairNow();
+  try { return CS && pair ? CS.firstSectionState(pair) : "go"; } catch (e) { return "go"; }
+}
+/* the pictures that recede: the reveal's dashboard art and the clip, together */
+function pullLayers() { return Array.from(document.querySelectorAll("#revealStage .stage-art, #revealVideo")); }
+/* start the pull-away from wherever the picture is now; only ever called while Shared Themes is not ready */
+function startPullAway(from) {
+  revealEl.classList.remove("is-closing");                            /* r5: black, never a curtain colour (also when already pulling) */
+  if (pullOn) return;
+  pullOn = true;
+  tm("waitStart", "pullStart", "the waiting screen was shown (Shared Themes not ready)", { from: from || "clip", clipAt: Math.round((revealVideo.currentTime || 0) * 10) / 10 });
+  revealEl.classList.add("is-on", "is-pulling");                      /* r5: reduced motion never showed the overlay: black, the line and Back need it */
+  const L = pullLayers(), w = document.getElementById("cozWait"), stage = document.getElementById("revealStage");
+  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  document.getElementById("revealLive").textContent = "Calculating your sky";
+  console.log("[COZ CRG2] Shared Themes not ready: pulling away into the dark");
+  /* Shared Themes may arrive while the picture is still receding: that closes the waiting-screen record at once
+     (the landing itself still comes from the clip's end, as before) */
+  pullWatch = setInterval(() => { const s = firstState(); if (s !== "wait") { clearInterval(pullWatch); pullWatch = 0; tm("closeWaits", "shared themes " + s); } }, 250);
+  if (reduced) { stage.style.visibility = "hidden"; w.classList.add("on"); return; }   /* r5: the final screen at once */
+  const t0 = performance.now();
+  const step = (now) => {
+    if (!pullOn) return;
+    const u = Math.min(1, (now - t0) / PULL_MS);
+    const sc = Math.exp(-5.3 * Math.pow(u, 1.6));                     /* starts slowly, keeps falling away */
+    const a = u < 0.8 ? 1 : Math.max(0, 1 - (u - 0.8) / 0.2);          /* the last of it fades to nothing */
+    const e = Math.min(1, (now - t0) / 1500);                           /* edges soften as it starts to recede */
+    const rx = 150 - 106 * e, ry = 140 - 98 * e;
+    L.forEach((v) => {
+      v.style.transform = "scale(" + sc.toFixed(4) + ")";
+      v.style.opacity = a.toFixed(3);
+      v.style.webkitMaskImage = v.style.maskImage = "radial-gradient(ellipse " + rx + "% " + ry + "% at 50% 50%, #000 70%, transparent 100%)";
+    });
+    if (u >= 1) { stage.style.visibility = "hidden"; w.classList.add("on"); pullRaf = 0; return; }
+    pullRaf = requestAnimationFrame(step);
+  };
+  pullRaf = requestAnimationFrame(step);
+}
+function stopPullAway() {
+  const was = pullOn;
+  pullOn = false; if (pullRaf) cancelAnimationFrame(pullRaf); pullRaf = 0;
+  if (pullWatch) { clearInterval(pullWatch); pullWatch = 0; }
+  pullLayers().forEach((v) => { ["transform", "opacity", "visibility", "maskImage", "webkitMaskImage"].forEach((k) => { v.style[k] = ""; }); });
+  const stage = document.getElementById("revealStage");
+  stage.style.visibility = "";
+  if (was) stage.style.removeProperty("--reveal-zoom");               /* r5: the next reveal starts from the dashboard's own zoom */
+  revealEl.classList.remove("is-pulling");
+  document.getElementById("cozWait").classList.remove("on");
+}
+/* r5: give control back after a landing from the black screen that has not left the page: stop that page load
+   first, so it can never arrive later and interrupt a new reveal, then restore. Back, or the 15 s recovery when the
+   reading never arrives (this concerns loading the reading after Shared Themes is ready; the wait itself has no limit). */
+function stopDarkLanding(why) {
+  if (!landedDark) return;
+  try { window.stop(); } catch (e) {}
+  tm("landingStopped", why);
+  restoreDark();
+}
+function restoreDark() {
+  if (!landedDark) return;
+  landedDark = false;
+  stopPullAway();
+  revealEl.classList.remove("is-on", "is-closing", "asc-off", "is-through");
+  try { revealVideo.pause(); } catch (e) {}
+  lockScroll(false);
+  revealActive = false;
+  syncReadyState();
+  showDashboard();                                    /* the dashboard's own zoom, as after Back */
+}
+/* the decision point: 40 s into the clip, only if Shared Themes is not ready */
+revealVideo.addEventListener("timeupdate", () => {
+  if (!revealActive) return;
+  tm("seen");                                                          /* r5: when this device first knew Shared Themes was ready */
+  if (pullOn || revealVideo.currentTime < PULL_AT_S) return;
+  if (firstState() === "wait") startPullAway("clip");
+});                                   /* the current wait's token, or null */
+function cancelFirstWait(why) {
+  if (!crgHold) return false;
+  clearInterval(crgHold.timer); crgHold = null;
+  console.log("[COZ CRG1] wait cancelled: " + (why || "back"));
+  return true;
+}
+function cmpPairNow() {
+  try { const bd = JSON.parse(localStorage.getItem("emergeBirthData") || "null");
+    return bd && bd.runId && bd.fingerprint ? { runId: bd.runId, fingerprint: bd.fingerprint } : null; } catch (e) { return null; }
+}
+function whenFirstSection(go) {
+  const CS = window.COZ_CMP_SERVER, pair = cmpPairNow();
+  const state = firstState;
+  const s0 = state();
+  if (s0 !== "wait") { tm("closeWaits", "shared themes " + s0); go(); return; }   /* ready: lands exactly as before, nothing extra shown */
+  try { CS.watchFirst(pair); } catch (e) {}
+  startPullAway("hold");                                             /* not ready: into the dark (no-op if already pulling) */
+  tm("waitStart", "holdStart", "the landing waited for Shared Themes after the reveal");   /* r5: fails the run for good */
+  const t0 = Date.now(), tok = {};
+  cancelFirstWait("replaced");
+  crgHold = tok;
+  console.log("[COZ CRG1] holding the landing for Shared Themes");
+  tok.timer = setInterval(() => {
+    if (crgHold !== tok) { clearInterval(tok.timer); return; }      /* r3: cancelled, never navigate */
+    const s = state();
+    if (s !== "wait") {                                              /* CRG2: no time limit */
+      clearInterval(tok.timer); crgHold = null;
+      console.log("[COZ CRG1] landing: " + s + " after " + (Date.now() - t0) + " ms");
+      tm("closeWaits", "shared themes " + s);
+      go();
+    }
+  }, 250);
+}
+
+/* how: ended (the clip played to its end) | reduced (no clip) | stall | error | noplay | nostart */
+function finishReveal(immediate, how) {
   if (!revealActive || revealDone) return;   // ignore clip events while the reveal is not running
   revealDone = true;
   revealTimers.forEach(clearTimeout); revealTimers = [];
-  const land = () => {
+  tm("mark", "revealDone", { how: how || (immediate === true ? "ended" : "stall") });   /* r5: with the Shared Themes state now */
+  const land0 = () => {
+    const dark = pullOn;                        /* r5: after the waiting screen, open the reading straight from black */
+    tm("end", "landed");
     location.href = readingPageHref();          // C2.5: opens Your Combined Reading
+    if (dark) { landedDark = true; revealTimers.push(setTimeout(() => stopDarkLanding("recovery"), 15000)); return; }   /* restored on pageshow, or after 15 s if the page never left */
+    stopPullAway();                             /* CRG2 */
     revealEl.classList.remove("is-on", "is-closing", "asc-off");
     try { revealVideo.pause(); } catch (e) {}
     lockScroll(false);
     revealActive = false;
     syncReadyState();
   };
-  if (immediate === true) { land(); return; }
+  const land = () => whenFirstSection(land0);   /* CRG1 */
+  /* r5: a stall or error while Shared Themes is not ready (or during the pull-away) never goes through the curtain:
+     straight to the black waiting screen. The curtain below stays for a stall when Shared Themes is ready, as before. */
+  if (immediate === true || pullOn || firstState() === "wait") { land(); return; }
   /* Sep 1 ruling: through the sun. Hold on the burst, then the camera drives into it, the light
      fills the screen, the page lands underneath and the light clears to reveal the reading. */
   if (immediate === "through"){
@@ -830,11 +995,18 @@ function finishReveal(immediate) {
   }
   /* stall or error before the drive began: plain curtain */
   revealEl.classList.add("is-closing");
-  setTimeout(land, 900);
+  revealTimers.push(setTimeout(land, 900));           /* r3: tracked, so leaving the page can clear it */
 }
 
-function cancelReveal() {
-  if (!revealActive || revealDone) return;
+function cancelReveal(why) {
+  if (!revealActive) return;
+  /* r5: Back while the reading is opening from the black screen: stop that page load and stay on the dashboard */
+  if (landedDark) { stopDarkLanding("back"); return; }
+  const holding = cancelFirstWait("back");            /* r3: Back works during the Shared Themes wait */
+  if (revealDone && !holding) return;
+  tm("end", typeof why === "string" ? why : "back");   /* r5: closes any wait record with its own duration */
+  if (holding) { try { window.__cozLightOut(); } catch (e) {} }
+  stopPullAway();                                     /* CRG2 */
   revealDone = true;
   revealTimers.forEach(clearTimeout); revealTimers = [];
   document.documentElement.classList.remove("reveal-zooming");
@@ -854,16 +1026,27 @@ document.querySelector('[data-dash="ascendant"]').addEventListener("click", func
   location.href = "your-ascendants.html";
 });
 document.getElementById("revealBack").addEventListener("click", cancelReveal);
-revealVideo.addEventListener("ended", () => finishReveal(true));   /* the clip ends on open space, the reading is already underneath */
-revealVideo.addEventListener("error", () => finishReveal(false));
+revealVideo.addEventListener("ended", () => finishReveal(true, "ended"));   /* the clip ends on open space, the reading is already underneath */
+revealVideo.addEventListener("error", () => finishReveal(false, "error"));
 
 /* Section links are plain hash links: every section is its own history entry,
    so the phone's back gesture steps through them, and back past Page 01 lands on the dashboard. */
 window.addEventListener("hashchange", showFromHash);
 /* C2.1: coming Back from Your Ascendants restores this page from Safari's cache with the
    light still up, so clear the reveal and show the dashboard again */
+/* r3: leaving the page (or a hash change) ends a Shared Themes wait; it never lands later */
+window.addEventListener("pagehide", () => {
+  cancelFirstWait("pagehide");
+  if (revealActive) tm("end", "left the page");      /* r5: no-op after a landing (already ended) */
+  if (revealActive && revealDone) { revealTimers.forEach(clearTimeout); revealTimers = []; }   /* a landing still pending: never fires after leaving */
+});
+window.addEventListener("hashchange", () => { if (crgHold) cancelReveal("hash change"); });
 window.addEventListener("pageshow", e => {
   if (!e.persisted) return;
+  cancelFirstWait("pageshow");
+  tm("end", "returned");                              /* r5: no-op unless an attempt was still open */
+  landedDark = false;                                 /* r5: the restore below covers a dark landing too */
+  stopPullAway();                                     /* CRG2 */
   revealTimers.forEach(clearTimeout); revealTimers = [];
   revealActive = false; revealDone = false;
   revealEl.classList.remove("is-on", "is-closing", "asc-off", "is-through");
@@ -982,7 +1165,7 @@ document.getElementById("hotReading").addEventListener("click", function(){
   }
   function reset() { clearTimeout(t); st.style.removeProperty("--reveal-zoom"); }
   vid.addEventListener("playing", function () { clearTimeout(t); t = setTimeout(unzoom, 3600); });
-  vid.addEventListener("ended", reset);
+  vid.addEventListener("ended", function () { if (!pullOn) reset(); });   /* CRG2: no zoom jump during the pull-away */
   vid.addEventListener("error", reset);
   vid.addEventListener("pause", function () { if (vid.currentTime === 0) reset(); });
 })();
