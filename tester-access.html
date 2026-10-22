@@ -1,0 +1,52 @@
+<!doctype html>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CozAlyze · tester access</title>
+<!-- TA1.0 (Oct 21 2026). Tester setup for one device, linked from no other page. It does two things on THIS device only:
+     1. checks the Demo tester password with the Vedic server (a status request for a job that does not exist: 404 =
+        accepted, 401 = refused; no reading, no charge) and saves it under "cozDemoTesterCode", the name every reading
+        uses (the previous one is kept under "cozDemoTesterCodePrevious", as the reading pages do);
+     2. switches the Vedic server on for this device ("cozVedicServerBase" = the production Vedic server), the same
+        setting the Vedic PROD bookmark makes. Turn off removes it.
+     The password is never shown. Nothing else is read or written, and no other page changes. Tropical readings already
+     use the server and only need the saved password. Compare is not touched. -->
+<h1>CozAlyze · tester access</h1>
+<p>Step 1. Enter the tester password and tap <b>Check and save password</b>.</p>
+<input id="code" type="password" autocomplete="off" placeholder="Tester password">
+<p><button id="save">Check and save password</button></p>
+<p>Step 2. Tap <b>Turn on readings for this device</b>.</p>
+<p><button id="on">Turn on readings for this device</button> <button id="off">Turn off</button></p>
+<pre id="state"></pre>
+<p>Step 3. <a href="index.html">Start a new chart</a>.</p>
+<script>
+(function(){
+  var CODE_KEY = "cozDemoTesterCode", PREV_KEY = "cozDemoTesterCodePrevious", SWITCH = "cozVedicServerBase";
+  var SERVER = "https://cozalyze-vedic-server.netlify.app";
+  function get(k){ try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function show(msg){
+    document.getElementById("state").textContent = (msg ? msg + "\n\n" : "") +
+      "Tester password on this device: " + (get(CODE_KEY) ? "saved" : "missing") + "\n" +
+      "Vedic readings on this device: " + (get(SWITCH) === SERVER ? "ON" : "OFF");
+  }
+  document.getElementById("save").onclick = function(){
+    var box = document.getElementById("code"), t = box.value.trim(); box.value = "";
+    if (!t) { show("Enter the tester password first."); return; }
+    show("Checking the password…");
+    fetch(SERVER + "/.netlify/functions/vedic-status?job=00000000000000000000000000000000", { headers: { "Authorization": "Bearer " + t }, cache: "no-store" })
+      .then(function (r) { return r.status; }, function () { return 0; })
+      .then(function (s) {
+        if (s === 404) {
+          try { var was = localStorage.getItem(CODE_KEY); if (was && was !== t) localStorage.setItem(PREV_KEY, was); localStorage.setItem(CODE_KEY, t); show("Password accepted and saved."); }
+          catch (e) { show("The password was accepted, but this browser would not save it. Private browsing can block saving; try a normal tab."); }
+        }
+        else if (s === 401) show("That tester password wasn’t accepted. Nothing was saved.");
+        else show("The password couldn’t be checked right now. Nothing was saved. Try again in a moment.");
+      });
+  };
+  document.getElementById("on").onclick = function(){
+    if (!get(CODE_KEY)) { show("Save the tester password first (Step 1)."); return; }
+    try { localStorage.setItem(SWITCH, SERVER); show("Readings are on for this device."); } catch (e) { show("This browser would not save the setting. Private browsing can block saving; try a normal tab."); }
+  };
+  document.getElementById("off").onclick = function(){ try { localStorage.removeItem(SWITCH); } catch (e) {} show("Vedic readings are off for this device."); };
+  show();
+})();
+</script>
