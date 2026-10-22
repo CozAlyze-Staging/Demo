@@ -645,6 +645,7 @@
 <script src="coz-saved.js?v=1"></script>
 <script src="coz-tropical-server.js?v=2"></script>
 <script src="coz-compare-server.js?v=4"></script>
+<style id="coz-ed3">/* ED3 (Oct 22 2026): BACK · SET · ENTER on the date and time rows */#bdaybar .entry-actions,#timebar .entry-actions{gap:14px}/* a hidden step's buttons never take a tap: with three pills on the date and time rows, the name row's invisible BACK would otherwise sit over SET */#bdaybar:not(.show) .entry-actions button,#bdaybar.done .entry-actions button,#timebar:not(.show) .entry-actions button,#timebar.done .entry-actions button,#namebar:not(.show) .entry-actions button,#namebar.done .entry-actions button{pointer-events:none!important}/* the start page's own version line (#ver) joins the DV1 developer-view rule */html:not(.coz-dev) #ver{display:none!important}</style>
 <style id="coz-rd1">/* RD1 (Oct 22 2026): every tappable label at least 15px on a phone */html body .coz-skip{font-size:15px}html body .entry-enter{font-size:15px}html body #finale .fn-pill{font-size:clamp(15px, 3.6vw, 17px)}</style>
 <style id="coz-dv1">/* DV1 (Oct 22 2026): version stamps and the diagnostic launcher show only on a device with developer view on (localStorage cozDevView = "1") */html:not(.coz-dev) .stamp,html:not(.coz-dev) .stamp2,html:not(.coz-dev) .vedic-stamp,html:not(.coz-dev) .build-stamp,html:not(.coz-dev) .lc-stamp,html:not(.coz-dev) .cs-stamp,html:not(.coz-dev) .ktw-stamp,html:not(.coz-dev) .wcn-stamp,html:not(.coz-dev) #stamp,html:not(.coz-dev) #cozDiagLaunch{display:none!important}</style><script>try{if(localStorage.getItem("cozDevView")==="1")document.documentElement.classList.add("coz-dev")}catch(e){}</script>
 </head>
@@ -718,6 +719,7 @@
   </span>
   <div class="entry-actions">
     <button type="button" class="entry-enter entry-back" aria-label="Back to birthplace">BACK</button>
+    <button type="button" id="bdSet" class="entry-enter" aria-label="Set this part of the date">SET</button>
     <button type="button" id="bdEnter" class="entry-enter" aria-label="Confirm date of birth">ENTER</button>
   </div>
 </div>
@@ -732,6 +734,7 @@
   <div id="ampm"><span data-v="AM">AM</span><span data-v="PM">PM</span></div>
   <div class="entry-actions">
     <button type="button" class="entry-enter entry-back" aria-label="Back to date of birth">BACK</button>
+    <button type="button" id="tmSet" class="entry-enter" aria-label="Set the hour">SET</button>
     <button type="button" id="tmEnter" class="entry-enter" aria-label="Confirm birth time">ENTER</button>
   </div>
 </div>
@@ -2196,6 +2199,105 @@ window.__setEntryStep = function(step) {
   });
 };
 
+// ---------- ED3 (Oct 22 2026, his ruling): two-digit windows fill from the right ----------
+/* Month, day, hour and minute each fill like a calculator: the first digit lands in the
+   second box with a 0 in front ("9" shows 09); a second digit slides it over ("1", "2"
+   shows 12). A digit that would make the window impossible is ignored. SET (between BACK
+   and ENTER) locks the window and moves to the next one; ENTER still commits the step, as
+   before. The year fills left to right. The field keeps its "MM – DD – YYYY" / "HH : MM"
+   text, so everything that reads the digits from it (commit, back navigation, the saved
+   birth data) is unchanged. A whole-field selection (Back, re-entry) is replaced by the
+   first digit, as the select() calls intend. */
+function cozSegField(cfg){
+  const inp = cfg.input, ghost = cfg.ghost, parts = cfg.mask.split(cfg.sep);
+  const segs = cfg.sizes.map(() => '');
+  let cur = 0, api = null;
+  const shown = i => (cfg.sizes[i] === 2 && segs[i]) ? ('0' + segs[i]).slice(-2) : segs[i];
+  const canSet = () => cur < segs.length - 1 && !!segs[cur] && cfg.ok(cur, +shown(cur), api);
+  function render(){
+    let out = '';
+    for (let i = 0; i <= cur; i++) { if (i) out += cfg.sep; out += shown(i); }
+    inp.value = out;
+    let rest = '';
+    if (!segs[cur]) rest = parts[cur]; else if (cfg.sizes[cur] > 2) rest = parts[cur].slice(segs[cur].length);
+    for (let j = cur + 1; j < segs.length; j++) rest += cfg.sep + parts[j];
+    if (ghost) { ghost.children[0].textContent = out; ghost.children[1].textContent = rest; }
+    try { if (document.activeElement === inp) inp.setSelectionRange(out.length, out.length); } catch(_){}
+    cfg.setBtn.classList.toggle('ready', canSet());
+    if (cfg.onChange) cfg.onChange();
+  }
+  const allSelected = () => { try { return inp.value.length > 0 && inp.selectionStart === 0 && inp.selectionEnd === inp.value.length; } catch(_){ return false; } };
+  function clearAll(){ for (let i = 0; i < segs.length; i++) segs[i] = ''; cur = 0; }
+  /* ED3.1: a whole value arriving at once (paste, drop, autofill/replacement, several digits in one input)
+     is read left to right into the windows and validated window by window: a complete two-digit window must
+     be a real value (month 01-12, a day that month can have, hour 01-12, minute 00-59); the first window that
+     is not stops the parse there, keeping the valid windows before it. */
+  function parseWhole(ds){
+    clearAll();
+    let k = 0;
+    for (let i = 0; i < segs.length; i++) {
+      cur = i;
+      const part = ds.slice(k, k + cfg.sizes[i]); k += cfg.sizes[i];
+      if (!part) break;
+      if (cfg.sizes[i] === 2) {
+        const good = part.length === 2 ? cfg.ok(i, +part, api) : cfg.allow(i, +part, api);
+        if (!good) break;
+      }
+      segs[i] = part;
+      if (part.length < cfg.sizes[i] || i === segs.length - 1) break;
+    }
+    if (segs[cur] && segs[cur].length === cfg.sizes[cur] && cur < segs.length - 1) cur++;
+  }
+  function digit(d){
+    const next = segs[cur] + d;
+    if (cfg.sizes[cur] === 2) { if (next.length <= 2 && cfg.allow(cur, +next, api)) { segs[cur] = next; return true; } return false; }
+    if (next.length <= cfg.sizes[cur]) { segs[cur] = next; return true; }
+    return false;
+  }
+  inp.addEventListener('beforeinput', e => {
+    const t = e.inputType || '';
+    if (t === 'insertText' || t === 'insertReplacementText' || t === 'insertFromPaste' || t === 'insertFromDrop' || t === 'insertFromYank') {
+      e.preventDefault();
+      let raw = e.data;
+      if (raw == null && e.dataTransfer) { try { raw = e.dataTransfer.getData('text/plain'); } catch(_){} }
+      const ds = String(raw || '').replace(/\D/g, '');
+      if (!ds) return;
+      if (t === 'insertText' && ds.length === 1) {          /* ordinary typing: one digit into the current window */
+        if (allSelected()) clearAll();
+        if (digit(ds) && cfg.onDigit) cfg.onDigit();
+      } else {                                               /* paste, drop, autofill, several digits at once: the whole field */
+        parseWhole(ds.slice(0, cfg.sizes.reduce((a, b) => a + b, 0)));
+        if (cfg.onDigit) cfg.onDigit();
+      }
+      render();
+    } else if (t.indexOf('delete') === 0) {
+      e.preventDefault();
+      if (allSelected()) clearAll();
+      else if (segs[cur]) segs[cur] = segs[cur].slice(0, -1);
+      else if (cur > 0) cur--;
+      render();
+    } else if (t.indexOf('insert') === 0) e.preventDefault();
+  });
+  /* fallback (no beforeinput, or a value set without one): the same validated whole-field parse */
+  inp.addEventListener('input', () => {
+    const ds = inp.value.replace(/\D/g, '');
+    parseWhole(ds.slice(0, cfg.sizes.reduce((a, b) => a + b, 0)));
+    if (ds.length && cfg.onDigit) cfg.onDigit();
+    render();
+  });
+  cfg.setBtn.addEventListener('click', ev => {
+    ev.stopPropagation();
+    if (!canSet()) return;
+    cur++; render();
+    /* keep the keyboard up; the step's own focus handler may select the whole field on focus,
+       so the caret is put back at the end right after it (SET continues the entry, it never replaces it) */
+    try { inp.focus({ preventScroll: true }); } catch(_){}
+    requestAnimationFrame(() => { try { const n = inp.value.length; inp.setSelectionRange(n, n); } catch(_){} });
+  });
+  api = { shown: shown, segs: segs, cur: () => cur, render: render };
+  return api;
+}
+
 // ---------- birthdate: tap the bar -> native calendar ----------
 (function(){
   const bar = document.getElementById('bdaybar');
@@ -2212,27 +2314,28 @@ window.__setEntryStep = function(step) {
       } catch(_){}
     });
   });
-  const bdGhost = document.getElementById('bd-ghost');
-  function bdGhostSync(){ if (!bdGhost) return;
-    bdGhost.children[0].textContent = inp.value;
-    bdGhost.children[1].textContent = 'MM – DD – YYYY'.slice(inp.value.length); }
-  inp.addEventListener('input', () => {
-    let dig = inp.value.replace(/\D/g, '').slice(0, 8);      // MMDDYYYY
-    try { if (dig.length) EMERGE_SOUND.play('pulse'); } catch(_){}
-    let out = dig.slice(0,2);
-    if (dig.length >= 3) out += ' – ' + dig.slice(2,4);
-    if (dig.length >= 5) out += ' – ' + dig.slice(4,8);
-    inp.value = out;
-    bdGhostSync();
-    /* v19.96 firm enter (his ruling): the 8th digit no longer advances the step —
-       people typed mistakes past themselves and could not easily come back. The
-       ENTER pill lights when the date is complete and is the only way forward. */
-    bdEnterEl.classList.toggle('ready', dig.length === 8);
-  });
   const bdEnterEl = document.getElementById('bdEnter');
+  /* ED3: right-filling month and day windows (cozSegField). The day window allows only days that month
+     can have (29 for February); ENTER also needs a real calendar date, so February 29 is refused in a
+     year that is not a leap year. */
+  const DIM = [31,29,31,30,31,30,31,31,30,31,30,31];
+  const monthMax = f => DIM[(+f.shown(0) || 1) - 1];
+  const bdField = cozSegField({ input: inp, ghost: document.getElementById('bd-ghost'), setBtn: document.getElementById('bdSet'),
+    sizes: [2, 2, 4], sep: ' – ', mask: 'MM – DD – YYYY',
+    allow: (i, n, f) => i === 0 ? n <= 12 : n <= monthMax(f),
+    ok: (i, n, f) => i === 0 ? n >= 1 && n <= 12 : n >= 1 && n <= monthMax(f),
+    onDigit: () => { try { EMERGE_SOUND.play('pulse'); } catch(_){} },
+    onChange: () => { bdEnterEl.classList.toggle('ready', bdValid()); } });
+  function bdValid(){
+    const f = bdField; if (!f || f.cur() !== 2 || f.segs[2].length !== 4) return false;
+    const m = +f.shown(0), d = +f.shown(1), y = +f.segs[2];
+    if (m < 1 || m > 12 || d < 1) return false;
+    const t = new Date(Date.UTC(2000, 0, 1)); t.setUTCFullYear(y, m, 0);
+    return d <= t.getUTCDate();
+  }
   function bdCommit(){
     const dig = inp.value.replace(/\D/g, '');
-    if (dig.length !== 8) return;
+    if (dig.length !== 8 || !bdValid()) return;
     window.__birthDate = dig.slice(4,8) + '-' + dig.slice(0,2) + '-' + dig.slice(2,4);
     console.log('[Birth data] date:', window.__birthDate);
     window.__setEntryStep('time');
@@ -2271,40 +2374,33 @@ window.__setEntryStep = function(step) {
       tmReady();   /* v19.96: selecting AM/PM no longer completes the step */
     });
   });
-  const tmGhost = document.getElementById('tm-ghost');
-  function tmGhostSync(){ if (!tmGhost) return;
-    tmGhost.children[0].textContent = inp.value;
-    tmGhost.children[1].textContent = 'HH : MM'.slice(inp.value.length); }
-  inp.addEventListener('input', () => {
-    let dig = inp.value.replace(/\D/g, '').slice(0, 4);   // HHMM
-    try { if (dig.length) EMERGE_SOUND.play('pulse'); } catch(_){}
+  /* ED3: right-filling hour and minute windows (cozSegField). SET locks the hour; a single minute digit
+     shows as 05. Once the minutes are in, AM arms as the default exactly as before (v19.53). */
+  const tmField = cozSegField({ input: inp, ghost: document.getElementById('tm-ghost'), setBtn: document.getElementById('tmSet'),
+    sizes: [2, 2], sep: ' : ', mask: 'HH : MM',
+    allow: (i, n) => i === 0 ? n <= 12 : n <= 59,
+    ok: (i, n) => i === 0 ? n >= 1 && n <= 12 : n <= 59,
     /* v19.90: Uncle John clicks back on under the first digit of the birth TIME */
-    if (dig.length) uncleJohnIn();
-    let out = dig.slice(0,2);
-    if (dig.length >= 3) out += ' : ' + dig.slice(2,4);
-    inp.value = out;
-    tmGhostSync();
-    if (dig.length === 4 && !ampm) {
-      // v19.53: NO blur — the numeric keyboard stays open and the Time panel
-      // holds its raised position while the user chooses AM or PM. The AM pill
-      // arms as the default exactly as before; the pills are tappable with the
-      // keyboard up, and finishIfComplete() proceeds normally on commit.
-      arm('AM');
-    } else if (dig.length < 4) {
-      disarm();
-    }
-    tmReady();
-  });
+    onDigit: () => { try { EMERGE_SOUND.play('pulse'); } catch(_){} uncleJohnIn(); },
+    onChange: () => {
+      if (tmComplete() && !ampm) arm('AM');   /* v19.53: no blur; the keyboard stays open for AM/PM */
+      else if (!tmComplete()) disarm();
+      tmReady();
+    } });
+  function tmComplete(){
+    const f = tmField; if (!f || f.cur() !== 1 || !f.segs[1]) return false;
+    const h = +f.shown(0); return h >= 1 && h <= 12 && +f.shown(1) <= 59;
+  }
   /* v19.96 firm enter: the pill lights once HH:MM is typed and a meridian is
      chosen or armed; tapping it is the only way the time commits. */
   const tmEnterEl = document.getElementById('tmEnter');
   function tmReady(){
     const dig = inp.value.replace(/\D/g, '');
-    tmEnterEl.classList.toggle('ready', dig.length === 4 && (!!ampm || !!armed));
+    tmEnterEl.classList.toggle('ready', dig.length === 4 && tmComplete() && (!!ampm || !!armed));
   }
   function tmCommit(){
     const dig = inp.value.replace(/\D/g, '');
-    if (dig.length !== 4) return;
+    if (dig.length !== 4 || !tmComplete()) return;
     if (!ampm && armed) {
       const el = [...pills()].find(x => x.dataset.v === armed);
       if (el) el.click();               // the armed cursor becomes the selection
@@ -3326,6 +3422,9 @@ document.querySelectorAll('.syscard').forEach(card => {
      Skip intro  — during the opening, jumps to the birthplace form.
      Go to my chart — on the birthplace form, when a chart already exists on
                       this device, opens the reveal straight at the result page.
+     GTC1 (Oct 22 2026, his ruling): Go to my chart now appears only when this device
+     has at least one SAVED chart, and it opens Saved Charts directly (no animation,
+     no prompts). The person opens their chart there, with Add-ons beside it.
    Plain gold text, subtle, top right. Flags live in localStorage.
    ============================================================ */
 (function(){
@@ -3333,6 +3432,9 @@ document.querySelectorAll('.syscard').forEach(card => {
   try { seenIntro = localStorage.getItem('cozSeenIntro') === '1'; } catch(_){}
   try { saved = JSON.parse(localStorage.getItem('emergeBirthData') || 'null'); } catch(_){}
   var skipEl = document.getElementById('cozSkipIntro'), goEl = document.getElementById('cozGoChart');
+  function hasSavedChart(){   /* GTC1: the Saved Charts store (coz-saved.js "cozSavedCharts") holds at least one record */
+    try { var st = JSON.parse(localStorage.getItem('cozSavedCharts') || 'null'); return !!(st && Array.isArray(st.records) && st.records.length); } catch(_){ return false; }
+  }
   var finale = document.getElementById('finale');
   function finaleReady(){ return finale && finale.classList.contains('ready'); }
   /* mark the intro seen the first time the birthplace form appears */
@@ -3340,7 +3442,7 @@ document.querySelectorAll('.syscard').forEach(card => {
     if (finaleReady()){
       try { localStorage.setItem('cozSeenIntro', '1'); } catch(_){}
       skipEl.classList.remove('on');
-      if (saved && saved.system && saved.location && saved.birthDate && saved.birthTime) setTimeout(function(){ goEl.classList.add('on'); }, 900);
+      if (hasSavedChart()) setTimeout(function(){ goEl.classList.add('on'); }, 900);   /* GTC1 */
       mo.disconnect();
     }
   });
@@ -3359,22 +3461,12 @@ document.querySelectorAll('.syscard').forEach(card => {
   });
   /* the text leaves as soon as a door is tapped, so it never sits over the reveal */
   document.querySelectorAll('.syscard').forEach(function(c){ c.addEventListener('click', function(){ goEl.classList.remove('on'); skipEl.classList.remove('on'); }); });
+  /* GTC1: straight to Saved Charts. The person opens their saved chart there and can add more from it. */
   goEl.addEventListener('click', function(){
-    if (!saved) return;
+    if (!hasSavedChart()) return;
     goEl.classList.remove('on');
-    var L = saved.location;
-    window.__birthPlace = { city:L.name, country:L.country, lat:L.latitude, lon:L.longitude, tz:L.timezone, formatted:(L.name + (L.country ? ', ' + L.country : '')) };
-    window.__birthDate = saved.birthDate; window.__birthTime = saved.birthTime;
-    window.__birthName = saved.name || null;   /* v19.96 */
-    window.__cozSkipReveal = true;
-    /* Sep 1 ruling: land on Choose Your Perspective, not on last time's door. The person
-       picks Tropical or Vedic again; the reveal then opens straight at the result page.
-       (A saved-chart page will take this over once it exists.) */
-    ['finale','timebar','bdaybar','namebar','datebar'].forEach(function(id){ var el = document.getElementById(id); if (el){ el.style.display = 'none'; } });
-    var gv = document.getElementById('globeViz'); if (gv){ gv.style.display = 'none'; gv.setAttribute('aria-hidden', 'true'); }
-    document.body.classList.add('paths-open');
-    document.getElementById('systembar').classList.add('show');
-    try { EMERGE_SOUND.stopLoop('voidatm', 2.5); EMERGE_SOUND.loop('choice'); } catch(_){}
+    try { EMERGE_SOUND.stopLoop('voidatm', 0.6); } catch(_){}
+    window.location.href = 'saved-charts.html';
   });
 })();
 
