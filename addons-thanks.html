@@ -98,6 +98,8 @@ h1{font-family:var(--head);font-weight:500;font-size:max(30px,calc(98 * var(--K)
 .ctl td:last-child{text-align:right;white-space:nowrap}
 .ctl .stamp2{margin-top:36px;font-size:9px;letter-spacing:.08em;color:rgba(214,185,140,.45);text-align:right}
 </style>
+<style id="coz-rd1">/* RD1 (Oct 22 2026): every tappable label at least 15px on a phone */html body .pill{font-size:max(15px,calc(30 * var(--K)))}html body .more{font-size:max(15px,calc(33 * var(--K)))}</style>
+<style id="coz-dv1">/* DV1 (Oct 22 2026): version stamps and the diagnostic launcher show only on a device with developer view on (localStorage cozDevView = "1") */html:not(.coz-dev) .stamp,html:not(.coz-dev) .stamp2,html:not(.coz-dev) .vedic-stamp,html:not(.coz-dev) .build-stamp,html:not(.coz-dev) .lc-stamp,html:not(.coz-dev) .cs-stamp,html:not(.coz-dev) .ktw-stamp,html:not(.coz-dev) .wcn-stamp,html:not(.coz-dev) #stamp,html:not(.coz-dev) #cozDiagLaunch{display:none!important}</style><script>try{if(localStorage.getItem("cozDevView")==="1")document.documentElement.classList.add("coz-dev")}catch(e){}</script>
 </head>
 <body>
 <div id="app"></div>

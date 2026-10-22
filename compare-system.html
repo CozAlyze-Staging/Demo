@@ -98,7 +98,7 @@ h1{font-family:var(--head);font-weight:500;font-size:max(24px,calc(66 * var(--k)
 .mlink:focus-visible{outline:1px solid var(--gold);outline-offset:2px}
 .note{font-family:var(--body);font-style:italic;font-size:clamp(15px,4.2vw,18px);color:var(--cream);opacity:.85;margin:calc(10 * var(--k)) calc(90 * var(--k)) 0}
 .pager{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:calc(46 * var(--k)) calc(90 * var(--k)) 0}
-.pager a{font-family:var(--head);font-weight:500;font-size:max(11.5px,calc(22 * var(--k)));letter-spacing:.18em;color:var(--gold);text-decoration:none;
+.pager a{font-family:var(--head);font-weight:500;font-size:max(15px,calc(28 * var(--k)));letter-spacing:.18em;color:var(--gold);text-decoration:none;
   padding:10px 4px;min-height:44px;display:inline-flex;align-items:center;-webkit-tap-highlight-color:transparent}
 .pager a:focus-visible{outline:1px solid var(--gold);outline-offset:4px}
 .art-bottom{position:relative;height:calc(282 * var(--K));background:url("compare-timing-reading-bottom.jpg?v=1") center top/100% auto no-repeat}
@@ -125,6 +125,8 @@ h1{font-family:var(--head);font-weight:500;font-size:max(24px,calc(66 * var(--k)
 <!-- Oct 2: ?v=5 so this page loads coz-saved.js CS1.6, not a cached copy -->
 <script src="coz-saved.js?v=5"></script>
 <script src="compare-saved-links.js?v=1"></script>
+<style id="coz-rd1">/* RD1 (Oct 22 2026): every tappable label at least 15px on a phone */html body .chart-end .pl{font-size:max(15px,calc(30 * var(--k)))}</style>
+<style id="coz-dv1">/* DV1 (Oct 22 2026): version stamps and the diagnostic launcher show only on a device with developer view on (localStorage cozDevView = "1") */html:not(.coz-dev) .stamp,html:not(.coz-dev) .stamp2,html:not(.coz-dev) .vedic-stamp,html:not(.coz-dev) .build-stamp,html:not(.coz-dev) .lc-stamp,html:not(.coz-dev) .cs-stamp,html:not(.coz-dev) .ktw-stamp,html:not(.coz-dev) .wcn-stamp,html:not(.coz-dev) #stamp,html:not(.coz-dev) #cozDiagLaunch{display:none!important}</style><script>try{if(localStorage.getItem("cozDevView")==="1")document.documentElement.classList.add("coz-dev")}catch(e){}</script>
 </head>
 <body>
 <main class="page">
@@ -139,8 +141,8 @@ h1{font-family:var(--head);font-weight:500;font-size:max(24px,calc(66 * var(--k)
   <div class="panel" id="panel"></div>
   <div class="div" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0 13.6 10.4 24 12 13.6 13.6 12 24 10.4 13.6 0 12 10.4 10.4Z"/></svg></div>
   <nav class="pager" aria-label="Page navigation">
-    <a href="compare-birth-charts.html">&lsaquo; YOUR BIRTH CHARTS</a>
-    <a href="compare-reading.html">COMPARE &rsaquo;</a>
+    <a href="compare-birth-charts.html">&lsaquo;&nbsp;YOUR BIRTH CHARTS</a>
+    <a href="compare-reading.html">COMPARE&nbsp;&rsaquo;</a>
   </nav>
  </div>
  <div class="art-bottom">
