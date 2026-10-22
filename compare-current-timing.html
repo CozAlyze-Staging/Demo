@@ -5,7 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Your Current Timing · CozAlyze</title>
 <!--
-  COZALYZE · COMPARE · CURRENT TIMING · CT3.0 · overview
+  COZALYZE · COMPARE · CURRENT TIMING · CT3.1 · overview
+  CT3.1 (Oct 22 2026, his instruction "bigger box, fill the space"): the background is
+  compare-current-timing-bg-tall.jpg, his same artwork with the Where The Two Meet panel
+  370 px taller (in 1206 x 2622 units): the panel's lower part (button and bottom border)
+  moved down into the empty space above the tagline, and the plain interior between filled
+  with one row averaged from his own interior (the combined-mid.png technique). Nothing else
+  in the image changed; his original file stays in the repo. The panel text is larger and
+  its box and the button's tap area follow the new panel.
   Reached from compare-reading.html ("Your Current Timing").
 
   Artwork: compare-current-timing-bg.jpg (his composite, 1206 x 2622). Baked in:
@@ -28,7 +35,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
-<link rel="preload" as="image" href="compare-current-timing-bg.jpg?v=1">
+<link rel="preload" as="image" href="compare-current-timing-bg-tall.jpg?v=1">
 <style>
 :root {
   --gold: #e6c07f;
@@ -45,7 +52,7 @@ body { padding-bottom: env(safe-area-inset-bottom); }
 .ct-stage {
   position: relative; width: 100%; margin: 0 auto;
   aspect-ratio: 1206 / 2622;
-  background: url("compare-current-timing-bg.jpg?v=1") center top / 100% 100% no-repeat;
+  background: url("compare-current-timing-bg-tall.jpg?v=1") center top / 100% 100% no-repeat;
   container-type: inline-size; overflow: hidden;
 }
 @media (min-width: 520px) { .ct-stage { max-width: 480px; } }
@@ -61,15 +68,15 @@ body { padding-bottom: env(safe-area-inset-bottom); }
 .t-glyph { font-family: var(--symbols); font-size: 4.8cqw; color: var(--gold); }
 
 .ct-summary {
-  position: absolute; left: 13%; right: 13%; top: 58.3%; height: 11.1%;
+  position: absolute; left: 11%; right: 11%; top: 59.0%; height: 23.9%;
   display: flex; align-items: center; justify-content: center; text-align: center;
-  font-size: 3.15cqw; line-height: 1.32; color: var(--ivory); min-width: 0;
+  font-size: 4.4cqw; line-height: 1.32; color: var(--ivory); min-width: 0;
 }
 .ct-summary p { margin: 0; min-width: 0; overflow-wrap: anywhere; }
 
 .hot { position: absolute; display: block; -webkit-tap-highlight-color: transparent; }
 .hot:focus-visible { outline: 1px solid var(--gold); outline-offset: 2px; }
-.read { left: 12.9%; top: 69.4%; width: 74.2%; height: 4.2%; border-radius: 999px; }
+.read { left: 12.9%; top: 83.5%; width: 74.2%; height: 4.2%; border-radius: 999px; }
 .nav-home { left: 10.5%; top: 96.1%; width: 24.5%; height: 2.7%; }
 .nav-saved { left: 35%; top: 96.1%; width: 26%; height: 2.7%; }
 .nav-acct { left: 61%; top: 96.1%; width: 26%; height: 2.7%; }
@@ -97,7 +104,7 @@ body { padding-bottom: env(safe-area-inset-bottom); }
     <a class="hot nav-acct" href="#" aria-label="Profile"></a>
   </nav>
 </main>
-<div class="stamp" aria-hidden="true">CURRENT TIMING · CT3.0 · overview</div>
+<div class="stamp" aria-hidden="true">CURRENT TIMING · CT3.1 · taller panel</div>
 
 <script src="https://cdn.jsdelivr.net/npm/astronomy-engine@2.1.19/astronomy.browser.min.js"></script>
 <script src="coz-graha.js"></script>
