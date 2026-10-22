@@ -1,14 +1,24 @@
 <!doctype html>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CozAlyze · tester access</title>
-<!-- TA1.0 (Oct 21 2026). Tester setup for one device, linked from no other page. It does two things on THIS device only:
+<!-- TA1.3 (Oct 22 2026): storage refusals reported honestly. Turning Compare off is verified by reading the switch back
+     (OFF written, else the switch removed); if it is still on, activation stops and Turn off says so. The status line
+     shows Compare ON whenever the stored switch is on, as the Compare adapter reads it.
+     TA1.2 (Oct 22 2026): Compare activation made safe against late or failed answers. Every Turn on writes Compare
+     OFF first; only the latest request can turn it on, and only if the saved password is the one it checked and no
+     browser test key is present. Turn off cancels any pending check. TA1.1 (Oct 22 2026). Tester setup for one device, linked from no other page. It does three things on THIS device only:
      1. checks the Demo tester password with the Vedic server (a status request for a job that does not exist: 404 =
         accepted, 401 = refused; no reading, no charge) and saves it under "cozDemoTesterCode", the name every reading
         uses (the previous one is kept under "cozDemoTesterCodePrevious", as the reading pages do);
      2. switches the Vedic server on for this device ("cozVedicServerBase" = the production Vedic server), the same
-        setting the Vedic PROD bookmark makes. Turn off removes it.
-     The password is never shown. Nothing else is read or written, and no other page changes. Tropical readings already
-     use the server and only need the saved password. Compare is not touched. -->
+        setting the Vedic PROD bookmark makes;
+     3. TA1.1/TA1.2: checks the saved password with the Compare server (a read of a job that does not exist, header
+        x-tester-code: 404 = accepted; no reading, no charge) and only then switches Compare on for this device
+        ("cozCmpServer" = { on: true, url: the Compare test-branch server }), the value the Compare Server bookmark
+        writes. Not turned on while a browser test key ("cozTestApiKey") is on the device, as the bookmark requires.
+     Turn off removes the Vedic switch and turns Compare off ({ on: false, url }). Tropical readings already use the
+     production Tropical server and only need the saved password. The password is never shown. Nothing else is read or
+     written, and no other page changes. -->
 <h1>CozAlyze · tester access</h1>
 <p>Step 1. Enter the tester password and tap <b>Check and save password</b>.</p>
 <input id="code" type="password" autocomplete="off" placeholder="Tester password">
@@ -21,11 +31,16 @@
 (function(){
   var CODE_KEY = "cozDemoTesterCode", PREV_KEY = "cozDemoTesterCodePrevious", SWITCH = "cozVedicServerBase";
   var SERVER = "https://cozalyze-vedic-server.netlify.app";
+  var CMP_KEY = "cozCmpServer", CMP_URL = "https://test--cozalyze-compare-server.netlify.app", TEST_KEY = "cozTestApiKey";
   function get(k){ try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function cmpOn(){ try { var c = JSON.parse(get(CMP_KEY) || "null"); return !!(c && c.on); } catch (e) { return false; } }   /* TA1.3: as the adapter reads it */
   function show(msg){
+    var code = !!get(CODE_KEY);
     document.getElementById("state").textContent = (msg ? msg + "\n\n" : "") +
-      "Tester password on this device: " + (get(CODE_KEY) ? "saved" : "missing") + "\n" +
-      "Vedic readings on this device: " + (get(SWITCH) === SERVER ? "ON" : "OFF");
+      "Tester password on this device: " + (code ? "saved" : "missing") + "\n" +
+      "Vedic readings on this device: " + (get(SWITCH) === SERVER ? "ON" : "OFF") + "\n" +
+      "Tropical readings on this device: " + (code ? "ON" : "OFF") + "\n" +
+      "Compare readings on this device: " + (cmpOn() ? "ON" : "OFF");
   }
   document.getElementById("save").onclick = function(){
     var box = document.getElementById("code"), t = box.value.trim(); box.value = "";
@@ -42,11 +57,41 @@
         else show("The password couldn’t be checked right now. Nothing was saved. Try again in a moment.");
       });
   };
+  var seq = 0;   /* TA1.2: only the latest Turn on may enable Compare; Turn off and any newer tap cancel older checks */
+  function cmpOff(){   /* TA1.3: true only if Compare is verifiably off afterwards */
+    if (!cmpOn()) return true;
+    try { localStorage.setItem(CMP_KEY, JSON.stringify({ on: false, url: CMP_URL })); } catch (e) { try { localStorage.removeItem(CMP_KEY); } catch (e2) {} }
+    return !cmpOn();
+  }
+  var STUCK = "Compare is still ON on this device: this browser would not change the setting. Try a normal (not private) tab, or clear this site's data in Settings.";
+  function failed(why, hint){ show(cmpOff() ? why + ", so Compare is off." + (hint ? " " + hint : "") : why + ". " + STUCK); }
   document.getElementById("on").onclick = function(){
-    if (!get(CODE_KEY)) { show("Save the tester password first (Step 1)."); return; }
-    try { localStorage.setItem(SWITCH, SERVER); show("Readings are on for this device."); } catch (e) { show("This browser would not save the setting. Private browsing can block saving; try a normal tab."); }
+    var my = ++seq, code = get(CODE_KEY);
+    if (!cmpOff()) { show("Nothing was turned on. " + STUCK); return; }   /* Compare stays off unless this check succeeds */
+    if (!code) { show("Save the tester password first (Step 1)."); return; }
+    try { localStorage.setItem(SWITCH, SERVER); } catch (e) { show("This browser would not save the setting. Private browsing can block saving; try a normal tab."); return; }
+    if (get(TEST_KEY)) { show("Vedic and Tropical readings are on. Compare was not turned on: this device has a browser test key. Remove it on test-index.html, then tap Step 2 again."); return; }
+    show("Vedic and Tropical readings are on. Checking Compare…");
+    fetch(CMP_URL + "/.netlify/functions/compare-read?job=00000000000000000000000000000000", { headers: { "x-tester-code": code }, cache: "no-store" })
+      .then(function (r) { return r.status; }, function () { return 0; })
+      .then(function (s) {
+        if (my !== seq) return;   /* a newer tap or Turn off came first: this answer changes nothing */
+        if (s === 404) {
+          if (get(CODE_KEY) !== code || get(TEST_KEY) || get(SWITCH) !== SERVER) { failed("The setup changed during the check", "Tap Step 2 again."); return; }
+          try { localStorage.setItem(CMP_KEY, JSON.stringify({ on: true, url: CMP_URL })); show("Readings are on for this device."); }
+          catch (e) { failed("Vedic and Tropical readings are on. This browser would not save the Compare setting"); }
+        }
+        else if (s === 401 || s === 403) { failed("Vedic and Tropical readings are on. The Compare server did not accept the password"); }
+        else { failed("Vedic and Tropical readings are on. Compare couldn’t be checked right now", "Tap Step 2 again in a moment."); }
+      });
   };
-  document.getElementById("off").onclick = function(){ try { localStorage.removeItem(SWITCH); } catch (e) {} show("Vedic readings are off for this device."); };
+  document.getElementById("off").onclick = function(){
+    seq++;   /* cancels any Compare check still pending */
+    try { localStorage.removeItem(SWITCH); } catch (e) {}
+    var vOff = get(SWITCH) === null, cOff = cmpOff();   /* TA1.3: report what is actually stored */
+    if (vOff && cOff) show("Vedic and Compare readings are off for this device.");
+    else show((vOff ? "Vedic readings are off. " : "Vedic readings are still ON: this browser would not change the setting. ") + (cOff ? "Compare readings are off." : STUCK));
+  };
   show();
 })();
 </script>
