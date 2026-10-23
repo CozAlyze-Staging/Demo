@@ -413,11 +413,11 @@
   /* the marker's own BACK pill is retired by the row above; the step logic that
      toggles .show on it is left untouched so nothing else has to change */
   .marker .entry-back { display:none; }
-  /* v19.97: picking a city clears the list — BACK and ENTER arrive together
-     right under the box, impossible to miss. BACK restores the options. */
+  /* v19.97: picking a city clears the list and ENTER arrives right under the box,
+     impossible to miss. SV1 (Oct 23 2026, his ruling): this step has no BACK;
+     editing the box brings the options back. */
   #locActions { display:none; margin:16px auto 0; justify-content:center; gap:26px; }
   #locActions.on { display:flex; }
-  #locBack { opacity:1; pointer-events:auto; }
   /* v19.96 name step: the exact date/time bar treatment, one text field */
   #namebar { position:fixed; left:50%; transform:translate(-50%, 24px); width:min(93vw,326px); bottom:25vh; z-index:14;
     display:flex; align-items:center; justify-content:flex-start; gap:10px;
@@ -648,6 +648,7 @@
 <style id="coz-ed3">/* ED3 (Oct 22 2026): BACK · SET · ENTER on the date and time rows */#bdaybar .entry-actions,#timebar .entry-actions{gap:14px}/* a hidden step's buttons never take a tap: with three pills on the date and time rows, the name row's invisible BACK would otherwise sit over SET */#bdaybar:not(.show) .entry-actions button,#bdaybar.done .entry-actions button,#timebar:not(.show) .entry-actions button,#timebar.done .entry-actions button,#namebar:not(.show) .entry-actions button,#namebar.done .entry-actions button{pointer-events:none!important}/* the start page's own version line (#ver) joins the DV1 developer-view rule */html:not(.coz-dev) #ver{display:none!important}</style>
 <style id="coz-rd1">/* RD1 (Oct 22 2026): every tappable label at least 15px on a phone */html body .coz-skip{font-size:15px}html body .entry-enter{font-size:15px}html body #finale .fn-pill{font-size:clamp(15px, 3.6vw, 17px)}</style>
 <style id="coz-dv1">/* DV1 (Oct 22 2026): version stamps and the diagnostic launcher show only on a device with developer view on (localStorage cozDevView = "1") */html:not(.coz-dev) .stamp,html:not(.coz-dev) .stamp2,html:not(.coz-dev) .vedic-stamp,html:not(.coz-dev) .build-stamp,html:not(.coz-dev) .lc-stamp,html:not(.coz-dev) .cs-stamp,html:not(.coz-dev) .ktw-stamp,html:not(.coz-dev) .wcn-stamp,html:not(.coz-dev) #stamp,html:not(.coz-dev) #cozDiagLaunch{display:none!important}</style><script>try{if(localStorage.getItem("cozDevView")==="1")document.documentElement.classList.add("coz-dev")}catch(e){}</script>
+<style id="coz-sv1">/* SV1 (Oct 23 2026, his ruling, Option 1): beta testers missed SET in the BACK · SET · ENTER row, so SET now sits right under the date and time boxes, centered; the birthplace city and country move down under it; BACK · ENTER sit lower on every birth step (date, time, name) */.entry-set{position:absolute;left:50%;top:calc(100% + 12px);transform:translateX(-50%)}.entry-actions{top:calc(100% + 121px)}#bdaybar .entry-actions,#timebar .entry-actions{gap:26px}#bdaybar:not(.show) .entry-set,#bdaybar.done .entry-set,#timebar:not(.show) .entry-set,#timebar.done .entry-set{pointer-events:none!important}body:has(#bdaybar.show,#timebar.show,#namebar.show) .marker .b-city,body:has(#bdaybar.show,#timebar.show,#namebar.show) .marker .b-country{position:relative;top:46px}</style>
 </head>
 <body>
 <button type="button" class="coz-skip" id="cozSkipIntro" aria-label="Skip the introduction">Skip intro</button>
@@ -671,7 +672,6 @@
     </div>
     <div id="dropdown"></div>
     <div id="locActions">
-      <button type="button" id="locBack" class="entry-enter" aria-label="Change birthplace">BACK</button>
       <button type="button" id="locEnter" class="entry-enter" aria-label="Confirm birthplace">ENTER</button>
     </div>
   </div>
@@ -717,9 +717,9 @@
     <input type="text" id="bd-typed" inputmode="numeric" autocomplete="off"
            placeholder="" aria-label="Birthdate" maxlength="14">
   </span>
+  <button type="button" id="bdSet" class="entry-enter entry-set" aria-label="Set this part of the date">SET</button>
   <div class="entry-actions">
     <button type="button" class="entry-enter entry-back" aria-label="Back to birthplace">BACK</button>
-    <button type="button" id="bdSet" class="entry-enter" aria-label="Set this part of the date">SET</button>
     <button type="button" id="bdEnter" class="entry-enter" aria-label="Confirm date of birth">ENTER</button>
   </div>
 </div>
@@ -732,9 +732,9 @@
          placeholder="" aria-label="Birth time" maxlength="7">
   </span>
   <div id="ampm"><span data-v="AM">AM</span><span data-v="PM">PM</span></div>
+  <button type="button" id="tmSet" class="entry-enter entry-set" aria-label="Set the hour">SET</button>
   <div class="entry-actions">
     <button type="button" class="entry-enter entry-back" aria-label="Back to date of birth">BACK</button>
-    <button type="button" id="tmSet" class="entry-enter" aria-label="Set the hour">SET</button>
     <button type="button" id="tmEnter" class="entry-enter" aria-label="Confirm birth time">ENTER</button>
   </div>
 </div>
@@ -819,7 +819,7 @@
   </div>
 </div>
 
-<div id="ver">SCENE 1 · v20.5 · engine versions · routes 1989 1885</div>
+<div id="ver">SCENE 1 · v20.6 · engine versions · routes 1989 1885</div>
 
 <script>
 function cozBirthFingerprint(bd){
@@ -1894,11 +1894,11 @@ function sceneComplete(){
   };
 
   /* v19.97 (his ruling): tapping a suggestion fills the box, the remaining
-     options DISAPPEAR, and BACK + ENTER pop up right under the box. ENTER
-     commits the flight; BACK undoes the pick and brings the options back. */
+     options DISAPPEAR, and ENTER pops up right under the box to commit the
+     flight. SV1 (Oct 23 2026, his ruling): the BACK pill on this step is gone;
+     editing the box clears the pick and searches again. */
   let pending = null, lastItems = [];
   const locEnterEl = document.getElementById('locEnter');
-  const locBackEl = document.getElementById('locBack');
   const locActionsEl = document.getElementById('locActions');
   function hideLocActions(){
     pending = null;
@@ -1931,13 +1931,6 @@ function sceneComplete(){
     selectResult(it);
   }
   locEnterEl.addEventListener('click', commitLocation);
-  locBackEl.addEventListener('click', () => {
-    if (chosen) return;
-    hideLocActions();
-    renderOptions(lastItems);
-    try { inputEl.focus({ preventScroll:true }); inputEl.select(); } catch(_){}
-    try { EMERGE_SOUND.play('pulse'); } catch(_){}
-  });
   inputEl.addEventListener('keydown', e => { if (e.key === 'Enter') commitLocation(); });
 
   let timer = null;
