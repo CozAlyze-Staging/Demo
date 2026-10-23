@@ -2207,19 +2207,27 @@ window.__setEntryStep = function(step) {
    before. The year fills left to right. The field keeps its "MM – DD – YYYY" / "HH : MM"
    text, so everything that reads the digits from it (commit, back navigation, the saved
    birth data) is unchanged. A whole-field selection (Back, re-entry) is replaced by the
-   first digit, as the select() calls intend. */
+   first digit, as the select() calls intend.
+   ED3.2 (Oct 22 2026, his ruling): month, day and hour still fill from the right, with the calendar
+   limits. The minutes type left to right as before ED3 ("5", "4" shows 54; "0", "5" shows 05) and need
+   both digits; the first minute digit can be 0 to 5. His sequence: 8, SET, 5, 4, AM/PM, ENTER.
+   ED3.2 also fixes typing on a phone whose keyboard changes the field without the cancelable
+   beforeinput step: one digit typed at the end (inputType insertText) now goes into the current window,
+   while paste, replacement and autofill still read the whole field. Before, every such change re-read
+   the field by position, so "08 : 05" plus 4 stayed 08 : 05 and "1", "2" in the hour became 01 : 02. */
 function cozSegField(cfg){
   const inp = cfg.input, ghost = cfg.ghost, parts = cfg.mask.split(cfg.sep);
   const segs = cfg.sizes.map(() => '');
-  let cur = 0, api = null;
-  const shown = i => (cfg.sizes[i] === 2 && segs[i]) ? ('0' + segs[i]).slice(-2) : segs[i];
+  let cur = 0, api = null, lastDs = '', lastVal = '', handled = false;
+  const right = i => cfg.sizes[i] === 2 && !(cfg.leftFill && cfg.leftFill[i]);   /* ED3.2 */
+  const shown = i => (right(i) && segs[i]) ? ('0' + segs[i]).slice(-2) : segs[i];
   const canSet = () => cur < segs.length - 1 && !!segs[cur] && cfg.ok(cur, +shown(cur), api);
   function render(){
     let out = '';
     for (let i = 0; i <= cur; i++) { if (i) out += cfg.sep; out += shown(i); }
-    inp.value = out;
+    inp.value = out; lastVal = out; lastDs = out.replace(/\D/g, '');
     let rest = '';
-    if (!segs[cur]) rest = parts[cur]; else if (cfg.sizes[cur] > 2) rest = parts[cur].slice(segs[cur].length);
+    if (!segs[cur]) rest = parts[cur]; else if (!right(cur)) rest = parts[cur].slice(segs[cur].length);
     for (let j = cur + 1; j < segs.length; j++) rest += cfg.sep + parts[j];
     if (ghost) { ghost.children[0].textContent = out; ghost.children[1].textContent = rest; }
     try { if (document.activeElement === inp) inp.setSelectionRange(out.length, out.length); } catch(_){}
@@ -2240,7 +2248,7 @@ function cozSegField(cfg){
       const part = ds.slice(k, k + cfg.sizes[i]); k += cfg.sizes[i];
       if (!part) break;
       if (cfg.sizes[i] === 2) {
-        const good = part.length === 2 ? cfg.ok(i, +part, api) : cfg.allow(i, +part, api);
+        const good = part.length === 2 ? cfg.ok(i, +part, api) : cfg.allow(i, +part, api, part);
         if (!good) break;
       }
       segs[i] = part;
@@ -2250,7 +2258,7 @@ function cozSegField(cfg){
   }
   function digit(d){
     const next = segs[cur] + d;
-    if (cfg.sizes[cur] === 2) { if (next.length <= 2 && cfg.allow(cur, +next, api)) { segs[cur] = next; return true; } return false; }
+    if (cfg.sizes[cur] === 2) { if (next.length <= 2 && cfg.allow(cur, +next, api, next)) { segs[cur] = next; return true; } return false; }
     if (next.length <= cfg.sizes[cur]) { segs[cur] = next; return true; }
     return false;
   }
@@ -2258,6 +2266,7 @@ function cozSegField(cfg){
     const t = e.inputType || '';
     if (t === 'insertText' || t === 'insertReplacementText' || t === 'insertFromPaste' || t === 'insertFromDrop' || t === 'insertFromYank') {
       e.preventDefault();
+      handled = true; setTimeout(() => { handled = false; }, 0);   /* ED3.2: an input event right after this one only restores the field */
       let raw = e.data;
       if (raw == null && e.dataTransfer) { try { raw = e.dataTransfer.getData('text/plain'); } catch(_){} }
       const ds = String(raw || '').replace(/\D/g, '');
@@ -2272,17 +2281,42 @@ function cozSegField(cfg){
       render();
     } else if (t.indexOf('delete') === 0) {
       e.preventDefault();
+      handled = true; setTimeout(() => { handled = false; }, 0);
       if (allSelected()) clearAll();
       else if (segs[cur]) segs[cur] = segs[cur].slice(0, -1);
       else if (cur > 0) cur--;
       render();
     } else if (t.indexOf('insert') === 0) e.preventDefault();
   });
-  /* fallback (no beforeinput, or a value set without one): the same validated whole-field parse */
-  inp.addEventListener('input', () => {
-    const ds = inp.value.replace(/\D/g, '');
-    parseWhole(ds.slice(0, cfg.sizes.reduce((a, b) => a + b, 0)));
-    if (ds.length && cfg.onDigit) cfg.onDigit();
+  /* fallback (no beforeinput, or a value set without one). ED3.2: ordinary typing (inputType insertText) of one
+     digit at the end goes into the current window, and digits removed from the end are deleted one by one,
+     exactly as with beforeinput. Everything else (paste, drop, replacement or autofill, several digits at once,
+     a replaced selection, a value set at once) is the validated whole-field parse, as before; for paste,
+     drop, replacement and autofill the parse reads the incoming value, as beforeinput does. */
+  inp.addEventListener('input', e => {
+    if (handled) { handled = false; render(); return; }           /* already applied in beforeinput: restore the field */
+    const ds = inp.value.replace(/\D/g, ''), was = lastDs, it = (e && e.inputType) || '';
+    const del = it ? it.indexOf('delete') === 0 : inp.value.length < lastVal.length;
+    if (it === 'insertText' && ds.length === was.length + 1 && ds.indexOf(was) === 0) {   /* ordinary typing: one digit at the end */
+      if (digit(ds.slice(-1)) && cfg.onDigit) cfg.onDigit();
+    } else if (del && ((ds.length < was.length && was.indexOf(ds) === 0) || ds === was)) {
+      for (let n = Math.max(1, was.length - ds.length); n > 0; n--) {   /* the same step as Delete in beforeinput */
+        if (segs[cur]) segs[cur] = segs[cur].slice(0, -1);
+        else if (cur > 0) cur--;
+      }
+    } else {
+      /* paste, drop, replacement or autofill: the incoming value alone is the whole field, as in beforeinput
+         (it may have been inserted next to the old digits); without it, the field as it now reads */
+      let src = ds;
+      if (it && it !== 'insertText' && it.indexOf('insert') === 0) {
+        let raw = e.data;
+        if (raw == null && e.dataTransfer) { try { raw = e.dataTransfer.getData('text/plain'); } catch(_){} }
+        const inc = String(raw || '').replace(/\D/g, '');
+        if (inc) src = inc;
+      }
+      parseWhole(src.slice(0, cfg.sizes.reduce((a, b) => a + b, 0)));
+      if (src.length && cfg.onDigit) cfg.onDigit();
+    }
     render();
   });
   cfg.setBtn.addEventListener('click', ev => {
@@ -2374,11 +2408,11 @@ function cozSegField(cfg){
       tmReady();   /* v19.96: selecting AM/PM no longer completes the step */
     });
   });
-  /* ED3: right-filling hour and minute windows (cozSegField). SET locks the hour; a single minute digit
-     shows as 05. Once the minutes are in, AM arms as the default exactly as before (v19.53). */
+  /* ED3: right-filling hour window (cozSegField). SET locks the hour. ED3.2: the minutes type left to right
+     and need both digits. Once the minutes are in, AM arms as the default exactly as before (v19.53). */
   const tmField = cozSegField({ input: inp, ghost: document.getElementById('tm-ghost'), setBtn: document.getElementById('tmSet'),
-    sizes: [2, 2], sep: ' : ', mask: 'HH : MM',
-    allow: (i, n) => i === 0 ? n <= 12 : n <= 59,
+    sizes: [2, 2], sep: ' : ', mask: 'HH : MM', leftFill: [false, true],   /* ED3.2: minutes left to right */
+    allow: (i, n, f, str) => i === 0 ? n <= 12 : (str && str.length === 1 ? n <= 5 : n <= 59),
     ok: (i, n) => i === 0 ? n >= 1 && n <= 12 : n <= 59,
     /* v19.90: Uncle John clicks back on under the first digit of the birth TIME */
     onDigit: () => { try { EMERGE_SOUND.play('pulse'); } catch(_){} uncleJohnIn(); },
@@ -2388,7 +2422,7 @@ function cozSegField(cfg){
       tmReady();
     } });
   function tmComplete(){
-    const f = tmField; if (!f || f.cur() !== 1 || !f.segs[1]) return false;
+    const f = tmField; if (!f || f.cur() !== 1 || f.segs[1].length !== 2) return false;   /* ED3.2: both minute digits */
     const h = +f.shown(0); return h >= 1 && h <= 12 && +f.shown(1) <= 59;
   }
   /* v19.96 firm enter: the pill lights once HH:MM is typed and a meridian is
