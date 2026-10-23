@@ -85,7 +85,7 @@ main{position:relative;z-index:1;max-width:640px;margin:0 auto;padding:max(22px,
     <a class="back next" id="next" href="#" hidden></a>
   </div>
 </main>
-<div class="stamp">ASCENDANT READING · R1.4 · early readings · ADD-ONS D1.3 · AN1 next</div>
+<div class="stamp">ASCENDANT READING · R1.4 · early readings · ADD-ONS D1.3</div>
 
 <script src="dev-review-engine.js?v=8"></script>
 <script src="coz-compare-server.js?v=4"></script>
@@ -145,10 +145,9 @@ main{position:relative;z-index:1;max-width:640px;margin:0 auto;padding:max(22px,
   });
 
   /* item 6 (Sep 22): Next steps through the Compare sequence.
-     AN1 (Oct 23 2026, his ruling): Tropical Ascendant -> Vedic Ascendant -> How They Work Together -> Your Current
-     Timing. The Vedic page's Next used to skip How They Work Together. */
+     Tropical Ascendant -> Vedic Ascendant -> Your Current Timing. */
   var NEXT = { western: ["VEDIC ASCENDANT", "ascendant-reading.html?sys=vedic"],
-               vedic:   ["HOW THEY WORK TOGETHER", "ascendant-reading.html?sys=combined"],
+               vedic:   ["YOUR CURRENT TIMING", "compare-current-timing.html"],
                combined:["YOUR CURRENT TIMING", "compare-current-timing.html"] };
   var nx = document.getElementById("next");
   if (NEXT[page]) { nx.innerHTML = esc(NEXT[page][0]) + " &rsaquo;"; nx.href = NEXT[page][1]; nx.hidden = false; }
