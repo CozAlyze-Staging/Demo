@@ -2023,14 +2023,17 @@ const SIGNS = {
   document.getElementById("asqHome").addEventListener("click", function(e){ e.preventDefault(); location.hash = "#/dashboard"; });
   /* DV2: a link in the Ascendant reading that leaves for another page (Next: Your Current Life Cycle)
      takes the first tap only; repeat taps while that page loads are ignored instead of restarting
-     the load. The sign clip keeps playing. Reset when the page is shown again (back). */
+     the load. The sign clip keeps playing. Reset when the page is shown again (back).
+     NX1 (Oct 24 2026): repeat taps are ignored for 4 seconds after a tap, not until the page is shown
+     again. A load that failed (weak signal) left the link dead for good; a tap after 4 s tries again. */
   document.addEventListener("click", function(e){
     const a = e.target.closest && e.target.closest("#asqContent a[href]");
     if (!a || !/\.html(\?|#|$)/.test(a.getAttribute("href"))) return;
-    if (a.dataset.cozLeaving === "1") { e.preventDefault(); return; }
-    a.dataset.cozLeaving = "1";
+    const now = Date.now(), at = Number(a.dataset.cozLeaving) || 0;
+    if (now - at < 4000) { e.preventDefault(); return; }
+    a.dataset.cozLeaving = String(now);
   });
-  window.addEventListener("pageshow", function(){ document.querySelectorAll('#asqContent a[data-coz-leaving="1"]').forEach(function(a){ a.dataset.cozLeaving = ""; }); });
+  window.addEventListener("pageshow", function(){ document.querySelectorAll('#asqContent a[data-coz-leaving]').forEach(function(a){ a.dataset.cozLeaving = ""; }); });
   document.addEventListener("click", function(e){
     const back = e.target.closest && e.target.closest("#asqNavBack");
     if (!back) return;
