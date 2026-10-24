@@ -1,4 +1,7 @@
-/* COZ NAV · NAV1 (Oct 24 2026, staging only) · page-opening message, dashboard Home, Account
+/* COZ NAV · NAV1 r2 (Oct 24 2026, staging only) · page-opening message, Account
+   r2 (Jason): Home is not changed by this file. Home never goes to the start of the platform (his
+   standing rule, fixed long ago): on a dashboard it stays on that dashboard, as on the live Demo, and
+   on the other pages it returns to the dashboard as before. r1's dashboard Home -> index.html is removed.
    Jason's rulings with Chat (Tom's test, Oct 23):
    - A tap that opens another page: if this page is still showing 8 seconds later, a message appears:
        "This page is taking longer than usual to open. You can try again."      [Cancel] [Try again]
@@ -10,8 +13,6 @@
      tap did. Nothing in this file starts a reading or sends a request to a reading server.
    - Cancel closes the message. The message goes away by itself when the next page opens, and it is
      cleared when a page comes back from Safari's Back cache.
-   - Home on the three dashboards (Vedic, Tropical, Compare) returns to the platform's start page
-     (index.html). The current chart and its readings stay on the phone. Saved Charts is unchanged.
    - Account, on every page: "Your account page is coming soon."                  [OK]
    - Look: the on-page message panel already approved for Compare saves (coz-saved.js CS1.8): Saved
      Charts' panel strip, its text style and its pills; pill text at least 15 px (RD1).
@@ -30,8 +31,6 @@
   /* controls whose page change is made by the page's own script */
   var SCRIPT_SEL = '#create,#backBtn,#wTog,#vTog,#comb';
   var page = (location.pathname.split("/").pop() || "index.html").replace(/\.html$/, "");
-  var DASHBOARD = { "vedic-reading": 1, "tropical-reading": 1, "compare-reading": 1 };
-  var START = new URL("index.html", location.href).href;
 
   var timer = null, retry = null, panel = null;
 
@@ -98,7 +97,6 @@
   }
   function goTo(url){ return function () { location.href = url; }; }
   function tapAgain(el){ return function () { if (el && el.isConnected) el.click(); }; }
-  function goStart(){ try { window.top.location.href = START; } catch (e) { location.href = START; } }
 
   /* the page changes; a page brought back from the Back cache shows no old message */
   window.addEventListener("pagehide", stop);
@@ -109,7 +107,6 @@
     if (!el || !el.closest) return null;
     var a;
     if ((a = el.closest(ACCOUNT_SEL))) return { k: "account", el: a };
-    if (DASHBOARD[page] && (a = el.closest('.hot[data-dash="home"]'))) return { k: "home", el: a };
     if (page !== "saved-charts" && (a = el.closest(SAVED_SEL))) return { k: "script", el: a };
     if (page === "compare-reading" && (a = el.closest('.hot[data-dash="ascendant"]'))) return { k: "script", el: a };
     if (page === "saved-charts" && !/[?&]chart=demo\b/.test(location.search) && (a = el.closest(".card")) &&
@@ -134,7 +131,6 @@
     var t = kindOf(ev.target);
     if (!t) return;
     if (t.k === "account") { ev.preventDefault(); show(ACCOUNT, [["OK", cancel]]); return; }
-    if (t.k === "home") { ev.preventDefault(); watch(goStart); if (!offline()) goStart(); return; }   /* offline: the message only */
     var held = t.k === "link" && offline();
     if (held) ev.preventDefault();                                  /* offline: a link is not tried until Try again */
     setTimeout(function () {
