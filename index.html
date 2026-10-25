@@ -859,7 +859,7 @@ body:has(#bdaybar.dt.show:not(.done)) .marker .b-label{visibility:hidden}</style
   </div>
 </div>
 
-<div id="ver">SCENE 1 · v20.8 · engine versions · routes 1989 1885</div>
+<div id="ver">SCENE 1 · v20.9 · engine versions · routes 1989 1885</div>
 
 <script>
 function cozBirthFingerprint(bd){
@@ -2372,7 +2372,8 @@ function cozSegField(cfg){
    04 = 2004). Hour 2-9 at once, 1 waits. Minute shows 0_: 0 and 6-9 finish it, 1-5 wait for 10-59.
    Then AM or PM, then ENTER. A digit that cannot belong to the box starts the next one (1 then 5 =
    January, day 5); a real day the month does not have (April 31, February 29 in 1977) is refused
-   with a short message instead, so a date is never guessed. The prompt above keeps the two existing questions: "What is your date of birth?"
+   with a short message instead, so a date is never guessed, and the box stays empty with ENTER off
+   until it is fixed (r3: an earlier value is never kept behind a refusal). The prompt above keeps the two existing questions: "What is your date of birth?"
    for the date boxes, "What time were you born?" for TIME. ENTER sets window.__birthDate (YYYY-MM-DD)
    and window.__birthTime (HH:MM AM) exactly as the old date and time rows did, then opens the name
    step. BACK steps back one box; on MONTH it returns to the birthplace, as before. */
@@ -2465,8 +2466,9 @@ function cozSegField(cfg){
       else {
         const v = Number(p) * 10 + d;
         if (v <= maxD) settle('day', v);
-        else if (v <= 31) {   /* a real day, just not in this month: say so, never guess another date */
-          pend = '';
+        else if (v <= 31) {   /* a real day, just not in this month: say so, never guess another date. The box is
+                                 emptied, not left on the day it had before, so ENTER waits for a day the month has */
+          pend = ''; S.day = null;
           message = ((S.month === 2 && S.year !== null) ? 'February ' + S.year : MONTHS_LONG[S.month - 1]) + ' has ' + maxD + ' days.';
         }
         else { settle('day', Number(p)); spill(d); }   /* 32 to 39 cannot be a day: the second digit starts the year */
@@ -2516,6 +2518,8 @@ function cozSegField(cfg){
   }
   function finish(){
     if (!allIn() || pend !== '' || active === 'done') return;
+    const bad = problem();   /* DT1 r3: never hand on a date the calendar does not have */
+    if (bad) { S[bad.part] = null; active = bad.part; message = bad.text; render(); return; }
     const now = new Date();
     const today = S.year === now.getFullYear() && S.month === now.getMonth() + 1 && S.day === now.getDate();
     if (today && to24(S.hour, S.ampm) * 60 + S.minute > now.getHours() * 60 + now.getMinutes()) {
@@ -2567,7 +2571,7 @@ function cozSegField(cfg){
     ampmEl.classList.toggle('muted', a !== 'ampm' && a !== 'ready');
     ampmEl.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x.getAttribute('data-ampm') === S.ampm)));
     msgEl.textContent = message;
-    enterEl.classList.toggle('ready', allIn() && pend === '' && a !== 'done');
+    enterEl.classList.toggle('ready', allIn() && pend === '' && a !== 'done' && !problem());
   }
 
   /* the number pad: two spaces sit in the field, so deleting one means the delete key */
