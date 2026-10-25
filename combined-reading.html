@@ -221,6 +221,13 @@ h1{font-family:var(--head);font-weight:500;font-size:calc(72 * var(--k));line-he
        in the shared cache instead of starting a second call. Network drops retry; a
        Try again control reruns the whole step. */
     var G = window.COZ_COMBINED_GEN, E = window.COZ_COMPARE_EVIDENCE;
+    /* GD1 r2: the dashboard's Combined Reading door counts only once real reading text is on this page (a finished or
+       released section), never for the waiting, refused, failed or unavailable lines (all drawn as .dev lines), and it
+       counts for this reading's own chart pair, not for whichever chart is current when it is written */
+    function doorSeen(){
+      if (!bodies.some(function(b){ return stParas(b).some(function(t){ return t && t.trim().length > 0; }); })) return;
+      try { (window.CozDoors ? CozDoors.mark : function (s, d, r) { (window.__cozDoorsQ = window.__cozDoorsQ || []).push([s, d, r]); })("compare", "reading", { runId: res.pair.runId, fingerprint: res.pair.fingerprint }); } catch (e) {}
+    }
     function show(rec){
       window.COZ_COMBINED_RECORD = rec;
       if (/[?&]debug=1\b/.test(location.search)) renderTrace(rec, window.COZ_COMBINED_MANIFEST);
@@ -229,6 +236,7 @@ h1{font-family:var(--head);font-weight:500;font-size:calc(72 * var(--k));line-he
         b.innerHTML = sct.paragraphs.map(function(t){ return "<p>" + esc(t) + "</p>"; }).join("");
         stTrack(b);                                                            /* r5 */
       });
+      doorSeen();                                                              /* GD1 r2 */
     }
     /* CR3.0 (Sep 22): this page is a VIEWER. Inside the living page it never sends a model
        request itself; it asks the coordinator in index.html (which a page change cannot
@@ -315,6 +323,7 @@ h1{font-family:var(--head);font-weight:500;font-size:calc(72 * var(--k));line-he
                                              : '<p class="dev wait">' + esc(x.message) + '</p>';
         if (x.state === "released") stTrack(b);                                /* r5 */
       });
+      doorSeen();                                                              /* GD1 r2: a released section is on the page */
     }
     function runServer(){
       bodies.forEach(function(b){ b.removeAttribute("data-srv"); b.innerHTML = '<p class="dev wait">' + esc(CS.MSG.writing) + '</p>'; });
@@ -365,7 +374,7 @@ h1{font-family:var(--head);font-weight:500;font-size:calc(72 * var(--k));line-he
   });
 })();
 </script>
-<script src="coz-doors.js?v=1"></script>
+<script src="coz-doors.js?v=2"></script>
 <script src="coz-nav.js?v=1"></script>
 </body>
 </html>

@@ -240,6 +240,8 @@ function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
       });
     });
     $("cPrev").textContent=combinedText(w,v);
+    /* GD1 r2: both Ascendants and How They Work Together are on screen: the dashboard door counts, for this pair's chart */
+    try { (window.CozDoors ? CozDoors.mark : function (s, d, r) { (window.__cozDoorsQ = window.__cozDoorsQ || []).push([s, d, r]); })("compare", "ascendant", { runId: res.pair.runId, fingerprint: res.pair.fingerprint }); } catch (e) {}
     /* A1.5: How They Work Together opens its own full reading. Generation starts now,
        in parallel with the two cards, so it is usually ready by the time it is tapped. */
     A.getReading("combined",res).catch(function(e){ console.log("[COZ ASC] combined reading:", e&&e.message); });
@@ -256,7 +258,7 @@ function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
   });
 })();
 </script>
-<script src="coz-doors.js?v=1"></script>
+<script src="coz-doors.js?v=2"></script>
 <script src="coz-nav.js?v=1"></script>
 </body>
 </html>

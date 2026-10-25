@@ -535,7 +535,7 @@ body[data-view="reading"] .vedic-reading-page { animation: none; }
 </style>
 <script src="coz-saved.js?v=3"></script>
 <script src="saved-tropical-library.js?v=1"></script>
-<script src="coz-tropical-server.js?v=2"></script>
+<script src="coz-tropical-server.js?v=3"></script>
 <style id="coz-rd1">/* RD1 (Oct 22 2026): every tappable label at least 15px on a phone */html body #cozFoot a{font-size:15px}html body .coz-skip{font-size:15px}/* RD3: Vedic/Tropical/Life Cycle Back/Next and the bottom bar labels larger */html body .vedic-nav a,html body .vedic-nav button{font-size:clamp(19px,5vw,22px);font-weight:500}html body #cozFoot a{font-size:17px}</style>
 <style id="coz-dv1">/* DV1 (Oct 22 2026): version stamps and the diagnostic launcher show only on a device with developer view on (localStorage cozDevView = "1") */html:not(.coz-dev) .stamp,html:not(.coz-dev) .stamp2,html:not(.coz-dev) .vedic-stamp,html:not(.coz-dev) .build-stamp,html:not(.coz-dev) .lc-stamp,html:not(.coz-dev) .cs-stamp,html:not(.coz-dev) .ktw-stamp,html:not(.coz-dev) .wcn-stamp,html:not(.coz-dev) #stamp,html:not(.coz-dev) #cozDiagLaunch{display:none!important}</style><script>try{if(localStorage.getItem("cozDevView")==="1")document.documentElement.classList.add("coz-dev")}catch(e){}</script>
 </head>
@@ -816,15 +816,16 @@ function completeReading(map) {
   return vedicReadingSections.every(sec => Array.isArray(map[sec.id]) && map[sec.id].length > 0 &&
     map[sec.id].every(p => typeof p === "string" && p.trim().length > 0));
 }
-/* returns { map, source } with source "personal" or "sample", or null when nothing valid is available */
+/* returns { map, source } with source "personal" or "sample", or null when nothing valid is available.
+   GD1 r2: a personal reading also carries run, the identity it was verified against (for the door marks). */
 function loadReading() {
   const run = currentRun();
   const live = verifiedReading(window.COZ_TROPICAL_READING, run);
-  if (live) { const m = readingFromContract(live); if (completeReading(m)) return { map: m, source: "personal" }; try { console.log("[TROPICAL READING] verified reading is incomplete; treated as unavailable"); } catch (e) {} }
+  if (live) { const m = readingFromContract(live); if (completeReading(m)) return { map: m, source: "personal", run: live.run }; try { console.log("[TROPICAL READING] verified reading is incomplete; treated as unavailable"); } catch (e) {} }
   try {
     const stored = JSON.parse(localStorage.getItem("cozTropicalReading") || "null");
     const ok = verifiedReading(stored, run);
-    if (ok) { const m = readingFromContract(ok); if (completeReading(m)) return { map: m, source: "personal" }; try { console.log("[TROPICAL READING] stored reading is incomplete; treated as unavailable"); } catch (e) {} }
+    if (ok) { const m = readingFromContract(ok); if (completeReading(m)) return { map: m, source: "personal", run: ok.run }; try { console.log("[TROPICAL READING] stored reading is incomplete; treated as unavailable"); } catch (e) {} }
   } catch (e) {}
   if (PREVIEW_SAMPLE) return { map: readingFromContract(COZ_TROPICAL_SAMPLE_READING), source: "sample" };   /* labeled in renderSection */
   return null;                                                                                               /* normal use: unavailable, never the sample */
@@ -973,7 +974,9 @@ function sectionById(id) { return vedicReadingSections.find(s => s.id === id) ||
 
 function renderSection(section) {
   const loaded = loadReading();
-  const paragraphs = loaded ? loaded.map[section.id] : serverParagraphs(section.id);
+  /* GD1 r2: one read of the server's section gives both its text and the run that text belongs to */
+  const view = loaded ? null : ((window.CozTropicalServer && CozTropicalServer.sectionView) ? CozTropicalServer.sectionView(section.id) : null);
+  const paragraphs = loaded ? loaded.map[section.id] : (view ? view.paragraphs : [READING_UNAVAILABLE]);
   const sampleLabel = (loaded && loaded.source === "sample") ? `<p class="dev-label">${esc(SAMPLE_LABEL)}</p>` : "";
   const sectionCounter = `${String(section.number).padStart(2, "0")} OF ${SECTION_TOTAL}`;
   const titleClass = section.title.length > 22 ? "vedic-title vedic-title--long" : "vedic-title";
@@ -1007,7 +1010,13 @@ function renderSection(section) {
   const fresh = old.cloneNode(false);      // fresh node so the fade re-runs on every section
   fresh.innerHTML = html;
   old.replaceWith(fresh);
-  try { if (document.body.dataset.view === "reading" && (loaded || serverSignature(section.id) === "passed")) (window.CozDoors ? CozDoors.mark : function (s, d) { (window.__cozDoorsQ = window.__cozDoorsQ || []).push([s, d]); })("tropical", "reading"); } catch (e) {}   /* GD1: the reading's text is on screen */
+  /* GD1 r2: the reading door counts once real reading text is on screen (a personal reading, or a section the server
+     has passed), for the run that text was written for. Never the sample preview, a status or "not available" line. */
+  try {
+    const shownRun = loaded ? loaded.run : (view && view.state === "passed" ? view.run : null);
+    if (shownRun && document.body.dataset.view === "reading")
+      (window.CozDoors ? CozDoors.mark : function (s, d, r) { (window.__cozDoorsQ = window.__cozDoorsQ || []).push([s, d, r]); })("tropical", "reading", shownRun);
+  } catch (e) {}
   if (section.id === "at-your-core") {     /* TSA1.4: recorded only now, with the paragraphs in the document and the reading view showing */
     const t = TM();
     if (t) {
@@ -1091,6 +1100,7 @@ function resolveAscendant() {
   if (!verified) return null;
   const hinted = pick(params.get("asc")) || pick(window.EMERGE_ASCENDANT_TROPICAL);
   if (hinted && hinted !== verified) { try { console.log("[TROPICAL READING] ascendant hint " + hinted + " ignored; verified chart says " + verified); } catch (e) {} }
+  try { window.COZ_DOORS_PAGE_RUN = { runId: rec.run.runId, fingerprint: rec.run.fingerprint }; } catch (e) {}   /* GD1 r2: the run this page's Ascendant and door marks come from */
   return verified;
 }
 
@@ -1791,6 +1801,8 @@ function tropicalRulerLayer(sign){
       hero.classList.remove("settling"); content.classList.remove("rising");
       hero.style.height = ""; content.style.transform = "";
       if (key) { try { window.dispatchEvent(new CustomEvent("EMERGE_ASCENDANT_SETTLED", { detail:{ sign:key } })); } catch(_){} }   /* a real emergence only */
+      /* GD1 r2: the Ascendant is on screen: its door counts for the run this sign came from (fixed when the page opened) */
+      if (key) { try { (window.CozDoors ? CozDoors.mark : function (s, d, r) { (window.__cozDoorsQ = window.__cozDoorsQ || []).push([s, d, r]); })("tropical", "ascendant", window.COZ_DOORS_PAGE_RUN); } catch(_){} }
     });
     if (reduced){ finish(); return; }
     content.style.transform = "translateY(" + window.innerHeight + "px)";
@@ -1944,7 +1956,7 @@ document.getElementById("hotReading").addEventListener("click", function(){
   vid.addEventListener("pause", function () { if (vid.currentTime === 0) reset(); });
 })();
 </script>
-<script src="coz-doors.js?v=1"></script>
+<script src="coz-doors.js?v=2"></script>
 <script src="coz-nav.js?v=1"></script>
 </body>
 </html>

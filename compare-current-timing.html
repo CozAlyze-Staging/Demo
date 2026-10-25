@@ -168,6 +168,8 @@ body { padding-bottom: env(safe-area-inset-bottom); }
     $('vPair').textContent = d.md.lord + ' \u2013 ' + d.ad.lord;
     fitPair($('vPair'));
     paintSlots(d);
+    /* GD1 r2: the timing is on screen: the dashboard door counts, for the chart run it was calculated from */
+    try { (window.CozDoors ? CozDoors.mark : function (s, dr, r) { (window.__cozDoorsQ = window.__cozDoorsQ || []).push([s, dr, r]); })('compare', 'timing', d.run); } catch (e) {}
 
     $('read').removeAttribute('aria-disabled');
     var refit = function () { fitPair($('vPair')); fitSummary(); };
@@ -176,7 +178,7 @@ body { padding-bottom: env(safe-area-inset-bottom); }
   });
 })();
 </script>
-<script src="coz-doors.js?v=1"></script>
+<script src="coz-doors.js?v=2"></script>
 <script src="coz-nav.js?v=1"></script>
 </body>
 </html>

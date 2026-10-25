@@ -277,7 +277,7 @@
     var j = record();
     if (!j) return null;                                           /* no server job for this run */
     var s = j.sections && j.sections[id];
-    if (s && s.state === "passed") return { state: "passed", paragraphs: s.body };
+    if (s && s.state === "passed") return { state: "passed", paragraphs: s.body, run: { runId: j.runId, fingerprint: j.fingerprint } };   /* GD1 r2: whose text this is */
     if (j.state === "access") return { state: "access:" + (j.reason || ""), paragraphs: [lineFor(j)] };   /* DTC2: the reason is in the state, so the page redraws when it changes */
     if (j.state === "refused") return { state: "failed", paragraphs: [COPY.failed] };
     if (s && s.state === "failed") return { state: "failed", paragraphs: [COPY.failed] };

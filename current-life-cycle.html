@@ -264,6 +264,9 @@ html, body {
 
     NAV;
 
+  /* GD1 r2: the life cycle is on screen: the dashboard door counts, for the chart run it was drawn from */
+  try { (window.CozDoors ? CozDoors.mark : function (s, d, r) { (window.__cozDoorsQ = window.__cozDoorsQ || []).push([s, d, r]); })('vedic', 'timing', chart.run); } catch (e) {}
+
   /* Developer/debug only. Never rendered into the customer view. */
   if (window.console) {
     console.log('[LIFE CYCLE] mode=' + lc.mode + ' year=' + lc.yearLengthDays + 'd status=' + lc.validationStatus +
@@ -275,7 +278,7 @@ html, body {
   }
 })();
 </script>
-<script src="coz-doors.js?v=1"></script>
+<script src="coz-doors.js?v=2"></script>
 <script src="coz-nav.js?v=1"></script>
 </body>
 </html>

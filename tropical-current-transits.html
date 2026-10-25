@@ -194,6 +194,8 @@ h3{font-family:var(--head);font-weight:500;font-size:clamp(16px,4.5cqw,19.5px);l
       '<p class="note">' + esc(NOTE) + '</p>';
     $('reading').innerHTML = html;
     $('status').hidden = true;
+    /* GD1 r2: the transits are on screen: the dashboard door counts, for the chart run they were calculated from */
+    try { (window.CozDoors ? CozDoors.mark : function (s, dr, r) { (window.__cozDoorsQ = window.__cozDoorsQ || []).push([s, dr, r]); })('tropical', 'timing', d.run); } catch (e) {}
     /* all closed when the page opens; one open at a time (the Compare reading's accordion behaviour) */
     var buttons = [].slice.call(document.querySelectorAll('.drop .acc-btn'));
     function setOpen(b, open){ b.setAttribute('aria-expanded', open ? 'true' : 'false'); $(b.getAttribute('aria-controls')).classList.toggle('open', open); }
@@ -226,7 +228,7 @@ h3{font-family:var(--head);font-weight:500;font-size:clamp(16px,4.5cqw,19.5px);l
   }, 60);
 })();
 </script>
-<script src="coz-doors.js?v=1"></script>
+<script src="coz-doors.js?v=2"></script>
 <script src="coz-nav.js?v=1"></script>
 </body>
 </html>

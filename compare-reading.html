@@ -733,6 +733,7 @@ function resolveAscendant() {
   /* C2.2: the validated chart-run pair first, so this glyph agrees with the Ascendants page */
   try {
     const bd = JSON.parse(localStorage.getItem("emergeBirthData") || "null");
+    if (bd && bd.runId && bd.fingerprint) window.COZ_DOORS_PAGE_RUN = { runId: bd.runId, fingerprint: bd.fingerprint };   /* GD1 r2: the chart this dashboard opened for */
     const pr = JSON.parse(localStorage.getItem("cozAscendantPair") || "null");
     if (bd && pr && bd.runId && pr.runId === bd.runId && pr.fingerprint === bd.fingerprint) {
       const t = String(pr.tropical.sign); return t.charAt(0).toUpperCase() + t.slice(1);
@@ -1199,7 +1200,7 @@ document.getElementById("hotReading").addEventListener("click", function(){
   vid.addEventListener("pause", function () { if (vid.currentTime === 0) reset(); });
 })();
 </script>
-<script src="coz-doors.js?v=1"></script>
+<script src="coz-doors.js?v=2"></script>
 <script src="coz-nav.js?v=1"></script>
 </body>
 </html>

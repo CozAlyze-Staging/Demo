@@ -1284,7 +1284,7 @@ function sectionById(id) { return vedicReadingSections.find(s => s.id === id) ||
 
 function renderSection(section) {
   cozCurrentSectionId = section.id;
-  const reading = loadReading() || partialReading();
+  const full = loadReading(), reading = full || partialReading();
   if (!reading) { renderUnavailableNotice(); return; }
   const paragraphs = Array.isArray(reading[section.id]) ? reading[section.id] : [];
   const sectionCounter = `${String(section.number).padStart(2, "0")} OF ${SECTION_TOTAL}`;
@@ -1322,6 +1322,14 @@ function renderSection(section) {
   const fresh = old.cloneNode(false);      // fresh node so the fade re-runs on every section
   fresh.innerHTML = html;
   old.replaceWith(fresh);
+  /* GD1 r2: the reading door counts once real reading text is on screen, for the run that text was written for:
+     a complete reading, Sections 1-2 of a partial one, or a Section 3-6 the server has released. Never a status line. */
+  try {
+    const real = paragraphs.some(p => typeof p === "string" && p.trim().length > 0) &&
+      (!!full || section.number <= 2 || ((window.CozVedicServer && CozVedicServer.sectionView(reading.run, section.id)) || {}).state === "released");
+    if (real && document.body.dataset.view === "reading")
+      (window.CozDoors ? CozDoors.mark : function (s, d, r) { (window.__cozDoorsQ = window.__cozDoorsQ || []).push([s, d, r]); })("vedic", "reading", reading.run);
+  } catch (e) {}
 
   document.title = `${section.title} · Your Vedic Reading · CozAlyze`;
 
@@ -1420,7 +1428,6 @@ function showFromHash() {
       history.replaceState({ id: section.id }, "", `#/${section.id}`);
     }
     renderSection(section);
-    try { (window.CozDoors ? CozDoors.mark : function (s, d) { (window.__cozDoorsQ = window.__cozDoorsQ || []).push([s, d]); })("vedic", "reading"); } catch (e) {}   /* GD1: the reading's text is on screen */
     try{(window.COZ_DIAG&&COZ_DIAG.log)("display (after render)",(function(){ var el = document.getElementById("vedicContent"); var unavailable = !!document.getElementById("vedicRetry"); var n = el ? el.querySelectorAll(".vedic-body p").length : 0; return (unavailable ? "UNAVAILABLE screen on display" : "reading on display, route " + String(location.hash || "").slice(0, 30) + ", " + n + " paragraphs") + " · complete reading object present: " + !!loadReading(); })());}catch(_d){}
     window.scrollTo({ top: 0, behavior: "instant" });
   };
@@ -1513,6 +1520,7 @@ function resolveAscendant() {
   if (!verified) return null;
   const hinted = pick(params.get("asc")) || pick(window.EMERGE_ASCENDANT);
   if (hinted && hinted !== verified) { try { console.log("[VEDIC READING] ascendant hint " + hinted + " ignored; verified chart says " + verified); } catch (e) {} }
+  try { window.COZ_DOORS_PAGE_RUN = { runId: c.run.runId, fingerprint: c.run.fingerprint }; } catch (e) {}   /* GD1 r2: the run this page's Ascendant and door marks come from */
   return verified;
 }
 
@@ -1998,6 +2006,8 @@ const SIGNS = {
       hero.classList.remove("settling"); content.classList.remove("rising");
       hero.style.height = ""; content.style.transform = "";
       if (key) { try { window.dispatchEvent(new CustomEvent("EMERGE_ASCENDANT_SETTLED", { detail:{ sign:key } })); } catch(_){} }   /* a real emergence only */
+      /* GD1 r2: the Ascendant's text is on screen: its door counts for the run this sign came from (fixed when the page opened) */
+      if (key) { try { (window.CozDoors ? CozDoors.mark : function (s, d, r) { (window.__cozDoorsQ = window.__cozDoorsQ || []).push([s, d, r]); })("vedic", "ascendant", window.COZ_DOORS_PAGE_RUN); } catch(_){} }
     });
     if (reduced){ finish(); return; }
     content.style.transform = "translateY(" + window.innerHeight + "px)";
@@ -2165,7 +2175,7 @@ document.querySelectorAll('#cozFoot a[data-foot]').forEach(a => {
   vid.addEventListener("pause", function () { if (vid.currentTime === 0) reset(); });
 })();
 </script>
-<script src="coz-doors.js?v=1"></script>
+<script src="coz-doors.js?v=2"></script>
 <script src="coz-nav.js?v=1"></script>
 </body>
 </html>

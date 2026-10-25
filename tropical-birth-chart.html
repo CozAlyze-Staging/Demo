@@ -944,11 +944,14 @@ function renderSavedReadings(lib){
   var report = renderReport(chart);
   if (savedLib && qp.get("in") !== "compare"){ var innerEl = report.querySelector(".report-inner"); innerEl.insertBefore(renderSavedReadings(savedLib), innerEl.querySelector(".report-footer")); }
   mount.appendChild(report);
+  /* GD1 r2: the person's own birth chart is on screen: its dashboard door counts, for the run this chart belongs to
+     (Compare's Your Birth Charts when shown inside Compare, otherwise the Tropical door). Never a sample or saved chart. */
+  if (!isSample && !savedLib) { try { (window.CozDoors ? CozDoors.mark : function (s, d, r) { (window.__cozDoorsQ = window.__cozDoorsQ || []).push([s, d, r]); })(qp.get("from") === "compare" ? "compare" : "tropical", "chart", chart.run); } catch (e) {} }
   cozAutoPrint();
 })();
 
 </script>
-<script src="coz-doors.js?v=1"></script>
+<script src="coz-doors.js?v=2"></script>
 <script src="coz-nav.js?v=1"></script>
 </body>
 </html>
