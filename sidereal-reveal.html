@@ -389,6 +389,12 @@
   .complete-reading-cta:focus-visible { outline:2px solid rgba(230,200,135,0.85); outline-offset:4px; }
   .complete-reading-cta span { display:inline-block; margin-left:6px; transition:transform 0.4s ease; }
   .complete-reading-cta:hover span { transform:translateX(4px); }
+  /* VC1 (Oct 25 2026), the Tropical v18.69 guard brought to Vedic: opacity:0 still takes
+     taps. While the "Your Chart Summary is ready" card rises (body.cardUp, about 5.3s to
+     10s after REVEAL MY CHART) this old CTA sat invisible in the card's lower half and a
+     tap on the card fired the unlock event, so the price page rose over the sample reading
+     before it had ever been seen. Not hit-testable until it is actually shown. */
+  .complete-reading-cta:not(.in) { visibility:hidden; pointer-events:none; }
 
   /* staged text entrance */
   .chart-summary-card .t { opacity:0; transform:translateY(13px); transition:opacity 0.85s ease, transform 0.85s ease; }
@@ -1037,7 +1043,7 @@ var BIRTH = __ok ? {
 console.log('[EMERGE FLOW] 5. sidereal-reveal — system in storage:',
             SAVED && SAVED.system, '| data:', __ok ? 'user birth data' : 'QA fallback');
 document.getElementById('stamp').textContent =
-  'SIDEREAL v19.99 engine version · LAHIRI · d1 · data:' + ((SAVED && SAVED.system) || 'none');
+  'SIDEREAL v19.99 engine version · VC1 card guard · LAHIRI · d1 · data:' + ((SAVED && SAVED.system) || 'none');
 
 var DEG = Math.PI/180, RAD = 180/Math.PI;
 
