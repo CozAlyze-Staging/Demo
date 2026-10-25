@@ -25,7 +25,10 @@
   --body-font: "Avenir Next", "Helvetica Neue", Arial, sans-serif;
   --side-pad: 28px;
   --dash-zoom: 1;            /* C1.3: opens showing the WHOLE frame like the Vedic and Tropical dashboards, then eases to --dash-zoom-in */
-  --dash-zoom-in: 1.34;   /* pulled back from 1.5 so the title clears the edges; ~1.06 on the art itself */
+  --dash-zoom-in: 1.17;   /* GD1 (Oct 25): the whole new art first, then the same ease-in as Vedic and Tropical (same delay, length and curve).
+                             His new art has no black border, so it lands at 1.17, not their 1.3: at 1.3 "Compare Your Charts"
+                             and TROPICAL / VEDIC would be cut at the screen edges. At 1.17 they clear the edges and the nav
+                             pill sits just below the screen, as on Vedic and Tropical. (Was 1.34 on the old letterboxed frame.) */
   --reveal-zoom: 1.23;    /* the clip zooms itself in over its first second, so the stage eases back to cover-fit */
 }
 @media (max-width: 374px) { :root { --side-pad: 20px; } }
@@ -422,6 +425,30 @@ body[data-view="reading"] .vedic-reading-page { animation: none; }
 <script src="coz-saved.js?v=5"></script>
 <script src="coz-compare-server.js?v=4"></script>
 <style id="coz-dv1">/* DV1 (Oct 22 2026): version stamps and the diagnostic launcher show only on a device with developer view on (localStorage cozDevView = "1") */html:not(.coz-dev) .stamp,html:not(.coz-dev) .stamp2,html:not(.coz-dev) .vedic-stamp,html:not(.coz-dev) .build-stamp,html:not(.coz-dev) .lc-stamp,html:not(.coz-dev) .cs-stamp,html:not(.coz-dev) .ktw-stamp,html:not(.coz-dev) .wcn-stamp,html:not(.coz-dev) #stamp,html:not(.coz-dev) #cozDiagLaunch{display:none!important}</style><script>try{if(localStorage.getItem("cozDevView")==="1")document.documentElement.classList.add("coz-dev")}catch(e){}</script>
+<style id="coz-gd1">
+/* GD1 (Oct 25 2026, staging only): Jason's IMG_3933 is the Compare dashboard art (compare-dashboard.jpg,
+   813 x 1763: the whole arch through the bottom nav). The dashboard stage takes its shape, so the whole
+   image is shown first and then eases in the same way as Vedic and Tropical (same delay, length and curve;
+   --dash-zoom-in above). The doors, nav and marks sit inside this stage, so they stay on the art through
+   the zoom, a pinch and a pan. The reveal keeps its own stage and art (compare-dash.jpg, the clip's first frame). */
+#dashStage {
+  aspect-ratio: 813 / 1763;
+  width: min(100vw, calc(100svh * 813 / 1763));   /* contain-fit: the whole art */
+  container-type: inline-size;
+  overflow: hidden;
+}
+/* the baked Leo on this art: ring centred (184,1198), outer ring radius ~36, inner dotted ring ~31; in cqw of 813 */
+#dashStage .asc-patch-glyph {
+  left: 18.97cqw; top: 143.70cqw;
+  width: 7.38cqw; height: 7.38cqw;
+  background: radial-gradient(circle, rgb(12,19,34) 0 86%, rgba(12,19,34,0) 100%);
+}
+#dashStage .asc-glyph {
+  left: 18.97cqw; top: 143.70cqw;
+  width: 7.38cqw; height: 7.38cqw;
+  font: 400 4.38cqw/7.38cqw "Cormorant Garamond", "Apple Symbols", "Segoe UI Symbol", serif;
+}
+</style>
 </head>
 <body data-view="dashboard">
 
@@ -430,19 +457,20 @@ body[data-view="reading"] .vedic-reading-page { animation: none; }
 <!-- ===== PAID DASHBOARD ===== -->
 <div class="dash" id="dash" aria-label="Compare Your Charts dashboard">
   <div class="stage" id="dashStage">
-    <img class="stage-art" src="compare-dash.jpg?v=10" alt="" width="1084" height="1908">
+    <!-- GD1: his IMG_3933. Door taps = each door's gold outline on this art; nav = the pill in thirds -->
+    <img class="stage-art" src="compare-dashboard.jpg?v=1" alt="" width="813" height="1763">
     <div class="asc-patch asc-patch-glyph" aria-hidden="true"></div>
     <div class="asc-patch asc-patch-text" aria-hidden="true"></div>
     <div class="asc-glyph" aria-hidden="true"></div>
     <div class="asc-label" aria-hidden="true"></div>
 
-    <button class="hot hot-reading" id="hotReading" type="button" style="left:23.99%;top:57.23%;width:53.04%;height:4.19%" aria-label="Your Combined Reading">Your Combined Reading</button>
-    <button class="hot" type="button" data-dash="ascendant"  style="left:23.99%;top:62.63%;width:53.04%;height:4.45%" aria-label="Your Ascendants">Your Ascendants</button>
-    <button class="hot" type="button" data-dash="timing" data-href="compare-current-timing.html" style="left:23.99%;top:69.18%;width:53.04%;height:4.45%" aria-label="Your Current Timing">Your Current Timing</button>
-    <button class="hot" type="button" data-dash="birth-charts" data-href="compare-birth-charts.html" style="left:23.99%;top:75.21%;width:53.04%;height:4.45%" aria-label="Your Birth Charts">Your Birth Charts</button>
-    <button class="hot" type="button" data-dash="home"    style="left:18.91%;top:86.74%;width:20.11%;height:3.14%" aria-label="Home">Home</button>
-    <button class="hot" type="button" data-dash="saved"   style="left:39.02%;top:86.74%;width:20.11%;height:3.14%" aria-label="Saved">Saved</button>
-    <button class="hot" type="button" data-dash="account" style="left:59.13%;top:86.74%;width:20.11%;height:3.14%" aria-label="Account">Account</button>
+    <button class="hot hot-reading" id="hotReading" type="button" style="left:16.48%;top:58.59%;width:68.27%;height:4.99%" aria-label="Your Combined Reading">Your Combined Reading</button>
+    <button class="hot" type="button" data-dash="ascendant"  style="left:16.36%;top:65.63%;width:67.9%;height:4.99%" aria-label="Your Ascendants">Your Ascendants</button>
+    <button class="hot" type="button" data-dash="timing" data-href="compare-current-timing.html" style="left:16.85%;top:72.55%;width:67.53%;height:4.99%" aria-label="Your Current Timing">Your Current Timing</button>
+    <button class="hot" type="button" data-dash="birth-charts" data-href="compare-birth-charts.html" style="left:17.22%;top:79.41%;width:66.42%;height:4.88%" aria-label="Your Birth Charts">Your Birth Charts</button>
+    <button class="hot" type="button" data-dash="home"    style="left:11.01%;top:92.68%;width:25.58%;height:3.57%" aria-label="Home">Home</button>
+    <button class="hot" type="button" data-dash="saved"   style="left:36.59%;top:92.68%;width:25.58%;height:3.57%" aria-label="Saved">Saved</button>
+    <button class="hot" type="button" data-dash="account" style="left:62.18%;top:92.68%;width:25.58%;height:3.57%" aria-label="Account">Account</button>
   </div>
 </div>
 
@@ -697,7 +725,7 @@ document.getElementById("vedicBack").addEventListener("click", goDashboard);
    DASHBOARD
    ============================================================ */
 const SIGNS = ["Aries","Taurus","Gemini","Cancer","Leo","Virgo","Libra","Scorpio","Sagittarius","Capricorn","Aquarius","Pisces"];
-const SAMPLE_SIGN_IN_ART = "Leo";   // baked into compare-dash.jpg and the clip's first frames
+const SAMPLE_SIGN_IN_ART = "Leo";   // baked into compare-dashboard.jpg, compare-dash.jpg and the clip's first frames
 const SIGN_GLYPH = { Aries:"\u2648", Taurus:"\u2649", Gemini:"\u264A", Cancer:"\u264B", Leo:"\u264C", Virgo:"\u264D",
   Libra:"\u264E", Scorpio:"\u264F", Sagittarius:"\u2650", Capricorn:"\u2651", Aquarius:"\u2652", Pisces:"\u2653" };
 
@@ -1171,6 +1199,7 @@ document.getElementById("hotReading").addEventListener("click", function(){
   vid.addEventListener("pause", function () { if (vid.currentTime === 0) reset(); });
 })();
 </script>
+<script src="coz-doors.js?v=1"></script>
 <script src="coz-nav.js?v=1"></script>
 </body>
 </html>

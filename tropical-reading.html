@@ -1007,6 +1007,7 @@ function renderSection(section) {
   const fresh = old.cloneNode(false);      // fresh node so the fade re-runs on every section
   fresh.innerHTML = html;
   old.replaceWith(fresh);
+  try { if (document.body.dataset.view === "reading" && (loaded || serverSignature(section.id) === "passed")) (window.CozDoors ? CozDoors.mark : function (s, d) { (window.__cozDoorsQ = window.__cozDoorsQ || []).push([s, d]); })("tropical", "reading"); } catch (e) {}   /* GD1: the reading's text is on screen */
   if (section.id === "at-your-core") {     /* TSA1.4: recorded only now, with the paragraphs in the document and the reading view showing */
     const t = TM();
     if (t) {
@@ -1943,6 +1944,7 @@ document.getElementById("hotReading").addEventListener("click", function(){
   vid.addEventListener("pause", function () { if (vid.currentTime === 0) reset(); });
 })();
 </script>
+<script src="coz-doors.js?v=1"></script>
 <script src="coz-nav.js?v=1"></script>
 </body>
 </html>

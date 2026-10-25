@@ -1420,6 +1420,7 @@ function showFromHash() {
       history.replaceState({ id: section.id }, "", `#/${section.id}`);
     }
     renderSection(section);
+    try { (window.CozDoors ? CozDoors.mark : function (s, d) { (window.__cozDoorsQ = window.__cozDoorsQ || []).push([s, d]); })("vedic", "reading"); } catch (e) {}   /* GD1: the reading's text is on screen */
     try{(window.COZ_DIAG&&COZ_DIAG.log)("display (after render)",(function(){ var el = document.getElementById("vedicContent"); var unavailable = !!document.getElementById("vedicRetry"); var n = el ? el.querySelectorAll(".vedic-body p").length : 0; return (unavailable ? "UNAVAILABLE screen on display" : "reading on display, route " + String(location.hash || "").slice(0, 30) + ", " + n + " paragraphs") + " · complete reading object present: " + !!loadReading(); })());}catch(_d){}
     window.scrollTo({ top: 0, behavior: "instant" });
   };
@@ -2164,6 +2165,7 @@ document.querySelectorAll('#cozFoot a[data-foot]').forEach(a => {
   vid.addEventListener("pause", function () { if (vid.currentTime === 0) reset(); });
 })();
 </script>
+<script src="coz-doors.js?v=1"></script>
 <script src="coz-nav.js?v=1"></script>
 </body>
 </html>
