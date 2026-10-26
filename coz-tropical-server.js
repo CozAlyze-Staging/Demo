@@ -1,4 +1,10 @@
-/* COZ TROPICAL SERVER · TSA1.4 (TS1.1.7 review package r2, Oct 16 2026, offline, not deployed)
+/* COZ TROPICAL SERVER · TSA1.5 (Oct 25 2026, staging only)
+   TSA1.5: a start that can't reach the server (no connection, or the request never gets an answer) is tried again after
+   a pause that grows each time, 3, 6, 12, 24 and 48 seconds, then once a minute, instead of about every 50 ms (Chat's
+   review: about 360 attempts in 20 seconds while offline). Nothing is tried while the phone says it is offline, and when
+   it comes back online the start is tried again at once. The count of tries is kept with the run's record, so a newly
+   opened page continues the same pauses. A start that reaches the server, and everything after it, is unchanged.
+   COZ TROPICAL SERVER · TSA1.4 (TS1.1.7 review package r2, Oct 16 2026, offline, not deployed)
    TSA1.4: (1) a timing record per run in localStorage "cozTropicalTiming" for the Section 1 readiness test, written by
    this file and by tropical-reading.html through CozTropicalServer.timing. It holds the run identity and job id, phone-clock
    marks (jobStart, s1Seen, s1Failed), one record per reveal attempt (door tap, reveal done, any entry wait, first view of
@@ -53,6 +59,9 @@
   }
   var JOB = "cozTropicalServerJob", OWN_OLD = "cozTropicalServerKey", OTHER_OLD = "cozVedicServerKey", LOCK = "cozTropicalServerPoll";   /* DTC2 */
   var POLL_MS = 4000, LOCK_STALE_MS = 12000;
+  /* TSA1.5: the pause before trying a start again; retryNow skips it once when the phone comes back online */
+  var RETRY_FIRST_MS = 3000, RETRY_MAX_MS = 60000, retryNow = false;
+  function retryWait(j){ var n = Math.max(1, (j && j.retries) || 1); return Math.min(RETRY_MAX_MS, RETRY_FIRST_MS * Math.pow(2, n - 1)); }
   var OWNER = "tsa-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 7);
   var SECTIONS = [
     { id: "at-your-core",           number: 1, title: "At Your Core" },
@@ -190,7 +199,7 @@
     if (!chart) { log("no Tropical chart for this run; nothing started"); return; }
     var code = codeForNew();
     if (!code) { lsSet(JOB, { v: 1, runId: run.runId, fingerprint: run.fingerprint, jobId: null, state: "access", reason: "missing", sections: {}, base: (rec && rec.base) || chosenBase(), updatedAt: new Date().toISOString() }); notify(); log("no tester password on this device; nothing started"); return; }   /* DTC2 */
-    lsSet(JOB, { v: 1, runId: run.runId, fingerprint: run.fingerprint, jobId: null, state: "starting", sections: {}, base: (rec && rec.base) || chosenBase(), cred: credOf(code), startedAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+    lsSet(JOB, { v: 1, runId: run.runId, fingerprint: run.fingerprint, jobId: null, state: "starting", sections: {}, base: (rec && rec.base) || chosenBase(), cred: credOf(code), startedAt: new Date().toISOString(), updatedAt: new Date().toISOString(), retries: (rec && rec.retries) || 0 });   /* TSA1.5: tries so far kept */
     timing.mark("jobStart");                                              /* TSA1.4 */
     notify();
     api("/tropical-start", { method: "POST", body: JSON.stringify({ chart: chart }), code: code }).then(function (r) {
@@ -206,7 +215,8 @@
       }
     }).catch(function (e) {
       var j = record(); if (!j) return;
-      j.state = "retry"; j.updatedAt = new Date().toISOString(); lsSet(JOB, j); notify(); log("start did not reach the server; it retries while a page is open");
+      j.state = "retry"; j.retries = (j.retries || 0) + 1; j.updatedAt = new Date().toISOString(); lsSet(JOB, j); notify();   /* TSA1.5: counted */
+      log("start did not reach the server; it retries while a page is open, next in " + Math.round(retryWait(j) / 1000) + " s");
       follow();
     });
   }
@@ -228,7 +238,13 @@
     if (!j || done(j.state)) return;
     if (restored() && !j.jobId) return;                              /* TSA1.2: restored never starts or re-starts; it only follows */
     if (!haveLock()) { timer = setTimeout(tick, POLL_MS); return; }
-    if (j.state === "retry" && !j.jobId) { lsSet(JOB, Object.assign(j, { state: "starting" })); restart(); return; }
+    if (j.state === "retry" && !j.jobId) {
+      /* TSA1.5: wait out the pause after a start that didn't reach the server, and never try while the phone is offline */
+      var left = retryWait(j) - (Date.now() - (Date.parse(j.updatedAt) || 0));
+      if (!retryNow && (left > 0 || navigator.onLine === false)) { timer = setTimeout(tick, Math.max(250, Math.min(left > 0 ? left : POLL_MS, POLL_MS))); return; }
+      retryNow = false;
+      lsSet(JOB, Object.assign(j, { state: "starting" })); restart(); return;
+    }
     if (!j.jobId) { timer = setTimeout(tick, POLL_MS); return; }
     var kc = codeForJob(j);                                                 /* DTC2 */
     if (!kc) { j.state = "access"; j.reason = j.cred ? "other" : "missing"; lsSet(JOB, j); notify(); return; }
@@ -289,6 +305,11 @@
   window.addEventListener("message", function (ev) { var d = ev && ev.data; if (d && d.coz === "GOTO_TROPICAL") start(); });
   /* another page wrote progress: tell this page */
   window.addEventListener("storage", function (ev) { if (ev && (ev.key === JOB || ev.key === "cozTropicalReading")) notify(); });
+  /* TSA1.5: back online: a start still waiting to be tried again is tried at once */
+  window.addEventListener("online", function () {
+    var j = record(); if (!j || j.jobId || j.state !== "retry") return;
+    retryNow = true; if (timer) { clearTimeout(timer); timer = null; } follow();
+  });
 
   window.CozTropicalServer = { start: start, resume: follow, sectionView: sectionView, record: record, COPY: COPY, timing: timing };   /* TSA1.4 */
   follow();                                                         /* pick up a job already under way */
