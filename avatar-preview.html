@@ -231,7 +231,7 @@ body {
 
 </style>
 <style>
-/* AV0.1 preview only (no labels under the avatars): the avatar choice at the top of Section 01, and the avatar reading.
+/* AV0.2 preview only (no labels under the avatars; the Vedic woman speaks): the avatar choice at the top of Section 01, and the avatar reading.
    Everything else on this page is the reading page's own styles, unchanged. */
 .avatar-choice { margin: 22px 0 4px; text-align: center; }
 .avatar-choice-title {
@@ -289,6 +289,11 @@ body {
 </main>
 <script>
 (function () {
+  /* AV0.2: the Vedic woman (Rashi) and the Vedic man (Rahul S) read the sample aloud from the CozAlyze voice server.
+     The two Tropical avatars stay silent until their voices are chosen. */
+  var VOICE_SERVER = "https://cozalyze-voice-server.netlify.app";
+  var VOICED = { "vedic-female": true, "vedic-male": true };
+
   var q = new URLSearchParams(location.search);
   var sys = q.get("sys") === "tropical" ? "tropical" : "vedic";
   var state = q.get("state") === "speaking" ? "speaking" : "choose";
@@ -310,52 +315,103 @@ body {
     "All six sections are read once, in order, finishing with the last section of the reading."
   ];
 
-  var block;
-  if (state === "choose") {
-    block =
-      '<section class="avatar-choice" aria-label="Hear your reading">' +
-        '<h2 class="avatar-choice-title">Hear Your Reading</h2>' +
-        '<div class="avatar-options">' +
-          '<a class="avatar-option" href="?sys=' + sys + '&state=speaking&who=male" aria-label="Choose this avatar"><img src="avatars/avatar-' + sys + '-male.jpg" alt="" width="1024" height="1536"></a>' +
-          '<a class="avatar-option" href="?sys=' + sys + '&state=speaking&who=female" aria-label="Choose this avatar"><img src="avatars/avatar-' + sys + '-female.jpg" alt="" width="1024" height="1536"></a>' +
-        '</div>' +
-      '</section>';
-  } else {
-    block =
-      '<section class="avatar-speaking" aria-label="Your avatar is reading">' +
+  /* one audio element for the whole page; the first tap on an avatar unlocks it on iPhone */
+  var player = new Audio();
+  player.preload = "auto";
+  player.setAttribute("playsinline", "");
+  var part = 0;
+
+  function voiced() { return !!VOICED[sys + "-" + who]; }
+  function partUrl(n) { return VOICE_SERVER + "/api/sample-audio?avatar=" + sys + "-" + who + "&part=" + n; }
+  function label(t) { var b = document.getElementById("avPause"); if (b) b.textContent = t; }
+
+  function playPart(n) {
+    part = n;
+    player.src = partUrl(n);
+    label("Pause");
+    var p = player.play();
+    if (p && p.catch) p.catch(function () { label("Try again"); });
+  }
+  player.addEventListener("ended", function () {
+    if (part < SAMPLE.length) playPart(part + 1);
+    else { part = 0; label("Play again"); }
+  });
+  player.addEventListener("error", function () { if (state === "speaking" && part) label("Try again"); });
+
+  function blockHtml() {
+    if (state === "choose") {
+      return '<section class="avatar-choice" aria-label="Hear your reading">' +
+          '<h2 class="avatar-choice-title">Hear Your Reading</h2>' +
+          '<div class="avatar-options">' +
+            '<button type="button" class="avatar-option" data-who="male" aria-label="Choose this avatar"><img src="avatars/avatar-' + sys + '-male.jpg" alt="" width="1024" height="1536"></button>' +
+            '<button type="button" class="avatar-option" data-who="female" aria-label="Choose this avatar"><img src="avatars/avatar-' + sys + '-female.jpg" alt="" width="1024" height="1536"></button>' +
+          '</div>' +
+        '</section>';
+    }
+    return '<section class="avatar-speaking" aria-label="Your avatar is reading">' +
         '<img src="avatars/avatar-' + sys + '-' + who + '.jpg" alt="" width="1024" height="1536">' +
         '<nav class="vedic-nav avatar-controls" aria-label="Avatar controls">' +
           '<div class="vedic-nav-rule" aria-hidden="true">' + STAR + '</div>' +
           '<div class="vedic-nav-links">' +
-            '<button type="button" id="avPause">Pause</button>' +
+            '<button type="button" id="avPause">' + (voiced() ? "Play" : "Pause") + '</button>' +
             '<span>Section 01 of 06</span>' +
-            '<a href="?sys=' + sys + '&state=choose">Stop</a>' +
+            '<button type="button" id="avStop">Stop</button>' +
           '</div>' +
         '</nav>' +
       '</section>';
   }
 
-  document.getElementById("content").innerHTML =
-    '<header class="vedic-header">' +
-      '<img class="vedic-logo" src="vedic-logo.png" alt="CozAlyze" width="1000" height="1055">' +
-      '<p class="vedic-eyebrow">' + SYS.eyebrow + '</p>' +
-      '<p class="vedic-counter">01 OF 06</p>' +
-    '</header>' +
-    '<div class="vedic-divider" aria-hidden="true">' + STAR + '</div>' +
-    '<h1 class="' + (SYS.title.length > 22 ? "vedic-title vedic-title--long" : "vedic-title") + '">' + SYS.title + '</h1>' +
-    '<div class="vedic-divider" aria-hidden="true">' + STAR + '</div>' +
-    block +
-    '<section class="vedic-body">' + SAMPLE.map(function (p) { return "<p>" + p + "</p>"; }).join("") + '</section>' +
-    '<nav class="vedic-nav" aria-label="Reading navigation">' +
-      '<div class="vedic-nav-rule" aria-hidden="true">' + STAR + '</div>' +
-      '<div class="vedic-nav-links">' +
-        '<a href="#">' + ARROW_L + ' Back to Your Reading</a>' +
-        '<a class="vedic-nav-next" href="#">Next: ' + SYS.next + ' ' + ARROW_R + '</a>' +
-      '</div>' +
-    '</nav>';
+  function render() {
+    document.getElementById("content").innerHTML =
+      '<header class="vedic-header">' +
+        '<img class="vedic-logo" src="vedic-logo.png" alt="CozAlyze" width="1000" height="1055">' +
+        '<p class="vedic-eyebrow">' + SYS.eyebrow + '</p>' +
+        '<p class="vedic-counter">01 OF 06</p>' +
+      '</header>' +
+      '<div class="vedic-divider" aria-hidden="true">' + STAR + '</div>' +
+      '<h1 class="' + (SYS.title.length > 22 ? "vedic-title vedic-title--long" : "vedic-title") + '">' + SYS.title + '</h1>' +
+      '<div class="vedic-divider" aria-hidden="true">' + STAR + '</div>' +
+      blockHtml() +
+      '<section class="vedic-body">' + SAMPLE.map(function (p) { return "<p>" + p + "</p>"; }).join("") + '</section>' +
+      '<nav class="vedic-nav" aria-label="Reading navigation">' +
+        '<div class="vedic-nav-rule" aria-hidden="true">' + STAR + '</div>' +
+        '<div class="vedic-nav-links">' +
+          '<a href="#">' + ARROW_L + ' Back to Your Reading</a>' +
+          '<a class="vedic-nav-next" href="#">Next: ' + SYS.next + ' ' + ARROW_R + '</a>' +
+        '</div>' +
+      '</nav>';
 
-  var pause = document.getElementById("avPause");
-  if (pause) pause.addEventListener("click", function () { pause.textContent = pause.textContent === "Pause" ? "Resume" : "Pause"; });
+    Array.prototype.forEach.call(document.querySelectorAll(".avatar-option"), function (b) {
+      b.addEventListener("click", function () {
+        who = b.getAttribute("data-who");
+        state = "speaking";
+        try { history.replaceState(null, "", "?sys=" + sys + "&state=speaking&who=" + who); } catch (e) {}
+        render();
+        if (voiced()) playPart(1);          /* inside the tap, so iPhone allows the sound */
+        else label("Pause");
+      });
+    });
+
+    var pause = document.getElementById("avPause");
+    if (pause) pause.addEventListener("click", function () {
+      if (!voiced()) { pause.textContent = pause.textContent === "Pause" ? "Resume" : "Pause"; return; }
+      var t = pause.textContent;
+      if (t === "Pause") { player.pause(); label("Resume"); }
+      else if (t === "Resume") { var p = player.play(); label("Pause"); if (p && p.catch) p.catch(function () { label("Try again"); }); }
+      else playPart(t === "Try again" && part ? part : 1);   /* Play, Play again, Try again */
+    });
+
+    var stop = document.getElementById("avStop");
+    if (stop) stop.addEventListener("click", function () {
+      player.pause();
+      part = 0;
+      state = "choose";
+      try { history.replaceState(null, "", "?sys=" + sys + "&state=choose"); } catch (e) {}
+      render();
+    });
+  }
+
+  render();
 })();
 </script>
 </body>
