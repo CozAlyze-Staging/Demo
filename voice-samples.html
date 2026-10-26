@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#000f26">
+<title>Voice Samples · CozAlyze</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,500&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+/* Reading page styles, copied unchanged from vedic-reading.html */
+:root {
+  --vedic-navy: #000f26;
+  --vedic-gold: #d4a178;
+  --vedic-gold-muted: rgba(212, 161, 120, 0.65);
+  --vedic-ivory: #e5d4c5;
+  --vedic-ivory-muted: rgba(229, 212, 197, 0.88);
+  --display-font: "Cormorant Garamond", Georgia, serif;
+  --body-font: "Avenir Next", "Helvetica Neue", Arial, sans-serif;
+  --side-pad: 28px;
+  --dash-zoom: 1;            /* opens showing the whole art, then eases to --dash-zoom-in */
+  --dash-zoom-in: 1.3;
+}
+@media (max-width: 374px) { :root { --side-pad: 20px; } }
+
+* { box-sizing: border-box; }
+html { background: var(--vedic-navy); -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--vedic-navy);
+  color: var(--vedic-ivory);
+  font-family: var(--body-font);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Fixed background layer: iOS ignores background-attachment on body,
+   so the image lives on its own fixed layer behind the scrolling content. */
+.vedic-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background-color: var(--vedic-navy);
+  background-image: url("vedic-moon-bg.png");
+  background-size: cover;
+  background-position: top center;
+  background-repeat: no-repeat;
+  pointer-events: none;
+}
+
+.vedic-reading-page {
+  position: relative;
+  z-index: 1;
+  min-height: 100svh;
+  padding:
+    calc(env(safe-area-inset-top) + 24px)
+    var(--side-pad)
+    calc(env(safe-area-inset-bottom) + 24px);
+}
+
+.vedic-reading-content {
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  animation: vedicFadeIn 240ms ease-out;
+}
+@keyframes vedicFadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vedic-reading-content { animation: none; }
+  .stage { transition: none; }
+}
+
+/* ---------- header ---------- */
+.vedic-back-button {
+  position: absolute;
+  top: calc(env(safe-area-inset-top) + 10px);
+  left: calc(var(--side-pad) - 10px);
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  color: var(--vedic-gold);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+}
+.vedic-back-button svg { width: 30px; height: 20px; display: block; }
+.vedic-back-button:focus-visible { outline: 1px solid var(--vedic-gold-muted); outline-offset: 4px; border-radius: 4px; }
+
+.vedic-header {
+  text-align: center;
+  padding-top: 6px;
+}
+/* His logo lockup (emblem + CozAlyze wordmark) as one image, white keyed out.
+   Width is set so the wordmark reads at the spec's 28–30px display size. */
+.vedic-logo {
+  display: block;
+  width: 140px;
+  height: auto;
+  margin: 0 auto;
+}
+.vedic-eyebrow {
+  font-family: var(--body-font);
+  font-size: clamp(13px, 3.5vw, 14.5px);
+  font-weight: 500;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--vedic-ivory-muted);
+  margin: 12px 0 0;
+  padding-left: 0.28em; /* optical centre with the trailing tracking */
+}
+.vedic-counter {
+  font-family: var(--display-font);
+  font-size: clamp(27px, 7.2vw, 31px);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  font-variant-numeric: lining-nums;
+  color: var(--vedic-gold);
+  margin: 40px 0 0;
+}
+
+/* ---------- ornamental divider ---------- */
+.vedic-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: min(100%, 420px);
+  margin: 14px auto;
+  color: var(--vedic-gold);
+}
+.vedic-divider::before,
+.vedic-divider::after {
+  content: "";
+  flex: 1 1 auto;
+  height: 1px;
+  background: var(--vedic-gold-muted);
+}
+.vedic-divider svg { width: 16px; height: 16px; flex: 0 0 auto; display: block; }
+
+/* ---------- title ---------- */
+.vedic-title {
+  font-family: var(--display-font);
+  font-size: clamp(2.6rem, 11.5vw, 3.4rem);
+  font-weight: 500;
+  line-height: 0.98;
+  color: var(--vedic-gold);
+  text-align: center;
+  text-wrap: balance;
+  margin: 10px 0;
+}
+.vedic-title--long {
+  font-size: clamp(2.35rem, 10vw, 2.9rem);
+}
+
+/* ---------- body ---------- */
+.vedic-body {
+  font-family: var(--body-font);
+  font-size: clamp(1.25rem, 5.4vw, 1.4rem);
+  line-height: 1.55;
+  font-weight: 400;
+  color: var(--vedic-ivory);
+  margin-top: 24px;
+}
+.vedic-body p { margin: 0 0 1.35em; }
+.vedic-body p:last-child { margin-bottom: 0; }
+.vedic-subhead {
+  font-family: var(--display-font);
+  font-size: clamp(1.6rem, 6.4vw, 1.9rem);
+  font-weight: 500;
+  line-height: 1.12;
+  color: var(--vedic-gold);
+  text-align: left;
+  margin: 1.6em 0 0.7em;
+}
+.vedic-body .vedic-subhead:first-child { margin-top: 0; }
+
+/* ---------- bottom navigation ---------- */
+.vedic-nav { margin-top: 34px; }
+.vedic-nav-rule {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--vedic-gold);
+}
+.vedic-nav-rule::before,
+.vedic-nav-rule::after {
+  content: "";
+  flex: 1 1 auto;
+  height: 1px;
+  background: var(--vedic-gold-muted);
+}
+.vedic-nav-rule svg { width: 14px; height: 14px; flex: 0 0 auto; display: block; }
+.vedic-nav-links {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding-top: 6px;
+}
+.vedic-nav a,
+.vedic-nav button {
+  font-family: var(--body-font);
+  font-size: clamp(16px, 4.3vw, 18px);
+  font-weight: 400;
+  color: var(--vedic-gold);
+  text-decoration: none;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  text-align: left;
+}
+.vedic-nav a:focus-visible,
+.vedic-nav button:focus-visible { outline: 1px solid var(--vedic-gold-muted); outline-offset: 4px; border-radius: 4px; }
+.vedic-nav .vedic-nav-next { text-align: right; justify-content: flex-end; }
+.vedic-nav svg:not(.vedic-nav-rule svg) { width: 24px; height: 15px; flex: 0 0 auto; }
+
+</style>
+
+<style>
+/* VS0.1 voice samples (staging only, not linked): listen to candidate voices for each avatar.
+   Clips are each voice's own public preview, played from ElevenLabs' storage; nothing is stored here. */
+.vs-avatar { display: block; width: 46%; max-width: 220px; height: auto; margin: 26px auto 8px; border: 1px solid var(--vedic-gold-muted); }
+.vs-list { margin: 0 0 8px; }
+.vs-voice { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 0; }
+.vs-name { font-family: var(--display-font); font-variant-numeric: lining-nums; font-size: clamp(1.45rem, 6vw, 1.7rem); font-weight: 500; line-height: 1.1; color: var(--vedic-gold); margin: 0; }
+.vs-desc { font-family: var(--body-font); font-size: 16px; line-height: 1.35; color: var(--vedic-ivory-muted); margin: 4px 0 0; }
+.vs-play {
+  flex: 0 0 auto; min-width: 72px; min-height: 44px; padding: 0; margin: 0; border: 0; background: transparent;
+  font-family: var(--body-font); font-size: clamp(16px, 4.3vw, 18px); color: var(--vedic-gold); text-align: right;
+  cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+</style>
+</head>
+<body data-view="reading">
+<div class="vedic-bg" aria-hidden="true"></div>
+<main class="vedic-reading-page">
+  <div class="vedic-reading-content" id="content"></div>
+</main>
+<script>
+(function () {
+  var DATA = {"vedic": [[{"id": "LrnwgcdTLxc99sutUxGU", "name": "Shiv", "desc": "Mature, Deep and Professional", "src": "https://storage.googleapis.com/eleven-public-prod/database/workspace/514d94e9241c48e8b7905375729c436f/voices/LrnwgcdTLxc99sutUxGU/LxCoMLmzFMBBbcEZyGRe.mp3"}, {"id": "xMagNCpMgZ83QOEsHNre", "name": "Aaditya", "desc": "Calm, Soft and Soothing", "src": "https://storage.googleapis.com/eleven-public-prod/database/workspace/514d94e9241c48e8b7905375729c436f/voices/xMagNCpMgZ83QOEsHNre/yI9vXkproqDv7JIC5nRG.mp3"}, {"id": "1GvuAC53XEPduXVWI2zk", "name": "Ramesh", "desc": "Calm and Captivating", "src": "https://api.us.elevenlabs.io/v1/voices/1GvuAC53XEPduXVWI2zk/previews/audio?payload=eyJ2b2ljZV9zb3VyY2UiOiJjdXN0b20iLCJ3b3Jrc3BhY2VfaWQiOiJlZDliMDVlNjMyNGM0NTc2ODU0OTAzNTJlOWExZWM5MCIsImZpbGVuYW1lIjoibEZjT3loTVdCeWtGT3Q3WUZqQ1oubXAzIiwidGltZXN0YW1wIjoxNzkxOTc1NjAwMDAwMDAwfQ%3D%3D"}, {"id": "vKnhz1CSirDNQVFqLbul", "name": "Shayne", "desc": "Calm, Natural and Comforting", "src": "https://storage.googleapis.com/eleven-public-prod/database/workspace/514d94e9241c48e8b7905375729c436f/voices/vKnhz1CSirDNQVFqLbul/txE967qErLesGymOovVh.mp3"}, {"id": "MaLeGj8yeAGK8yQXRAzr", "name": "Srivatsa", "desc": "Relaxed and Deep", "src": "https://api.us.elevenlabs.io/v1/voices/MaLeGj8yeAGK8yQXRAzr/previews/audio?payload=eyJ2b2ljZV9zb3VyY2UiOiJjdXN0b20iLCJ3b3Jrc3BhY2VfaWQiOiJlZDliMDVlNjMyNGM0NTc2ODU0OTAzNTJlOWExZWM5MCIsImZpbGVuYW1lIjoibk82ZEVmVW9SVnAycUY0dVIyTTcubXAzIiwidGltZXN0YW1wIjoxNzkxOTc1NjAwMDAwMDAwfQ%3D%3D"}, {"id": "F283CmouI2PYZhZYWl5b", "name": "Darwin", "desc": "Grand Mythology Narration", "src": "https://storage.googleapis.com/eleven-public-prod/database/workspace/514d94e9241c48e8b7905375729c436f/voices/F283CmouI2PYZhZYWl5b/PrBkiTlVa22aWz3sQqYb.mp3"}], [{"id": "MwUMLXurEzSN7bIfIdXF", "name": "Tripti", "desc": "Calm and Experienced", "src": "https://storage.googleapis.com/eleven-public-prod/database/workspace/ed9b05e6324c457685490352e9a1ec90/voices/MwUMLXurEzSN7bIfIdXF/TrdTr9Wax8NgyefaqiuS.mp3"}, {"id": "tKZQTIqwDrPzLv6MrPxF", "name": "Sana", "desc": "Feminine Audiobook Narrator", "src": "https://storage.googleapis.com/eleven-public-prod/database/workspace/514d94e9241c48e8b7905375729c436f/voices/tKZQTIqwDrPzLv6MrPxF/OqxYamtdRapLaSmYnWK0.mp3"}, {"id": "ftDdhfYtmfGP0tFlBYA1", "name": "Alisha", "desc": "Soft and Engaging", "src": "https://storage.googleapis.com/eleven-public-prod/database/workspace/514d94e9241c48e8b7905375729c436f/voices/ftDdhfYtmfGP0tFlBYA1/ij5PfYlZZeiriPm7LHrO.mp3"}, {"id": "yA5sg1jAeFs7jFtteRx8", "name": "Henna", "desc": "Elegant, Calm, Conversational", "src": "https://storage.googleapis.com/eleven-public-prod/database/user/ACUCEaB1KwNeFnNVlfY9gtGQrnN2/voices/yA5sg1jAeFs7jFtteRx8/cce0e6d5-1bf2-4227-8312-800bcaed523d.mp3"}, {"id": "eUdJpUEN3EslrgE24PKx", "name": "Rhea", "desc": "Soft, Polished and Calm", "src": "https://storage.googleapis.com/eleven-public-prod/database/workspace/ed9b05e6324c457685490352e9a1ec90/voices/eUdJpUEN3EslrgE24PKx/hATnEjfM6xZs8rpEGeDm.mp3"}, {"id": "XYfWcxd0jJece96Z98eV", "name": "Kritika", "desc": "Soulful Meditation & Calm Narration", "src": "https://storage.googleapis.com/eleven-public-prod/database/workspace/bf15a5c401f34e9b85f9cf867ade1725/voices/XYfWcxd0jJece96Z98eV/iSqLxAK2myEMtXPML5DV.mp3"}]], "tropical": [[{"id": "0lp4RIz96WD1RUtvEu3Q", "name": "Grandfather Joe", "desc": "British · Gentle, Warm and Wise", "src": "https://api.us.elevenlabs.io/v1/voices/0lp4RIz96WD1RUtvEu3Q/previews/audio?payload=eyJ2b2ljZV9zb3VyY2UiOiJjdXN0b20iLCJ3b3Jrc3BhY2VfaWQiOiI4ZWExOGY1NDczNDI0MmRlYjAwZDRmZDcwMjc5ZDI5ZiIsImZpbGVuYW1lIjoiNW9BeHRWeG96VExSUnV2NVlFdGQubXAzIiwidGltZXN0YW1wIjoxNzkxOTc1NjAwMDAwMDAwfQ%3D%3D"}, {"id": "y2Y5MeVPm6ZQXK64WUui", "name": "The Pharaoh", "desc": "American · Wisdom Bearer", "src": "https://storage.googleapis.com/eleven-public-prod/database/workspace/f980beb735ca4ecba4541ccf284ae53c/voices/y2Y5MeVPm6ZQXK64WUui/x08T5kv5QPkKG589naPg.mp3"}, {"id": "Gsndh0O5AnuI2Hj3YUlA", "name": "Adam", "desc": "British · Steady, Rich and Round", "src": "https://storage.googleapis.com/eleven-public-prod/database/workspace/3c415eb9d3264c779ccd52ec3dc79b96/voices/Gsndh0O5AnuI2Hj3YUlA/jtSf7NA0dL884m4naypU.mp3"}, {"id": "PerZoH0r6nxBZXCoIPpv", "name": "Michael Moody", "desc": "American · Grandfatherly, Warm and Deep", "src": "https://storage.googleapis.com/eleven-public-prod/database/user/ghhxYFSr6DZUXDF4V3gpvN3tGsn1/voices/PerZoH0r6nxBZXCoIPpv/HI04nJ747vsQaRlgDoeB.mp3"}, {"id": "JBFqnCBsd6RMkjVDRZzb", "name": "George", "desc": "British · Warm, Captivating Storyteller · ElevenLabs default", "src": "https://api.us.elevenlabs.io/v1/voices/JBFqnCBsd6RMkjVDRZzb/previews/audio?payload=eyJ2b2ljZV9zb3VyY2UiOiJwcmVtYWRlIiwiZmlsZW5hbWUiOiJlNjIwNmQxYS0wNzIxLTQ3ODctYWFmYi0wNmE2ZTcwNWNhYzUubXAzIiwidGltZXN0YW1wIjoxNzkzMDE2MDAwMDAwMDAwfQ%3D%3D"}, {"id": "pqHfZKP75CvOlQylNhV4", "name": "Bill", "desc": "American · Wise, Mature, Balanced · ElevenLabs default", "src": "https://storage.googleapis.com/eleven-public-prod/premade/voices/pqHfZKP75CvOlQylNhV4/d782b3ff-84ba-4029-848c-acf01285524d.mp3"}], [{"id": "kBag1HOZlaVBH7ICPE8x", "name": "Sally Ford", "desc": "British · Smooth, Soft, Calm and Well-Spoken", "src": "https://storage.googleapis.com/eleven-public-prod/custom/voices/kBag1HOZlaVBH7ICPE8x/5yhMiT0yswqnLsv3YVWr.mp3"}, {"id": "RILOU7YmBhvwJGDGjNmP", "name": "Jeanette", "desc": "British · Audiobook Narrator", "src": "https://storage.googleapis.com/eleven-public-prod/database/workspace/20dd3b9a3ec14f77bc0f5688c9f44ff5/voices/RILOU7YmBhvwJGDGjNmP/rg0TiCrZRw0nfGOZiVoe.mp3"}, {"id": "t5ztDJA7pj9EyW9QIcJ2", "name": "Chanelle", "desc": "American · Wise, Warm and Expressive", "src": "https://storage.googleapis.com/eleven-public-prod/database/user/9fxUBapSiAdSIPbgosK5YoJT7t92/voices/t5ztDJA7pj9EyW9QIcJ2/B984jyRILemxGEaLm5jp.mp3"}, {"id": "M6N6IdXhi5YNZyZSDe7k", "name": "Amanda", "desc": "American · Mature, Wise and Soothing", "src": "https://storage.googleapis.com/eleven-public-prod/mLJS5PYL2DSr4AuA7rc3xvYF8l82/voices/M6N6IdXhi5YNZyZSDe7k/8a2c1964-00b4-4237-a884-eeb6bf8d03a8.mp3"}, {"id": "kkPJzQOWz2Oz9cUaEaQd", "name": "Beatrice", "desc": "British · Mature, Gentle and Engaging", "src": "https://api.us.elevenlabs.io/v1/voices/kkPJzQOWz2Oz9cUaEaQd/previews/audio?payload=eyJ2b2ljZV9zb3VyY2UiOiJjdXN0b20iLCJ1c2VyX2lkIjoiVFVEb051N3pjSFJjNHhBNnBPYVNjUnlNdm5pMiIsImZpbGVuYW1lIjoiRDg5WXZOUE9VOXdrNXlrYjB5c3oubXAzIiwidGltZXN0YW1wIjoxNzkxOTc1NjAwMDAwMDAwfQ%3D%3D"}, {"id": "pFZP5JQG7iQjIQuC4Bku", "name": "Lily", "desc": "British · Velvety Actress · ElevenLabs default", "src": "https://storage.googleapis.com/eleven-public-prod/premade/voices/pFZP5JQG7iQjIQuC4Bku/89b68b35-b3dd-4348-a84a-a3c13a3c2b30.mp3"}]]};
+  var SILENT = "data:audio/wav;base64,UklGRsQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YaAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
+  var q = new URLSearchParams(location.search);
+  var sys = q.get("sys") === "tropical" ? "tropical" : "vedic";
+  var groups = DATA[sys];
+  var STAR = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0 13.6 10.4 24 12 13.6 13.6 12 24 10.4 13.6 0 12 10.4 10.4Z"/></svg>';
+  var ARROW_L = '<svg viewBox="0 0 22 14" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 7H2M7 2 2 7l5 5"/></svg>';
+  var ARROW_R = '<svg viewBox="0 0 22 14" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 7h19M15 2l5 5-5 5"/></svg>';
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+
+  var voices = [], html = "";
+  html += '<header class="vedic-header">' +
+            '<img class="vedic-logo" src="vedic-logo.png" alt="CozAlyze" width="1000" height="1055">' +
+            '<p class="vedic-eyebrow">' + (sys === "vedic" ? "Vedic" : "Tropical") + ' Voice Samples</p>' +
+          '</header>' +
+          '<div class="vedic-divider" aria-hidden="true">' + STAR + '</div>';
+  ["male", "female"].forEach(function (who, g) {
+    html += '<img class="vs-avatar" src="avatars/avatar-' + sys + '-' + who + '.jpg" alt="" width="1024" height="1536">';
+    html += '<div class="vs-list">';
+    groups[g].forEach(function (v) {
+      var i = voices.length; voices.push(v);
+      html += '<div class="vs-voice"><div><p class="vs-name">' + (i + 1) + '\u2002' + esc(v.name) + '</p>' +
+              '<p class="vs-desc">' + esc(v.desc) + '</p></div>' +
+              '<button class="vs-play" type="button" data-i="' + i + '" data-voice-id="' + esc(v.id) + '">Play</button></div>';
+    });
+    html += '</div>';
+  });
+  html += '<nav class="vedic-nav" aria-label="Voice samples"><div class="vedic-nav-rule" aria-hidden="true">' + STAR + '</div><div class="vedic-nav-links">' +
+          (sys === "vedic" ? '<span></span><a class="vedic-nav-next" href="?sys=tropical">Tropical Voices ' + ARROW_R + '</a>'
+                           : '<a href="?sys=vedic">' + ARROW_L + ' Vedic Voices</a><span></span>') +
+          '</div></nav>';
+  document.getElementById("content").innerHTML = html;
+
+  var btns = Array.prototype.slice.call(document.querySelectorAll(".vs-play"));
+  var cache = {}, inflight = {};
+  var player = new Audio(); player.preload = "auto"; player.setAttribute("playsinline", "");
+  var current = -1;
+
+  /* Each clip is fetched once and played from memory with its real type,
+     because some of the stored previews are labelled as plain text. */
+  function load(i) {
+    var v = voices[i];
+    if (cache[i]) return Promise.resolve(cache[i]);
+    if (inflight[i]) return inflight[i];
+    inflight[i] = fetch(v.src, { mode: "cors" }).then(function (r) {
+      if (!r.ok) throw new Error("http " + r.status);
+      return r.arrayBuffer();
+    }).then(function (buf) {
+      var b = new Uint8Array(buf.slice(0, 4));
+      var type = (b[0] === 0x52 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x46) ? "audio/wav" : "audio/mpeg";
+      cache[i] = URL.createObjectURL(new Blob([buf], { type: type }));
+      return cache[i];
+    });
+    inflight[i].catch(function () { delete inflight[i]; });
+    return inflight[i];
+  }
+  function label(i, t) { if (btns[i]) btns[i].textContent = t; }
+  function start(url, i) {
+    player.src = url;
+    label(i, "Stop");
+    var p = player.play();
+    if (p && p.catch) p.catch(function () { if (current === i) { label(i, "Play"); current = -1; } });
+  }
+  player.addEventListener("ended", function () { if (current >= 0) label(current, "Play"); current = -1; });
+
+  btns.forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var i = +btn.getAttribute("data-i");
+      if (current === i) { player.pause(); label(i, "Play"); current = -1; return; }
+      if (current >= 0) { player.pause(); label(current, "Play"); }
+      current = i;
+      if (cache[i]) { start(cache[i], i); return; }
+      label(i, "Loading\u2026");
+      player.src = SILENT; var u = player.play(); if (u && u.catch) u.catch(function () {});   /* unlocks iPhone audio inside the tap */
+      load(i).then(function (url) { if (current === i) start(url, i); })
+             .catch(function () { if (current === i) start(voices[i].src, i); });          /* fallback: play the stored file directly */
+    });
+  });
+
+  /* fetch the twelve clips in the background, three at a time */
+  var next = 0;
+  function pump() { if (next >= voices.length) return; var i = next++; load(i).then(pump, pump); }
+  window.addEventListener("load", function () { pump(); pump(); pump(); });
+})();
+</script>
+</body>
+</html>
