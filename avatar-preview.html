@@ -231,7 +231,7 @@ body {
 
 </style>
 <style>
-/* AV0.3 preview only (no labels under the avatars; the Vedic avatars speak, and move once their Simli avatar is ready): the avatar choice at the top of Section 01, and the avatar reading.
+/* AV0.4 preview only (no labels under the avatars; the Vedic avatars speak, and move once their D-ID video of the whole picture is ready): the avatar choice at the top of Section 01, and the avatar reading.
    Everything else on this page is the reading page's own styles, unchanged. */
 .avatar-choice { margin: 22px 0 4px; text-align: center; }
 .avatar-choice-title {
@@ -301,12 +301,14 @@ body {
 </main>
 <script>
 (function () {
-  /* AV0.3: the Vedic woman (Rashi) and the Vedic man (Rahul S) read the sample aloud from the CozAlyze voice server.
+  /* AV0.4: the Vedic woman (Rashi) and the Vedic man (Rahul S) read the sample aloud from the CozAlyze voice server.
+     Oct 26: his new Vedic pictures (seated, hands at rest); ART makes phones fetch the new pictures instead of old copies.
      When an avatar's moving video is ready on the server, it plays in the avatar's place with its own sound;
      otherwise the voice plays over the still picture. ?face=test uses Simli's ready-made test face (testing only).
      The two Tropical avatars stay silent until their voices are chosen. */
   var VOICE_SERVER = "https://cozalyze-voice-server.netlify.app";
   var VOICED = { "vedic-female": true, "vedic-male": true };
+  var ART = "?v=2";
 
   var q = new URLSearchParams(location.search);
   var FACE = q.get("face") === "test" ? "test" : "own";
@@ -380,15 +382,15 @@ body {
       return '<section class="avatar-choice" aria-label="Hear your reading">' +
           '<h2 class="avatar-choice-title">Hear Your Reading</h2>' +
           '<div class="avatar-options">' +
-            '<button type="button" class="avatar-option" data-who="male" aria-label="Choose this avatar"><img src="avatars/avatar-' + sys + '-male.jpg" alt="" width="1024" height="1536"></button>' +
-            '<button type="button" class="avatar-option" data-who="female" aria-label="Choose this avatar"><img src="avatars/avatar-' + sys + '-female.jpg" alt="" width="1024" height="1536"></button>' +
+            '<button type="button" class="avatar-option" data-who="male" aria-label="Choose this avatar"><img src="avatars/avatar-' + sys + '-male.jpg' + ART + '" alt="" width="1024" height="1536"></button>' +
+            '<button type="button" class="avatar-option" data-who="female" aria-label="Choose this avatar"><img src="avatars/avatar-' + sys + '-female.jpg' + ART + '" alt="" width="1024" height="1536"></button>' +
           '</div>' +
         '</section>';
     }
     var k = sys + "-" + who;
     return '<section class="avatar-speaking" aria-label="Your avatar is reading">' +
         '<div class="av-frame">' +
-          '<img src="avatars/avatar-' + sys + '-' + who + '.jpg" alt="" width="1024" height="1536">' +
+          '<img src="avatars/avatar-' + sys + '-' + who + '.jpg' + ART + '" alt="" width="1024" height="1536">' +
           (voiced() && MOVING[k] ? '<video playsinline webkit-playsinline preload="auto" src="' + videoUrl(k) + '"></video>' : '') +
         '</div>' +
         '<nav class="vedic-nav avatar-controls" aria-label="Avatar controls">' +
