@@ -1,9 +1,14 @@
-/* COZ TROPICAL SERVER · TSA1.5 (Oct 25 2026, staging only)
+/* COZ TROPICAL SERVER · TSA1.5 r2 (Oct 25 2026, staging only)
    TSA1.5: a start that can't reach the server (no connection, or the request never gets an answer) is tried again after
    a pause that grows each time, 3, 6, 12, 24 and 48 seconds, then once a minute, instead of about every 50 ms (Chat's
-   review: about 360 attempts in 20 seconds while offline). Nothing is tried while the phone says it is offline, and when
-   it comes back online the start is tried again at once. The count of tries is kept with the run's record, so a newly
-   opened page continues the same pauses. A start that reaches the server, and everything after it, is unchanged.
+   review: about 360 attempts in 20 seconds while offline). The count of tries and the end of the pause (retryAt) are kept
+   with the run's record, so every page, including one opened later, keeps the same pause.
+   r2 (Chat's review of TSA1.5): start() is the one place a start request is sent, and it checks first, so GOTO_TROPICAL,
+   a password just entered, the retry timer and repeated calls all follow the same rules: nothing is sent while the phone
+   says it is offline (the first start included), nothing before the saved pause is over, and nothing while this page's
+   own start for the same chart is still waiting for its answer. Coming back online ends the pause for every page
+   (retryAt = now); it never lets a start through while the phone is offline. A pause never holds a start for more than
+   a minute, even if the phone clock is moved. A start that reaches the server, and everything after it, is unchanged.
    COZ TROPICAL SERVER · TSA1.4 (TS1.1.7 review package r2, Oct 16 2026, offline, not deployed)
    TSA1.4: (1) a timing record per run in localStorage "cozTropicalTiming" for the Section 1 readiness test, written by
    this file and by tropical-reading.html through CozTropicalServer.timing. It holds the run identity and job id, phone-clock
@@ -59,9 +64,20 @@
   }
   var JOB = "cozTropicalServerJob", OWN_OLD = "cozTropicalServerKey", OTHER_OLD = "cozVedicServerKey", LOCK = "cozTropicalServerPoll";   /* DTC2 */
   var POLL_MS = 4000, LOCK_STALE_MS = 12000;
-  /* TSA1.5: the pause before trying a start again; retryNow skips it once when the phone comes back online */
-  var RETRY_FIRST_MS = 3000, RETRY_MAX_MS = 60000, retryNow = false;
+  /* TSA1.5: the pause before trying a start again, saved with the run's record as retryAt (phone clock, ms) */
+  var RETRY_FIRST_MS = 3000, RETRY_MAX_MS = 60000, sending = {};       /* r2: runs whose start this page sent and still waits for */
   function retryWait(j){ var n = Math.max(1, (j && j.retries) || 1); return Math.min(RETRY_MAX_MS, RETRY_FIRST_MS * Math.pow(2, n - 1)); }
+  function retryAt(j){ return typeof j.retryAt === "number" ? j.retryAt : (Date.parse(j.updatedAt) || 0) + retryWait(j); }   /* a record saved before r2 */
+  function runKey(r){ return r.runId + "|" + r.fingerprint; }
+  function held(run, rec){                                              /* TSA1.5 r2: why this run's start can't be sent now, or "" */
+    if (sending[runKey(run)]) return "sending";                         /* this page's start is still waiting for its answer */
+    if (navigator.onLine === false) return "offline";                   /* always, whatever else is true */
+    if (rec && !rec.jobId && rec.state === "retry") {
+      var left = retryAt(rec) - Date.now();
+      if (left > 0 && left <= RETRY_MAX_MS) return "paused";            /* more than the longest pause left: the phone clock moved */
+    }
+    return "";
+  }
   var OWNER = "tsa-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 7);
   var SECTIONS = [
     { id: "at-your-core",           number: 1, title: "At Your Core" },
@@ -199,10 +215,20 @@
     if (!chart) { log("no Tropical chart for this run; nothing started"); return; }
     var code = codeForNew();
     if (!code) { lsSet(JOB, { v: 1, runId: run.runId, fingerprint: run.fingerprint, jobId: null, state: "access", reason: "missing", sections: {}, base: (rec && rec.base) || chosenBase(), updatedAt: new Date().toISOString() }); notify(); log("no tester password on this device; nothing started"); return; }   /* DTC2 */
+    var why = held(run, rec);                                             /* TSA1.5 r2: every start is checked here before it is sent */
+    if (why) {
+      if (why === "offline" && !(rec && rec.state === "retry")) {         /* nothing tried yet: no pause, it waits for the connection */
+        lsSet(JOB, { v: 1, runId: run.runId, fingerprint: run.fingerprint, jobId: null, state: "retry", sections: {}, base: (rec && rec.base) || chosenBase(), cred: credOf(code), updatedAt: new Date().toISOString(), retries: (rec && rec.retries) || 0, retryAt: Date.now() });
+        notify();
+      }
+      log("start not sent (" + why + "); it is tried when it may be"); follow(); return;
+    }
     lsSet(JOB, { v: 1, runId: run.runId, fingerprint: run.fingerprint, jobId: null, state: "starting", sections: {}, base: (rec && rec.base) || chosenBase(), cred: credOf(code), startedAt: new Date().toISOString(), updatedAt: new Date().toISOString(), retries: (rec && rec.retries) || 0 });   /* TSA1.5: tries so far kept */
     timing.mark("jobStart");                                              /* TSA1.4 */
     notify();
+    var key = runKey(run); sending[key] = true;                           /* TSA1.5 r2 */
     api("/tropical-start", { method: "POST", body: JSON.stringify({ chart: chart }), code: code }).then(function (r) {
+      delete sending[key];                                                /* TSA1.5 r2 */
       var j = record(); if (!j) return;
       if ((r.status === 200 || r.status === 201) && r.body && r.body.jobId) {
         j.jobId = r.body.jobId; j.state = "writing"; j.updatedAt = new Date().toISOString(); lsSet(JOB, j); timing.jobId(j.jobId); notify();   /* TSA1.4 */
@@ -214,8 +240,9 @@
         log("start refused before any writing: " + j.detail);
       }
     }).catch(function (e) {
+      delete sending[key];                                                /* TSA1.5 r2 */
       var j = record(); if (!j) return;
-      j.state = "retry"; j.retries = (j.retries || 0) + 1; j.updatedAt = new Date().toISOString(); lsSet(JOB, j); notify();   /* TSA1.5: counted */
+      j.state = "retry"; j.retries = (j.retries || 0) + 1; j.retryAt = Date.now() + retryWait(j); j.updatedAt = new Date().toISOString(); lsSet(JOB, j); notify();   /* TSA1.5: counted, and the pause saved */
       log("start did not reach the server; it retries while a page is open, next in " + Math.round(retryWait(j) / 1000) + " s");
       follow();
     });
@@ -239,11 +266,11 @@
     if (restored() && !j.jobId) return;                              /* TSA1.2: restored never starts or re-starts; it only follows */
     if (!haveLock()) { timer = setTimeout(tick, POLL_MS); return; }
     if (j.state === "retry" && !j.jobId) {
-      /* TSA1.5: wait out the pause after a start that didn't reach the server, and never try while the phone is offline */
-      var left = retryWait(j) - (Date.now() - (Date.parse(j.updatedAt) || 0));
-      if (!retryNow && (left > 0 || navigator.onLine === false)) { timer = setTimeout(tick, Math.max(250, Math.min(left > 0 ? left : POLL_MS, POLL_MS))); return; }
-      retryNow = false;
-      lsSet(JOB, Object.assign(j, { state: "starting" })); restart(); return;
+      /* TSA1.5: wait out the saved pause after a start that didn't reach the server; nothing is tried while offline.
+         r2: start() checks the same rules again before it sends. */
+      var why = held(j, j);                                           /* the record carries its run's identity */
+      if (why) { timer = setTimeout(tick, why === "paused" ? Math.max(250, Math.min(retryAt(j) - Date.now(), POLL_MS)) : POLL_MS); return; }
+      restart(); return;
     }
     if (!j.jobId) { timer = setTimeout(tick, POLL_MS); return; }
     var kc = codeForJob(j);                                                 /* DTC2 */
@@ -305,10 +332,12 @@
   window.addEventListener("message", function (ev) { var d = ev && ev.data; if (d && d.coz === "GOTO_TROPICAL") start(); });
   /* another page wrote progress: tell this page */
   window.addEventListener("storage", function (ev) { if (ev && (ev.key === JOB || ev.key === "cozTropicalReading")) notify(); });
-  /* TSA1.5: back online: a start still waiting to be tried again is tried at once */
+  /* TSA1.5: back online: a start waiting out its pause is tried at once. r2: only the pause ends, saved for every page
+     (retryAt = now); start() still sends nothing while the phone is offline. */
   window.addEventListener("online", function () {
     var j = record(); if (!j || j.jobId || j.state !== "retry") return;
-    retryNow = true; if (timer) { clearTimeout(timer); timer = null; } follow();
+    if (retryAt(j) > Date.now()) { j.retryAt = Date.now(); lsSet(JOB, j); }
+    if (timer) { clearTimeout(timer); timer = null; } follow();
   });
 
   window.CozTropicalServer = { start: start, resume: follow, sectionView: sectionView, record: record, COPY: COPY, timing: timing };   /* TSA1.4 */
