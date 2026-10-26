@@ -231,7 +231,7 @@ body {
 
 </style>
 <style>
-/* AV0.2 preview only (no labels under the avatars; the Vedic woman speaks): the avatar choice at the top of Section 01, and the avatar reading.
+/* AV0.3 preview only (no labels under the avatars; the Vedic avatars speak, and move once their Simli avatar is ready): the avatar choice at the top of Section 01, and the avatar reading.
    Everything else on this page is the reading page's own styles, unchanged. */
 .avatar-choice { margin: 22px 0 4px; text-align: center; }
 .avatar-choice-title {
@@ -269,6 +269,18 @@ body {
   height: auto;
   border: 1px solid var(--vedic-gold-muted);
 }
+.av-frame { position: relative; }
+.av-frame video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 0%;
+  border: 1px solid var(--vedic-gold-muted);
+  visibility: hidden;          /* the still picture shows until the first moving frame */
+}
+.av-frame video.on { visibility: visible; }
 .avatar-controls { margin-top: 10px; }
 .avatar-controls .vedic-nav-links span {
   font-family: var(--body-font);
@@ -289,12 +301,15 @@ body {
 </main>
 <script>
 (function () {
-  /* AV0.2: the Vedic woman (Rashi) and the Vedic man (Rahul S) read the sample aloud from the CozAlyze voice server.
+  /* AV0.3: the Vedic woman (Rashi) and the Vedic man (Rahul S) read the sample aloud from the CozAlyze voice server.
+     When an avatar's moving video is ready on the server, it plays in the avatar's place with its own sound;
+     otherwise the voice plays over the still picture. ?face=test uses Simli's ready-made test face (testing only).
      The two Tropical avatars stay silent until their voices are chosen. */
   var VOICE_SERVER = "https://cozalyze-voice-server.netlify.app";
   var VOICED = { "vedic-female": true, "vedic-male": true };
 
   var q = new URLSearchParams(location.search);
+  var FACE = q.get("face") === "test" ? "test" : "own";
   var sys = q.get("sys") === "tropical" ? "tropical" : "vedic";
   var state = q.get("state") === "speaking" ? "speaking" : "choose";
   var who = q.get("who") === "male" ? "male" : "female";
@@ -321,7 +336,20 @@ body {
   player.setAttribute("playsinline", "");
   var part = 0;
 
+  var MOVING = {};          /* avatar -> true once its moving video is ready on the server */
+  var useVideo = false;
+
   function voiced() { return !!VOICED[sys + "-" + who]; }
+  function videoUrl(k) { return VOICE_SERVER + "/api/sample-video?avatar=" + k + "&part=all" + (FACE === "test" ? "&face=test" : ""); }
+  function vid() { return document.querySelector(".av-frame video"); }
+  function playVideo() {
+    var v = vid();
+    if (!v) return;
+    useVideo = true;
+    label("Pause");
+    var p = v.play();
+    if (p && p.catch) p.catch(function () { label("Try again"); });
+  }
   function partUrl(n) { return VOICE_SERVER + "/api/sample-audio?avatar=" + sys + "-" + who + "&part=" + n; }
   function label(t) { var b = document.getElementById("avPause"); if (b) b.textContent = t; }
 
@@ -338,6 +366,15 @@ body {
   });
   player.addEventListener("error", function () { if (state === "speaking" && part) label("Try again"); });
 
+  Object.keys(VOICED).forEach(function (k) {
+    if (k.indexOf(sys + "-") !== 0) return;
+    fetch(videoUrl(k), { method: "HEAD" }).then(function (r) {
+      MOVING[k] = r.ok;
+      /* a direct link to the speaking view: add the moving avatar once we know it's there */
+      if (r.ok && state === "speaking" && k === sys + "-" + who && !useVideo && player.paused && !vid()) render();
+    }).catch(function () {});
+  });
+
   function blockHtml() {
     if (state === "choose") {
       return '<section class="avatar-choice" aria-label="Hear your reading">' +
@@ -348,8 +385,12 @@ body {
           '</div>' +
         '</section>';
     }
+    var k = sys + "-" + who;
     return '<section class="avatar-speaking" aria-label="Your avatar is reading">' +
-        '<img src="avatars/avatar-' + sys + '-' + who + '.jpg" alt="" width="1024" height="1536">' +
+        '<div class="av-frame">' +
+          '<img src="avatars/avatar-' + sys + '-' + who + '.jpg" alt="" width="1024" height="1536">' +
+          (voiced() && MOVING[k] ? '<video playsinline webkit-playsinline preload="auto" src="' + videoUrl(k) + '"></video>' : '') +
+        '</div>' +
         '<nav class="vedic-nav avatar-controls" aria-label="Avatar controls">' +
           '<div class="vedic-nav-rule" aria-hidden="true">' + STAR + '</div>' +
           '<div class="vedic-nav-links">' +
@@ -381,13 +422,22 @@ body {
         '</div>' +
       '</nav>';
 
+    var v = vid();
+    if (v) {
+      v.addEventListener("playing", function () { v.classList.add("on"); });
+      v.addEventListener("ended", function () { label("Play again"); });
+      v.addEventListener("error", function () { useVideo = false; label("Try again"); });
+    }
+
     Array.prototype.forEach.call(document.querySelectorAll(".avatar-option"), function (b) {
       b.addEventListener("click", function () {
         who = b.getAttribute("data-who");
         state = "speaking";
-        try { history.replaceState(null, "", "?sys=" + sys + "&state=speaking&who=" + who); } catch (e) {}
+        try { history.replaceState(null, "", "?sys=" + sys + "&state=speaking&who=" + who + (FACE === "test" ? "&face=test" : "")); } catch (e) {}
+        useVideo = false;
         render();
-        if (voiced()) playPart(1);          /* inside the tap, so iPhone allows the sound */
+        if (voiced() && vid()) playVideo();    /* inside the tap, so iPhone allows the sound */
+        else if (voiced()) playPart(1);
         else label("Pause");
       });
     });
@@ -396,6 +446,14 @@ body {
     if (pause) pause.addEventListener("click", function () {
       if (!voiced()) { pause.textContent = pause.textContent === "Pause" ? "Resume" : "Pause"; return; }
       var t = pause.textContent;
+      var v = vid();
+      if (v && (useVideo || t === "Play")) {
+        if (t === "Pause") { v.pause(); label("Resume"); }
+        else if (t === "Resume") { var r = v.play(); label("Pause"); if (r && r.catch) r.catch(function () { label("Try again"); }); }
+        else if (t === "Try again" && v.error) { useVideo = false; playPart(1); }   /* the video failed: the voice alone */
+        else { try { v.currentTime = 0; } catch (e) {} playVideo(); }          /* Play, Play again, Try again */
+        return;
+      }
       if (t === "Pause") { player.pause(); label("Resume"); }
       else if (t === "Resume") { var p = player.play(); label("Pause"); if (p && p.catch) p.catch(function () { label("Try again"); }); }
       else playPart(t === "Try again" && part ? part : 1);   /* Play, Play again, Try again */
@@ -404,9 +462,12 @@ body {
     var stop = document.getElementById("avStop");
     if (stop) stop.addEventListener("click", function () {
       player.pause();
+      var v = vid();
+      if (v) v.pause();
+      useVideo = false;
       part = 0;
       state = "choose";
-      try { history.replaceState(null, "", "?sys=" + sys + "&state=choose"); } catch (e) {}
+      try { history.replaceState(null, "", "?sys=" + sys + "&state=choose" + (FACE === "test" ? "&face=test" : "")); } catch (e) {}
       render();
     });
   }
