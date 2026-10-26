@@ -58,14 +58,66 @@
         becomes "is in". The Moon's nakshatra is still named exactly once.
      Chat's review (Oct 26) changed two phrases of the Oct 14 wording: "a central influence in this reading" and "27
      divisions of the zodiac" (with "division" and "nakshatra" in place of "star group" after it).
-     3. Three pronoun errors in claim sentences are corrected (SW1_FIX).
+     3. Three pronoun errors in claim sentences are corrected (SW1_FIX). SW2 adds twenty-two more corrections to SW1_FIX.
      Each opening is its own paragraph; the claim sentences are split into paragraphs as before. No claim is added,
      removed or reworded beyond SW1_FIX. Sections 3-6 and the Compare selections are unchanged. */
   var sw1On = false;
   var SW1_FIX = [
     ["central and genuinely their own.", "central and truly your own."],
     ["the feelings or responses of someone close to them.", "the feelings or responses of someone close to you."],
-    ["discovering what allows them to remain internally centered.", "discovering what allows you to remain internally centered."]
+    ["discovering what allows them to remain internally centered.", "discovering what allows you to remain internally centered."],
+    /* SW2 (Oct 26 2026, offline): twenty-two claim sentences that read wrongly to the reader, each matched as a whole
+       sentence so nothing else can change: verbs after "you" ("you recognizes"), "they", "their" and "them" where the
+       reader is meant, one "The person may", and two writer notes left in the reader's text ("without predicting
+       parenthood", "without determining the actual family history"). Like the three above, they apply only when the
+       page asks with { sw1: true }. The claim files are unchanged. */
+    ["Family or inherited values may help shape what you associates with safety and belonging, without determining the actual family history.",
+     "Family or inherited values may help shape what you associate with safety and belonging."],
+    ["Caring for, teaching or encouraging younger people or creative work may carry emotional meaning, without predicting parenthood.",
+     "Caring for, teaching or encouraging younger people or creative work may carry emotional meaning."],
+    ["Important choices may become clearer when you notice their internal response without assuming that the first feeling must determine the final direction.",
+     "Important choices may become clearer when you notice your internal response without assuming that the first feeling must determine the final direction."],
+    ["Endurance may become burdensome when you continues carrying a responsibility after its useful purpose has ended.",
+     "Endurance may become burdensome when you continue carrying a responsibility after its useful purpose has ended."],
+    ["You may bring steadiness of mind to what they value and wish to develop.",
+     "You may bring steadiness of mind to what you value and wish to develop."],
+    ["Emotional confidence may increase when you can apply a skill and see a tangible result from their effort.",
+     "Emotional confidence may increase when you can apply a skill and see a tangible result from your effort."],
+    ["Contentment may become possible when you trust what has already been developed rather than continually proving their worth.",
+     "Contentment may become possible when you trust what has already been developed rather than continually proving your worth."],
+    ["You may feel emotionally responsible for protecting what has been placed in their care.",
+     "You may feel emotionally responsible for protecting what has been placed in your care."],
+    ["Searching for the root may become exhausting when every explanation is dismantled before you recognizes what is already clear.",
+     "Searching for the root may become exhausting when every explanation is dismantled before you recognize what is already clear."],
+    ["Emotional momentum may return when you reconnects with an aim that still feels genuinely worth pursuing.",
+     "Emotional momentum may return when you reconnect with an aim that still feels genuinely worth pursuing."],
+    ["Private processing may become isolation when you waits for complete understanding before seeking support.",
+     "Private processing may become isolation when you wait for complete understanding before seeking support."],
+    ["You may take responsibility for an agreement most readily when it serves a principle they can respect and openly uphold.",
+     "You may take responsibility for an agreement most readily when it serves a principle you can respect and openly uphold."],
+    ["Imagination or symbolic understanding may help you recognize what another person or situation is asking of them.",
+     "Imagination or symbolic understanding may help you recognize what another person or situation is asking of you."],
+    ["You may feel most engaged when they can make clear creative decisions and take ownership of the resulting form.",
+     "You may feel most engaged when you can make clear creative decisions and take ownership of the resulting form."],
+    ["You may use accumulated knowledge to guide a difficult decision or protect what has been placed in their care.",
+     "You may use accumulated knowledge to guide a difficult decision or protect what has been placed in your care."],
+    ["Competence may become over-responsibility when you assumes that being capable means every burden should be accepted.",
+     "Competence may become over-responsibility when you assume that being capable means every burden should be accepted."],
+    ["Receptivity may blur authority when you absorbs competing expectations without deciding which responsibility is actually theirs.",
+     "Receptivity may blur authority when you absorb competing expectations without deciding which responsibility is actually yours."],
+    ["Protective responsibility may become control when you assumes they alone can determine what serves everyone involved.",
+     "Protective responsibility may become control when you assume you alone can determine what serves everyone involved."],
+    ["Responsible guidance may become over-responsibility when you starts carrying tasks or decisions that properly belong to others.",
+     "Responsible guidance may become over-responsibility when you start carrying tasks or decisions that properly belong to others."],
+    ["The person may be willing to challenge established patterns when those patterns conflict with a deeply held conviction.",
+     "You may be willing to challenge established patterns when those patterns conflict with a deeply held conviction."],
+    /* SW2 r2: a typo ("what you i genuinely drawn"), and a capital letter. The second entry matches the sentence as Section 2
+       voices it: sw1Fix runs after the nakshatra's name and "pada" are replaced, so the claim's "Purva Bhadrapada's
+       intensity ... in this pada." reaches it as "this nakshatra's intensity ... in this placement." */
+    ["With Venus ruling the Ascendant, love and desire may become important guides in recognizing what you i genuinely drawn to sustain or pursue.",
+     "With Venus ruling the Ascendant, love and desire may become important guides in recognizing what you are genuinely drawn to sustain or pursue."],
+    ["this nakshatra's intensity may take a more initiating and immediate mode of expression in this placement.",
+     "This nakshatra's intensity may take a more initiating and immediate mode of expression in this placement."]
   ];
   function sw1Fix(t) { SW1_FIX.forEach(function (f) { t = String(t).split(f[0]).join(f[1]); }); return t; }
   /* ELIG1 (Oct 26 2026, offline, from Chat's review): a claim record that says it may not be used is never selected.
