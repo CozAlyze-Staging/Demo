@@ -941,7 +941,7 @@ console.log('[EMERGE FLOW] 5. tropical-reveal — system in storage:',
             SAVED && SAVED.system, '| data:', __ok ? 'user birth data' : 'QA fallback');
 console.log('[EMERGE FLOW] 6. calculation branch: TROPICAL — no ayanamsa (true tropical longitudes)');
 document.getElementById('stamp').textContent =
-  'TROPICAL v18.94 engine version · d1 · data:' + ((SAVED && SAVED.system) || 'none');
+  'TROPICAL v18.94 engine version · SKIP1 skip · d1 · data:' + ((SAVED && SAVED.system) || 'none');
 
 var DEG = Math.PI/180, RAD = 180/Math.PI;
 
@@ -2825,6 +2825,28 @@ if (!IS_COARSE){
 var resultPage = document.getElementById('chartResultPage');
 var unlockBtn = document.getElementById('unlockCompleteReading');
 var resultBuilt = false, resultOpened = false;
+/* SKIP1 (Oct 26 2026, staging): the Skip block at the end of this file runs outside this function, so it read
+   resultOpened, revealGateArmed, t0 and the result-page functions by name and threw a ReferenceError: the Skip never
+   appeared and ?skip=1 failed (since Sep 1). The steps that need this state now live here, unchanged and in the same
+   order; the Skip block calls them. beforeFinish runs just before the result page opens, where the Skip block's own
+   extra step (?skip=1 goes on to the unlock request) used to sit. */
+window.__cozRevealSkip = {
+  opened: function(){ return resultOpened; },
+  toChart: function(beforeFinish){
+    if (resultOpened) return false;
+    revealGateArmed = false;
+    var g = document.getElementById('soundGate'); if (g){ try { g.remove(); } catch(_){} }
+    window.__numPulsed = 12;
+    t0 = performance.now() - 600000;                 /* every timeline beat is in the past */
+    window.EMERGE_HOLD_AMBIENT = false;
+    try { EMERGE_SOUND.stopLoop('voidatm', 1.0); EMERGE_SOUND.loop('ambient', 1.4); } catch(_){}
+    if (!resultBuilt){ try { buildResultPage(); resultBuilt = true; } catch(e){ console.log('[EMERGE FLOW] result page build error:', e); } }
+    try { promptEl.classList.remove('show'); } catch(_){}
+    if (beforeFinish) beforeFinish();
+    finishRevealTransition(REDUCED ? 0 : 400);
+    return true;
+  }
+};
 
 var RP_MODE = 'tropical';
 var RP_SIGN_GLYPH = ['\u2648','\u2649','\u264A','\u264B','\u264C','\u264D','\u264E','\u264F','\u2650','\u2651','\u2652','\u2653'];
@@ -3884,25 +3906,21 @@ ctaEl.addEventListener('click', function(){
   var auto = false; try { auto = new URLSearchParams(location.search).get('skip') === '1'; } catch(_){}
   var el = document.createElement('button'); el.type = 'button'; el.className = 'coz-skip'; el.textContent = 'Skip'; el.setAttribute('aria-label', 'Skip to your chart');
   document.body.appendChild(el);
-  window.addEventListener('EMERGE_FREE_SUMMARY_COMPLETE', function(){ try { localStorage.setItem(KEY, '1'); } catch(_){} });
+  /* SKIP1: the result page is open (by Skip or by the normal reveal): the seen flag is set, and the Skip leaves,
+     so it never sits over the result page */
+  window.addEventListener('EMERGE_FREE_SUMMARY_COMPLETE', function(){ try { localStorage.setItem(KEY, '1'); } catch(_){} el.classList.remove('on'); });
+  function opened(){ var S = window.__cozRevealSkip; return !S || S.opened(); }   /* SKIP1: the reveal's own state */
   function skipToChart(){
-    if (resultOpened) return;
+    if (opened()) return;
     el.classList.remove('on');
-    revealGateArmed = false;
-    var g = document.getElementById('soundGate'); if (g){ try { g.remove(); } catch(_){} }
-    window.__numPulsed = 12;
-    t0 = performance.now() - 600000;                 /* every timeline beat is in the past */
-    window.EMERGE_HOLD_AMBIENT = false;
-    try { EMERGE_SOUND.stopLoop('voidatm', 1.0); EMERGE_SOUND.loop('ambient', 1.4); } catch(_){}
-    if (!resultBuilt){ try { buildResultPage(); resultBuilt = true; } catch(e){ console.log('[EMERGE FLOW] result page build error:', e); } }
-    try { promptEl.classList.remove('show'); } catch(_){}
-    if (auto) window.addEventListener('EMERGE_FREE_SUMMARY_COMPLETE', function(){ window.dispatchEvent(new CustomEvent('EMERGE_UNLOCK_READING_REQUESTED')); }, { once:true });
-    finishRevealTransition(REDUCED ? 0 : 400);
+    window.__cozRevealSkip.toChart(function(){        /* SKIP1: the original steps, inside the reveal's scope */
+      if (auto) window.addEventListener('EMERGE_FREE_SUMMARY_COMPLETE', function(){ window.dispatchEvent(new CustomEvent('EMERGE_UNLOCK_READING_REQUESTED')); }, { once:true });
+    });
     console.log('[EMERGE FLOW] skip -> result page, then straight to Conscious Expression');
   }
   el.addEventListener('click', skipToChart);
   if (auto) setTimeout(skipToChart, 500);
-  else if (seen) setTimeout(function(){ if (!resultOpened) el.classList.add('on'); }, 5800);
+  else if (seen) setTimeout(function(){ if (!opened()) el.classList.add('on'); }, 5800);
 })();
 
 

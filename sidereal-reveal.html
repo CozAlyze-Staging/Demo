@@ -1100,7 +1100,7 @@ var BIRTH = __ok ? {
 console.log('[EMERGE FLOW] 5. sidereal-reveal — system in storage:',
             SAVED && SAVED.system, '| data:', __ok ? 'user birth data' : 'QA fallback');
 document.getElementById('stamp').textContent =
-  'SIDEREAL v19.99 engine version · VC1 card guard · LAHIRI · d1 · data:' + ((SAVED && SAVED.system) || 'none');
+  'SIDEREAL v19.99 engine version · VC1 card guard · SKIP1 skip · LAHIRI · d1 · data:' + ((SAVED && SAVED.system) || 'none');
 
 var DEG = Math.PI/180, RAD = 180/Math.PI;
 
@@ -2626,6 +2626,26 @@ var resultPage = document.getElementById('chartResultPage');
 var resultLogoEl = document.getElementById('resultLogo');   /* v19.50: the header logo left the page; every use is guarded */
 var unlockBtn = document.getElementById('unlockCompleteReading');
 var resultBuilt = false, resultOpened = false;
+/* SKIP1 (Oct 26 2026, staging): the Skip block at the end of this file runs outside this function, so it read
+   resultOpened, revealGateArmed, t0 and the result-page functions by name and threw a ReferenceError: the Skip never
+   appeared and ?skip=1 failed (since Sep 1). The steps that need this state now live here, unchanged and in the same
+   order; the Skip block calls them. */
+window.__cozRevealSkip = {
+  opened: function(){ return resultOpened; },
+  toChart: function(){
+    if (resultOpened) return false;
+    revealGateArmed = false;
+    var g = document.getElementById('soundGate'); if (g){ try { g.remove(); } catch(_){} }
+    window.__numPulsed = 12;
+    t0 = performance.now() - 600000;                 /* every timeline beat is in the past */
+    window.EMERGE_HOLD_AMBIENT = false;
+    try { EMERGE_SOUND.stopLoop('voidatm', 1.0); EMERGE_SOUND.loop('ambient', 1.4); } catch(_){}
+    if (!resultBuilt){ try { buildResultPage(); resultBuilt = true; } catch(e){ console.log('[EMERGE FLOW] result page build error:', e); } }
+    try { promptEl.classList.remove('show'); } catch(_){}
+    finishRevealTransition(REDUCED ? 0 : 400);
+    return true;
+  }
+};
 if (resultLogoEl) resultLogoEl.src = EMERGE_RESULT_LOGO;   /* v19.50: header logo retired from the page */
 
 var RP_MODE = 'sidereal';
@@ -4351,24 +4371,19 @@ try {
   var auto = false; try { auto = new URLSearchParams(location.search).get('skip') === '1'; } catch(_){}
   var el = document.createElement('button'); el.type = 'button'; el.className = 'coz-skip'; el.textContent = 'Skip'; el.setAttribute('aria-label', 'Skip to your chart');
   document.body.appendChild(el);
-  window.addEventListener('EMERGE_FREE_SUMMARY_COMPLETE', function(){ try { localStorage.setItem(KEY, '1'); } catch(_){} });
+  /* SKIP1: the result page is open (by Skip or by the normal reveal): the seen flag is set, and the Skip leaves,
+     so it never sits over the result page */
+  window.addEventListener('EMERGE_FREE_SUMMARY_COMPLETE', function(){ try { localStorage.setItem(KEY, '1'); } catch(_){} el.classList.remove('on'); });
+  function opened(){ var S = window.__cozRevealSkip; return !S || S.opened(); }   /* SKIP1: the reveal's own state */
   function skipToChart(){
-    if (resultOpened) return;
+    if (opened()) return;
     el.classList.remove('on');
-    revealGateArmed = false;
-    var g = document.getElementById('soundGate'); if (g){ try { g.remove(); } catch(_){} }
-    window.__numPulsed = 12;
-    t0 = performance.now() - 600000;                 /* every timeline beat is in the past */
-    window.EMERGE_HOLD_AMBIENT = false;
-    try { EMERGE_SOUND.stopLoop('voidatm', 1.0); EMERGE_SOUND.loop('ambient', 1.4); } catch(_){}
-    if (!resultBuilt){ try { buildResultPage(); resultBuilt = true; } catch(e){ console.log('[EMERGE FLOW] result page build error:', e); } }
-    try { promptEl.classList.remove('show'); } catch(_){}
-    finishRevealTransition(REDUCED ? 0 : 400);
+    window.__cozRevealSkip.toChart();                 /* SKIP1: the original steps, inside the reveal's scope */
     console.log('[EMERGE FLOW] skip -> result page');
   }
   el.addEventListener('click', skipToChart);
   if (auto) setTimeout(skipToChart, 500);
-  else if (seen) setTimeout(function(){ if (!resultOpened) el.classList.add('on'); }, 5800);
+  else if (seen) setTimeout(function(){ if (!opened()) el.classList.add('on'); }, 5800);
 })();
 
 
