@@ -306,9 +306,9 @@ body {
      ART makes phones fetch the new pictures instead of old copies.
      When an avatar's moving video is ready on the server, it plays in the avatar's place with its own sound;
      otherwise the voice plays over the still picture. ?face=test uses Simli's ready-made test face (testing only).
-     AV0.6: the Western man reads in Orion's voice; the Western woman stays silent until her voice is chosen. */
+     AV0.6/AV0.7: the Western man reads in Orion's voice and the Western woman in Annabel's. */
   var VOICE_SERVER = "https://cozalyze-voice-server.netlify.app";
-  var VOICED = { "vedic-female": true, "vedic-male": true, "tropical-male": true };
+  var VOICED = { "vedic-female": true, "vedic-male": true, "tropical-female": true, "tropical-male": true };
   var ART = "?v=3";
 
   var q = new URLSearchParams(location.search);
