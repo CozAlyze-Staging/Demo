@@ -68,6 +68,29 @@
     ["discovering what allows them to remain internally centered.", "discovering what allows you to remain internally centered."]
   ];
   function sw1Fix(t) { SW1_FIX.forEach(function (f) { t = String(t).split(f[0]).join(f[1]); }); return t; }
+  /* ELIG1 (Oct 26 2026, offline, from Chat's review): a claim record that says it may not be used is never selected.
+     The Moon in the 8th record (BLOCKED_PENDING_ADOPTION_RULING, developmentEligible: false) was reaching paid Section 2.
+     A record is left out when its file or the record says developmentEligible: false, or its status contains BLOCKED,
+     GAP, PROHIBIT or REJECT (the words of the Compare gate in compare-evidence.js). Development drafts stay in: every
+     record marked developmentEligible: true, and the six Lisbon records that carry no eligibility field (their files say
+     environment: development). productionEligible is not required.
+     Where it applies:
+     1. The six-section reading's Sections 1-2, only when the page asks with { elig: true } (it asks together with
+        { sw1: true }, so new runs). A run whose Sections 3-6 were written, or are being written, from earlier Sections 1-2
+        keeps those through the SW1 bridge and the r3 pin, exactly as with SW1.
+     2. The Ascendant evidence (selectAscendantEvidence), always. Those readings are reused by keys that don't include the
+        evidence, so nothing already written changes. No Section 1 record is blocked today, so its output is unchanged.
+     3. The Compare selection (selectRecords) keeps returning every matched record, now with eligible and
+        eligibilityProblem on each entry. Compare's own gate (CE1.2) already keeps such records out of the prompt and,
+        by his Sep 19 ruling, lists them in the manifest with the reason. */
+  var eligOn = false;
+  var ELIG_BAD_STATUS = /BLOCKED|GAP|PROHIBIT|REJECT/i;
+  function eligibilityProblem(rec, file) {
+    if (file && file.developmentEligible === false) return "file not developmentEligible";
+    if (!rec || rec.developmentEligible === false) return "record not developmentEligible";
+    if (rec.status && ELIG_BAD_STATUS.test(String(rec.status))) return "record status " + rec.status;
+    return null;
+  }
   function sw1Lord(code) { var n = CODE_TO_NAME[code]; return (code === "su" || code === "mo") ? "the " + n : n; }
   function nakKey(name) { var k = String(name || "").toLowerCase().trim().replace(/\s+/g, "-"); return (aliasOn && NAK_KEY_ALIAS[k]) || k; }
   function signName(signNumber) { return SIGN_NAMES[(signNumber - 1 + 12) % 12]; }
@@ -104,15 +127,19 @@
     });
   }
 
-  function collectSentences(files, matchFn) {
+  function collectSentences(files, matchFn, forceElig) {
     var sentences = [];
     var matchedIds = [];
+    var excluded = [];   /* ELIG1: matched records left out, with the reason */
+    var elig = eligOn || forceElig === true;
     var seen = {};
     files.forEach(function (file) {
       (file.records || []).forEach(function (rec) {
         if (matchFn(rec)) {
           var id = rec.recordId || rec.modelId || rec.coverageItem;
           if (seen[id]) return;
+          var why = elig ? eligibilityProblem(rec, file) : null;
+          if (why) { excluded.push({ id: id, reason: why }); return; }   /* ELIG1 */
           seen[id] = true;
           matchedIds.push(id);
           (rec.applicationClaims || []).forEach(function (c) {
@@ -121,18 +148,20 @@
         }
       });
     });
-    return { sentences: sentences, matchedIds: matchedIds };
+    return { sentences: sentences, matchedIds: matchedIds, excluded: excluded };
   }
 
   /* S2C: Section 2's records, matched and ordered as collectSentences matches and orders them, then the two S2C rules.
      Each unit is a list of claim sentences that goes into one paragraph. */
   function collectS2C(files, matchFn) {
-    var recs = [], seen = {};
+    var recs = [], seen = {}, excluded = [];
     files.forEach(function (file) {
       (file.records || []).forEach(function (rec) {
         if (!matchFn(rec)) return;
         var id = rec.recordId || rec.modelId || rec.coverageItem;
         if (seen[id]) return;
+        var why = eligOn ? eligibilityProblem(rec, file) : null;
+        if (why) { excluded.push({ id: id, reason: why }); return; }   /* ELIG1 */
         seen[id] = true;
         recs.push(rec);
       });
@@ -169,7 +198,7 @@
         units.push([c.allowedMeaning]);
       });
     });
-    return { units: units, matchedIds: matchedIds };
+    return { units: units, matchedIds: matchedIds, excluded: excluded };
   }
 
   function toParagraphs(sentences, introSentences) {
@@ -197,6 +226,7 @@
       sentences: matched.sentences,
       units: matched.units,                                  /* S2C only */
       matchedIds: matched.matchedIds,
+      excluded: matched.excluded,                            /* ELIG1 */
       moon: moon, moonSign: moonSign
     };
   }
@@ -204,9 +234,10 @@
   /* ---------- Public API ---------- */
   /* SR1 bridge: the alias applies to this draft only when the page passes { sr1: true } */
   function generateDevReview(chart, claimData, snippets36, firstName, opts) {
-    var was = aliasOn, wasS2c = s2cOn, wasSw1 = sw1On; aliasOn = !!(opts && opts.sr1); s2cOn = !!(opts && opts.s2c);   /* S2C: { s2c: true } */
+    var was = aliasOn, wasS2c = s2cOn, wasSw1 = sw1On, wasElig = eligOn; aliasOn = !!(opts && opts.sr1); s2cOn = !!(opts && opts.s2c);   /* S2C: { s2c: true } */
     sw1On = !!(opts && opts.sw1);   /* SW1: { sw1: true } */
-    try { return draftReview(chart, claimData, snippets36, firstName); } finally { aliasOn = was; s2cOn = wasS2c; sw1On = wasSw1; }
+    eligOn = !!(opts && opts.elig);   /* ELIG1: { elig: true } */
+    try { return draftReview(chart, claimData, snippets36, firstName); } finally { aliasOn = was; s2cOn = wasS2c; sw1On = wasSw1; eligOn = wasElig; }
   }
   function draftReview(chart, claimData, snippets36, firstName) {
     var s1 = computeS1Keys(chart);
@@ -312,6 +343,10 @@
       }
     };
     if (sw1On) out.meta.sw1 = true;   /* SW1: marks Sections 1-2 assembled with the SW1 wording (absent otherwise) */
+    if (eligOn) {   /* ELIG1: marks Sections 1-2 assembled with the eligibility gate, and lists what it left out (absent otherwise) */
+      out.meta.elig = true;
+      out.meta.excludedRecords = { section1: s1Match.excluded || [], section2: s2.excluded || [] };
+    }
     return out;
   }
 
@@ -327,7 +362,7 @@
      Additive only; generateDevReview is unchanged. */
   function selectAscendantEvidence(chart, section1Files) {
     var s1 = computeS1Keys(chart);
-    var m = collectSentences(section1Files, function (rec) { return recordMatchesKeys(rec, s1.keys); });
+    var m = collectSentences(section1Files, function (rec) { return recordMatchesKeys(rec, s1.keys); }, true);   /* ELIG1: always */
     var lord = s1.ascLordPlanet;
     return {
       keys: s1.keys,
@@ -356,7 +391,8 @@
           if (!fn(rec)) return;
           var id = rec.recordId || rec.modelId || rec.coverageItem;
           if (seen[id]) return; seen[id] = true;
-          out.push({ record: rec, fileIndex: fi });
+          var why = eligibilityProblem(rec, file);   /* ELIG1: reported on every entry; Compare's CE1.2 gate excludes it */
+          out.push({ record: rec, fileIndex: fi, eligible: !why, eligibilityProblem: why });
         });
       });
       return out;
@@ -369,6 +405,8 @@
   }
 
   global.CozDevReview = { generateDevReview: generateDevReview, selectAscendantEvidence: selectAscendantEvidence, selectRecords: selectRecords,
+                          eligibilityProblem: eligibilityProblem,   /* ELIG1: the shared rule, for any other selector */
                           s2c: true,     /* S2C: this engine understands { s2c: true }; a page asks only an engine that says so */
-                          sw1: true };   /* SW1: the same, for { sw1: true } */
+                          sw1: true,     /* SW1: the same, for { sw1: true } */
+                          elig: true };  /* ELIG1: the same, for { elig: true } */
 })(typeof window !== "undefined" ? window : globalThis);

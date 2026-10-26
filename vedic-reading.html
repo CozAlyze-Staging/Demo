@@ -706,10 +706,10 @@ body[data-view="reading"] .vedic-reading-page { animation: none; }
   </div>
 </div>
 
-<div class="vedic-stamp" aria-hidden="true">VEDIC READING · R5.2 · quiet pre-write · VD1.2 diagnostic · VW1 waiting · VSP1.2 server switch · DV1 load order · DV2 tap guard · S2C section 2 · SW1 r3 sections 1-2</div>
+<div class="vedic-stamp" aria-hidden="true">VEDIC READING · R5.2 · quiet pre-write · VD1.2 diagnostic · VW1 waiting · VSP1.2 server switch · DV1 load order · DV2 tap guard · S2C section 2 · SW1 r3 sections 1-2 · ELIG1 eligible records</div>
 
 <script src="ascendant-library.js"></script>
-<script src="dev-review-engine.js?v=10"></script>
+<script src="dev-review-engine.js?v=11"></script>
 <script src="coz-vedic-server.js?v=1"></script>
 <script>
 /* ============================================================
@@ -1215,9 +1215,12 @@ var COZ_READING_READY = requestChartData().then(function (chart) {
        whose Sections 3-6 were already written, or are being written, from the Sections 1-2 chosen above keeps them, and so
        does a run whose server job was started from them or by a page from before the SR1 bridge. A run written from the
        SW1 wording, or with nothing written yet, gets it. With an engine from before SW1 (it has no CozDevReview.sw1), the
-       Sections 1-2 above are used. */
+       Sections 1-2 above are used.
+       ELIG1 (Oct 26 2026): the same call also asks { elig: true }, so the SW1 Sections 1-2 leave out any claim record marked
+       not eligible (the blocked Moon in the 8th record). A run started from Sections 1-2 that still had them keeps them
+       through this bridge and the r3 pin below, as with any SW1 change. An engine from before ELIG1 ignores the option. */
     if (window.CozDevReview.sw1 === true) {
-      var worded = window.CozDevReview.generateDevReview(chart, chosen.data, snippets36, firstName, Object.assign({}, chosen.opts, { sw1: true }));
+      var worded = window.CozDevReview.generateDevReview(chart, chosen.data, snippets36, firstName, Object.assign({}, chosen.opts, { sw1: true, elig: true }));   /* ELIG1: new runs also leave out claim records marked not eligible (blocked) */
       if (cozS12(worded.reading) !== cozS12(result.reading)) {
         var job12w = cozStartedS12(chart.run);   /* r3: a start still waiting for its job ID counts */
         var fromWorded = !!cozBrowserPinned(chart, worded.reading, firstName) || job12w === cozS12(worded.reading);
