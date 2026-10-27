@@ -424,7 +424,7 @@ body[data-view="reading"] .dash { display: none; }
   -webkit-tap-highlight-color: transparent;
 }
 .reveal-back svg { width: 30px; height: 20px; display: block; }
-/* WL1 (Oct 26 2026, Jason's ruling, staging only): the same waiting line as the Tropical and Combined readings, his
+/* WL1 r2 (Oct 26 2026, Jason's ruling, staging only): the same waiting line as the Tropical and Combined readings, his
    existing line from index.html (same style as .gn-title .t1, the same pulse used by "Tap the Sky"), 22vh from the bottom. */
 @keyframes cozTwinkle { 0%,100%{opacity:1} 50%{opacity:.45} }
 .reveal .coz-wait { position:absolute; left:0; right:0; bottom:22vh; text-align:center; z-index:5;
@@ -432,7 +432,6 @@ body[data-view="reading"] .dash { display: none; }
 .reveal .coz-wait .t1 { font-family:Georgia,serif; font-size:17px; letter-spacing:.14em; color:#E8C7A6; }
 .reveal .coz-wait.on { opacity:1; }
 .reveal .coz-wait.on .t1 { animation:cozTwinkle 3.2s ease-in-out 1.2s infinite; }
-.reveal .coz-wait.on.wl-swap { opacity:0; }   /* WL1: the line's own fade, out and back in, when its words change */
 .sr-only {
   position: absolute; width: 1px; height: 1px; overflow: hidden;
   clip: rect(0 0 0 0); white-space: nowrap;
@@ -681,7 +680,7 @@ body[data-view="reading"] .vedic-reading-page { animation: none; }
     <svg viewBox="0 0 30 20" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M29 10H2M9 3 2 10l7 7"/></svg>
   </button>
   <span class="sr-only" aria-live="polite" id="revealLive"></span>
-  <div class="coz-wait" id="cozWait" aria-hidden="true"><div class="t1">Calculating reading</div></div>
+  <div class="coz-wait" id="cozWait" aria-hidden="true"><div class="t1">Your reading will be done shortly</div></div>
 </div>
 
 <main class="vedic-reading-page" id="vedicPage">
@@ -716,7 +715,7 @@ body[data-view="reading"] .vedic-reading-page { animation: none; }
   </div>
 </div>
 
-<div class="vedic-stamp" aria-hidden="true">VEDIC READING · R5.2 · quiet pre-write · VD1.2 diagnostic · VW1 waiting · VSP1.2 server switch · DV1 load order · DV2 tap guard · S2C section 2 · SW1 r3 sections 1-2 · ELIG1 eligible records · SW2 claim text · WL1 waiting line</div>
+<div class="vedic-stamp" aria-hidden="true">VEDIC READING · R5.2 · quiet pre-write · VD1.2 diagnostic · VW1 waiting · VSP1.2 server switch · DV1 load order · DV2 tap guard · S2C section 2 · SW1 r3 sections 1-2 · ELIG1 eligible records · SW2 claim text · WL1 r2 waiting line</div>
 
 <script src="ascendant-library.js"></script>
 <script src="dev-review-engine.js?v=12"></script>
@@ -1694,7 +1693,7 @@ revealVideo.addEventListener("playing", () => {
      blooming, the light takes the screen while the stage is still growing, the page
      lands under the light and the light clears. No hold anywhere. */
   revealTimers.push(setTimeout(() => revealEl.classList.add("is-through"), 1500));
-  revealTimers.push(setTimeout(() => { if (wlNotReady()) waitLine(true); }, 2000));   /* WL1: the waiting line, 2 s into the clip */
+  revealTimers.push(setTimeout(() => { if (wlNotReady()) waitLine(true); }, 20000));   /* WL1 r2: the waiting line, 20 s into the clip */
   /* Sep 20: the reveal, the drive through the sun, the light and the space flight are now ONE clip
      (vedic-reading-reveal-full.mp4). The page just plays it and lands when it ends. */
   // hard cap a little past the clip's 2.5s so a stalled clip never traps anyone
@@ -1710,29 +1709,21 @@ revealVideo.addEventListener("playing", () => {
   }, 500));
 });
 
-/* WL1 (Oct 26 2026, Jason's ruling, staging only): the Vedic reveal gets the waiting line the Tropical and Combined
-   readings use, 22vh from the bottom, the same size, colour and pulse. Two lines only: "Calculating reading" from 2 s
-   into the clip, then at 20 s the same 1.2 s fade out and back in to "Your reading will be done shortly", which stays
-   (through the dark wait, if there is one) until the reading opens. It shows only while the reading is not
-   ready, so a finished reading never shows it; if it is ready during the clip the line leaves, and it leaves with every
-   landing and Back. Nothing else changes: the clip, the waiting and the landing are as before. */
-const WL_FIRST = "Calculating reading", WL_SECOND = "Your reading will be done shortly";
-let wlTimer = 0, wlWatch = 0;
+/* WL1 r2 (Oct 26 2026, Jason's ruling, staging only): the Vedic reveal gets the waiting line the Tropical and Combined
+   readings use, "Your reading will be done shortly", 22vh from the bottom, the same size, colour and pulse. It fades in 20 s into the reveal clip (the clip
+   shows its own "Calculating reading" earlier, so nothing is added there) and stays (through the dark wait, if there
+   is one) until the reading opens. It shows only while the reading is not ready, so a finished reading
+   never shows it; if it is ready during the clip the line leaves, and it leaves with every landing and Back. Nothing
+   else changes: the clip, the waiting and the landing are as before. (r1 also showed "Calculating reading" at 2 s:
+   removed, it overlapped the clip's own.) */
+const WL_TEXT = "Your reading will be done shortly";
+let wlWatch = 0;
 function wlNotReady() { return !loadReading(); }
 function waitLine(on) {
-  const w = document.getElementById("cozWait"), t1 = w.querySelector(".t1"), live = document.getElementById("revealLive");
-  if (!on) {
-    if (wlTimer) { clearTimeout(wlTimer); wlTimer = 0; }
-    if (wlWatch) { clearInterval(wlWatch); wlWatch = 0; }
-    w.classList.remove("on", "wl-swap"); t1.textContent = WL_FIRST;
-    return;
-  }
-  if (wlWatch) return;                                            /* already showing: it keeps its own timing */
-  t1.textContent = WL_FIRST; w.classList.remove("wl-swap"); w.classList.add("on"); live.textContent = WL_FIRST;
-  wlTimer = setTimeout(() => {                                    /* 18 s after it came in, 20 s into the clip */
-    w.classList.add("wl-swap");                                   /* out with the line's own 1.2 s fade, back in with the new words */
-    wlTimer = setTimeout(() => { wlTimer = 0; t1.textContent = WL_SECOND; live.textContent = WL_SECOND; w.classList.remove("wl-swap"); }, 1200);
-  }, 18000);
+  const w = document.getElementById("cozWait"), live = document.getElementById("revealLive");
+  if (!on) { if (wlWatch) { clearInterval(wlWatch); wlWatch = 0; } w.classList.remove("on"); return; }
+  if (wlWatch) return;                                            /* already showing */
+  w.querySelector(".t1").textContent = WL_TEXT; w.classList.add("on"); live.textContent = WL_TEXT;
   wlWatch = setInterval(() => { if (!wlNotReady()) waitLine(false); }, 500);
 }
 function finishReveal(immediate) {
