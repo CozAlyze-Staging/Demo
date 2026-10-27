@@ -11,7 +11,11 @@
    Section 06, as the approved preview says. Text that is still being written is read when it arrives.
    The text comes from the page itself, one paragraph at a time, from the CozAlyze voice server (testers only: the
    tester password saved on this device). Each paragraph is voiced once and kept there, so a replay costs nothing.
-   Leaving the page, Stop, or changing section by hand stops the voice. */
+   Leaving the page, Stop, or changing section by hand stops the voice.
+   VO1.1 (Oct 27 2026, after his first listen, "a bit of a delay"): no silent gaps. The first lines of a page are asked
+   for together; the next section's first lines are made while the current section ends; the first long paragraph of
+   each page starts with its first sentences as a short piece; the welcome comes in three pieces (VS2.2), so it starts
+   about 2 seconds after the tap; and opening a page checks the tester password in advance. Same text, same cost. */
 (function () {
   if (window.CozVoice) return;
   var SERVER = "https://cozalyze-voice-server.netlify.app";
@@ -28,6 +32,8 @@
   var MONTHS = { Jan: "January", Feb: "February", Mar: "March", Apr: "April", Jun: "June", Jul: "July", Aug: "August",
                  Sep: "September", Sept: "September", Oct: "October", Nov: "November", Dec: "December" };
   var MAXCHUNK = 1800;     /* the voice server takes up to 2,500 characters at a time */
+  var HEAD = 240;          /* VO1.1: the first long paragraph of a page starts with a short piece (its first sentences) */
+  var FIRST = 4, AHEAD = 3, KEEP = 30;   /* VO1.1: asked for at the start; asked for ahead while playing; kept on the page */
   var TURN_MS = 900;       /* the pause before the next section opens */
   var WAIT_MS = 2500;      /* how often text still being written is looked for */
 
@@ -129,9 +135,10 @@
             .replace(/([A-Za-z])\s*–\s*(?=[A-Za-z])/g, "$1, ")
             .replace(/\s\+\s/g, " and ");
   }
+  var SENT = /[^.!?]+[.!?]+["'\u201D\u2019)]*\s*|[^.!?]+$/g;   /* one sentence, with its closing quote and space */
   function split(t) {   /* a long paragraph goes in pieces, at sentence ends */
     if (t.length <= MAXCHUNK) return [t];
-    var parts = t.match(/[^.!?]+[.!?]+["'”’)]*\s*|[^.!?]+$/g) || [t], out = [], cur = "";
+    var parts = t.match(SENT) || [t], out = [], cur = "";
     parts.forEach(function (s) {
       if ((cur + s).length > MAXCHUNK && cur) { out.push(cur.trim()); cur = ""; }
       while (s.length > MAXCHUNK) { out.push(s.slice(0, MAXCHUNK)); s = s.slice(MAXCHUNK); }
@@ -141,11 +148,18 @@
     return out;
   }
   function chunksFrom(items) {
-    var out = [];
+    var out = [], headDone = false;
     (items || []).forEach(function (it) {
       var raw = typeof it === "string" ? it : it && it.text, el = it && typeof it === "object" ? it.el || null : null;
       var t = speech(raw); if (!t) return;
-      split(t).forEach(function (c) { out.push({ text: c, el: el }); });
+      var pieces = null;
+      if (!headDone && t.length > HEAD) {   /* VO1.1: the first long paragraph starts with its first sentences, so it is ready sooner */
+        headDone = true;
+        var sents = t.match(SENT) || [t], head = "";
+        for (var j = 0; j < sents.length && (head + sents[j]).length <= HEAD; j++) head += sents[j];
+        if (head.trim() && head.length < t.length) pieces = [head.trim()].concat(split(t.slice(head.length).trim()));
+      }
+      (pieces || split(t)).forEach(function (c) { out.push({ text: c, el: el }); });
     });
     return out;
   }
@@ -176,20 +190,40 @@
     if (b) b.textContent = ph === "paused" ? "Resume" : ph === "done" ? "Play again" : ph === "error" ? "Try again" : "Pause";
   }
 
-  function fetchChunk(s, i) {
-    if (s.urls[i]) return Promise.resolve(s.urls[i]);
-    if (s.pend[i]) return s.pend[i];
-    var c = s.chunks[i], prevC = s.chunks[i - 1], nextC = s.chunks[i + 1];
-    var body = c.welcome ? { avatar: s.voice, welcome: true, name: firstName(), next: nextC && nextC.text || "" }
-                         : { avatar: s.voice, text: c.text, prev: prevC && prevC.text || "", next: nextC && nextC.text || "" };
-    s.pend[i] = fetch(SERVER + "/api/speak", {
-      method: "POST", headers: { "Content-Type": "application/json", "x-tester-code": get("cozDemoTesterCode") || "" }, body: JSON.stringify(body)
+  /* VO1.1: every piece voiced on this page is kept here (the last 30), whichever reading asked for it, so the next
+     section's first lines can be made before it opens and a replay never waits. */
+  var STORE = {}, ORDER = [];
+  function keyOf(voice, c) { return voice + "|" + (c.welcome ? "welcome" + c.welcome + (c.welcome === 1 ? ":" + firstName() : "") : c.text); }
+  function bodyOf(voice, list, i) {
+    var c = list[i], prevC = list[i - 1], nextC = list[i + 1];
+    if (c.welcome) return { avatar: voice, welcome: true, part: c.welcome, name: firstName(), next: nextC && !nextC.welcome ? nextC.text : "" };
+    return { avatar: voice, text: c.text, prev: prevC && !prevC.welcome ? prevC.text : "", next: nextC && !nextC.welcome ? nextC.text : "" };
+  }
+  function want(voice, list, i) {
+    var c = list[i]; if (!c) return Promise.reject(new Error("nothing to read"));
+    var k = keyOf(voice, c), e = STORE[k];
+    if (e) { ORDER.splice(ORDER.indexOf(k), 1); ORDER.push(k); return e.p; }
+    e = { url: null };
+    e.p = fetch(SERVER + "/api/speak", {
+      method: "POST", headers: { "Content-Type": "application/json", "x-tester-code": get("cozDemoTesterCode") || "" }, body: JSON.stringify(bodyOf(voice, list, i))
     }).then(function (r) {
       if (!r.ok) { warn("the voice server answered " + r.status); throw new Error("voice " + r.status); }
       return r.blob();
-    }).then(function (b) { var u = URL.createObjectURL(b); s.urls[i] = u; return u; })
-      .catch(function (e) { delete s.pend[i]; throw e; });
-    return s.pend[i];
+    }).then(function (b) { e.url = URL.createObjectURL(b); return e.url; })
+      .catch(function (err) { if (STORE[k] === e) { delete STORE[k]; ORDER.splice(ORDER.indexOf(k), 1); } throw err; });
+    STORE[k] = e; ORDER.push(k);
+    while (ORDER.length > KEEP) {
+      var old = ORDER.shift(), oe = STORE[old]; delete STORE[old];
+      if (oe && oe.url && !(player && player.src === oe.url)) { try { URL.revokeObjectURL(oe.url); } catch (x) {} }
+    }
+    return e.p;
+  }
+  function fetchChunk(s, i) { return want(s.voice, s.chunks, i); }
+  function aheadNext(s) {   /* VO1.1: the next section's first lines, made while this one ends */
+    if (s.nextAsked || !s.o.then || !s.o.nextTexts) return;
+    s.nextAsked = true;
+    var list = []; try { list = chunksFrom(s.o.nextTexts() || []); } catch (e) {}
+    for (var k = 0; k < 2 && k < list.length; k++) want(s.voice, list, k).catch(function () {});
   }
   function playChunk(s, i) {
     if (s !== S) return;
@@ -200,7 +234,8 @@
       if (s !== S || s.i !== i || s.phase !== "loading") return;   /* paused, stopped or moved on while it loaded */
       var a = audio(); a.src = u; s.cur = i; phase(s, "playing");
       var p = a.play(); if (p && p.catch) p.catch(function () { if (s === S && s.cur === i && s.phase === "playing") phase(s, "error"); });
-      for (var k = 1; k <= 2; k++) if (s.chunks[i + k]) fetchChunk(s, i + k).catch(function () {});   /* the next ones get ready while this plays */
+      for (var k = 1; k <= AHEAD; k++) if (s.chunks[i + k]) fetchChunk(s, i + k).catch(function () {});   /* the next ones get ready while this plays */
+      if (i >= s.chunks.length - 2) aheadNext(s);
     }, function () { if (s === S && s.i === i && s.phase === "loading") phase(s, "error"); });
   }
   function refresh(s) {   /* text written while they listened: read too (pages only ever add text at the end) */
@@ -236,19 +271,20 @@
     if (!auto) unlock();                                 /* inside the tap */
     if (o.kind === "first" || o.kind === "next" || o.remember) set("cozVoice-" + sysOf(o), voice);   /* the pages after this one use it */
     var chunks = chunksFrom(texts(o));
+    var welcome = o.kind === "first" && !auto ? [{ welcome: 1, text: "" }, { welcome: 2, text: "" }, { welcome: 3, text: "" }] : [];   /* VS2.2: the welcome in three pieces */
     var s = { el: el, o: o, voice: voice, hash: location.hash, id: ++seq,
-              chunks: (o.kind === "first" && !auto ? [{ welcome: true, text: "" }] : []).concat(chunks), textCount: chunks.length,
-              urls: {}, pend: {}, i: -1, cur: -1, phase: "loading", mid: false };
+              chunks: welcome.concat(chunks), textCount: chunks.length, i: -1, cur: -1, phase: "loading", mid: false };
     S = s;
     el.innerHTML = inner(o, true, voice); hook(el, o);
-    if (s.chunks.length) playChunk(s, 0); else advance(s);
+    if (!s.chunks.length) { advance(s); return; }
+    playChunk(s, 0);
+    for (var k = 1; k < FIRST && k < s.chunks.length; k++) fetchChunk(s, k).catch(function () {});   /* VO1.1: the first lines together */
   }
   function stop() {
     var s = S; S = null; pending = null;
     if (player) { try { player.pause(); } catch (e) {} }
     if (!s) return;
     clearTimeout(s.wait); clearTimeout(s.turn);
-    Object.keys(s.urls).forEach(function (k) { try { URL.revokeObjectURL(s.urls[k]); } catch (e) {} });
     if (s.el && s.el.isConnected) { s.el.innerHTML = inner(s.o, false); hook(s.el, s.o); }
   }
   function onPause(el) {
@@ -282,12 +318,19 @@
      where: an element; how: "beforebegin" | "afterbegin" | "beforeend" | "afterend".
      o: { sys: "vedic" | "tropical" | "compare", kind: "first" | "next" | "page", label, key (this page or section),
           collect: () => the page's text, more: () => true while text is still being written,
-          then: { key, hash } (the next section), follow: (element being read) => ..., font: "cinzel",
-          style: { css property or --cv- variable: value } } */
+          then: { key, hash } (the next section), nextTexts: () => the next section's text (VO1.1, made ahead),
+          follow: (element being read) => ..., font: "cinzel", style: { css property or --cv- variable: value } } */
+  var warmed = false;
+  function warm() {   /* VO1.1: a reading page opened: the voice server checks the tester password now, nothing is voiced */
+    var code = get("cozDemoTesterCode");
+    if (warmed || !code) return;
+    warmed = true;
+    try { fetch(SERVER + "/api/speak", { method: "POST", headers: { "Content-Type": "application/json", "x-tester-code": code }, body: '{"warm":true}' }).catch(function () {}); } catch (e) {}
+  }
   function attach(where, how, o) {
     if (!where || !o) return null;
     try {
-      css();
+      css(); warm();
       var el = document.createElement("div");
       el.className = "cv" + (o.font === "cinzel" ? " cv--cinzel" : "");
       el.setAttribute("role", "region"); el.setAttribute("aria-label", "Have this read aloud");

@@ -611,10 +611,10 @@ body[data-view="reading"] .vedic-reading-page { animation: none; }
   </div>
 </div>
 
-<div class="vedic-stamp" aria-hidden="true">TROPICAL READING · T4.5 · server reading · WL1 r4 waiting line once · VT1 Tropical from Vedic · TC2 words raised · NA1 on to Ascendant · VO1 read aloud</div>
+<div class="vedic-stamp" aria-hidden="true">TROPICAL READING · T4.5 · server reading · WL1 r4 waiting line once · VT1 Tropical from Vedic · TC2 words raised · NA1 on to Ascendant · VO1.1 read aloud</div>
 
 <script src="ascendant-library.js"></script>
-<script src="coz-voice.js?v=1"></script>   <!-- VO1 (Oct 27 2026, staging only): the reading read aloud -->
+<script src="coz-voice.js?v=2"></script>   <!-- VO1 (Oct 27 2026, staging only): the reading read aloud -->
 <script>
 /* ============================================================
    SECTION DATA (spec, verbatim)
@@ -1044,14 +1044,21 @@ function renderSection(section) {
   /* VO1 (Oct 27 2026, his ruling, staging only): the reading read aloud, under the title, only on real reading text
      (a personal reading, the labelled sample, or a section the server has passed; never a status line). Section 01:
      "Have Your Chart Read By" with the two pictures; Sections 02 to 06: "Have This Page Read". When a section
-     finishes, the voice turns to the next one and keeps reading, through Section 06. */
+     finishes, the voice turns to the next one and keeps reading, through Section 06.
+     VO1.1: the next section's first lines are made while this one ends, so the turn has no silent gap. */
   try {
     const under = fresh.querySelector("h1.vedic-title + .vedic-divider");
     if (window.CozVoice && (loaded || (view && view.state === "passed")) && under) CozVoice.attach(under, "afterend", {
       sys: "tropical", kind: section.number === 1 ? "first" : "next", key: "tropical:" + section.id,
       label: `Section ${String(section.number).padStart(2, "0")} of ${SECTION_TOTAL}`,
       collect: () => CozVoice.collect(fresh, { include: "h1.vedic-title, .vedic-body p" }),
-      then: next ? { key: "tropical:" + next.id, hash: "#/" + next.id } : null
+      then: next ? { key: "tropical:" + next.id, hash: "#/" + next.id } : null,
+      nextTexts: next ? () => {   /* VO1.1: the next section's text as it will be shown, so its first lines are made ahead */
+        const L = loadReading();
+        if (L) return [next.title].concat((L.map[next.id] || []).filter(p => typeof p === "string"));
+        const v = (window.CozTropicalServer && CozTropicalServer.sectionView) ? CozTropicalServer.sectionView(next.id) : null;
+        return v && v.state === "passed" ? [next.title].concat((v.paragraphs || []).filter(p => typeof p === "string")) : [];
+      } : null
     });
   } catch (e) {}
   if (section.id === "at-your-core") {     /* TSA1.4: recorded only now, with the paragraphs in the document and the reading view showing */

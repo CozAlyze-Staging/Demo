@@ -714,12 +714,12 @@ body[data-view="reading"] .vedic-reading-page { animation: none; }
   </div>
 </div>
 
-<div class="vedic-stamp" aria-hidden="true">VEDIC READING · R5.2 · quiet pre-write · VD1.2 diagnostic · VW1 waiting · VSP1.2 server switch · DV1 load order · DV2 tap guard · S2C section 2 · SW1 r3 sections 1-2 · ELIG1 eligible records · SW2 claim text · WL1 r4 waiting line once · NA1 on to Ascendant · VO1 read aloud</div>
+<div class="vedic-stamp" aria-hidden="true">VEDIC READING · R5.2 · quiet pre-write · VD1.2 diagnostic · VW1 waiting · VSP1.2 server switch · DV1 load order · DV2 tap guard · S2C section 2 · SW1 r3 sections 1-2 · ELIG1 eligible records · SW2 claim text · WL1 r4 waiting line once · NA1 on to Ascendant · VO1.1 read aloud</div>
 
 <script src="ascendant-library.js"></script>
 <script src="dev-review-engine.js?v=12"></script>
 <script src="coz-vedic-server.js?v=1"></script>
-<script src="coz-voice.js?v=1"></script>   <!-- VO1 (Oct 27 2026, staging only): the reading read aloud -->
+<script src="coz-voice.js?v=2"></script>   <!-- VO1 (Oct 27 2026, staging only): the reading read aloud -->
 <script>
 /* ============================================================
    SECTION DATA (spec, verbatim)
@@ -1396,7 +1396,8 @@ function renderSection(section) {
   } catch (e) {}
   /* VO1 (Oct 27 2026, his ruling, staging only): the reading read aloud, under the title, only on real reading text
      (never a status line). Section 01: "Have Your Chart Read By" with the two pictures; Sections 02 to 06: "Have This
-     Page Read". When a section finishes, the voice turns to the next one and keeps reading, through Section 06. */
+     Page Read". When a section finishes, the voice turns to the next one and keeps reading, through Section 06.
+     VO1.1: the next section's first lines are made while this one ends, so the turn has no silent gap. */
   try {
     const voiceText = paragraphs.some(p => typeof p === "string" && p.trim().length > 0) &&
       (!!full || section.number <= 2 || ((window.CozVedicServer && CozVedicServer.sectionView(reading.run, section.id)) || {}).state === "released");
@@ -1405,7 +1406,12 @@ function renderSection(section) {
       sys: "vedic", kind: section.number === 1 ? "first" : "next", key: "vedic:" + section.id,
       label: `Section ${String(section.number).padStart(2, "0")} of ${SECTION_TOTAL}`,
       collect: () => CozVoice.collect(fresh, { include: "h1.vedic-title, .vedic-body h3, .vedic-body p" }),
-      then: next ? { key: "vedic:" + next.id, hash: "#/" + next.id } : null
+      then: next ? { key: "vedic:" + next.id, hash: "#/" + next.id } : null,
+      nextTexts: next ? () => {   /* VO1.1: the next section's text as it will be shown, so its first lines are made ahead */
+        const r = loadReading() || partialReading(), ps = r && Array.isArray(r[next.id]) ? r[next.id] : [];
+        const ready = !!loadReading() || next.number <= 2 || ((window.CozVedicServer && r && CozVedicServer.sectionView(r.run, next.id)) || {}).state === "released";
+        return ready ? [next.title].concat(ps.filter(p => typeof p === "string").map(p => p.startsWith("## ") ? p.slice(3) : p)) : [];
+      } : null
     });
   } catch (e) {}
 
