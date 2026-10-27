@@ -675,6 +675,8 @@
 #bdaybar.dt .dt-ampm button[aria-pressed="true"]{color:#E8C7A6;text-shadow:0 0 16px rgba(232,199,166,.6),0 1px 8px rgba(0,0,0,.95)}
 #bdaybar.dt .dt-ampm button[aria-pressed="true"]::after{content:"";position:absolute;left:12px;right:12px;bottom:2px;height:1.5px;background:#E8C7A6}
 #bdaybar.dt .dt-div{width:1.5px;height:24px;background:#857260}
+/* DT2 (Oct 27 2026, his ruling): in the time box BACK waits for AM or PM, in ENTER's waiting look (no gold); it still works if tapped */
+#bdaybar.dt .entry-actions .entry-back.show.dim{background:none;color:#C99378;border-color:rgba(214,169,134,.4);box-shadow:none;opacity:.35}
 #bdaybar.dt{bottom:calc(25vh - 24px)}
 /* DT1 r2 (his ruling): BACK and ENTER sit right under the boxes, BACK at the left and ENTER at the right, with AM | PM between them for the time; the city and country stay under the pin (no SV1 drop), and the Earth settles lower so they show clearly; the pin's Birthplace label stays hidden, as it was behind the old date row */
 #bdaybar.dt .entry-actions{top:calc(100% + 10px);left:0;right:0;transform:none;justify-content:space-between;gap:0}
@@ -2464,7 +2466,8 @@ function cozSegField(cfg){
     const p = problem();
     if (p) { S[p.part] = null; active = p.part; message = p.text; render(); return; }
     active = nextAfter(part);
-    if (part === 'minute' && S.ampm === null) S.ampm = 'AM';   /* v21.0 (his ruling): AM comes chosen and lit gold, PM is one tap away */
+    /* DT2 (Oct 27 2026, his ruling, supersedes v21.0's AM chosen in gold): nothing is chosen for the person; AM or PM is
+       their own tap, and until it is made ENTER and BACK stay dim (see render) */
     render();
   }
   function settleYear(y){
@@ -2594,6 +2597,9 @@ function cozSegField(cfg){
     ampmEl.classList.toggle('away', !timeOn && S.ampm === null);
     ampmEl.classList.toggle('muted', a !== 'ampm' && a !== 'ready');
     ampmEl.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x.getAttribute('data-ampm') === S.ampm)));
+    /* DT2: in the time box, BACK loses its gold until AM or PM is tapped, like ENTER (it still works if tapped) */
+    const dtBack = bar.querySelector('.entry-actions .entry-back');
+    if (dtBack) dtBack.classList.toggle('dim', timeOn && S.ampm === null && a !== 'done');
     msgEl.textContent = message;
     enterEl.classList.toggle('ready', allIn() && pend === '' && a !== 'done' && !problem());
   }
