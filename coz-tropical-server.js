@@ -1,4 +1,17 @@
-/* COZ TROPICAL SERVER · TSA1.5 r2 (Oct 25 2026, staging only)
+/* COZ TROPICAL SERVER · VT1 (Oct 26 2026, staging only)
+   VT1: the Tropical reading bought from the Vedic reveal (the Tropical option on the Vedic result page). Only
+   tropical-reveal.html calculates the Tropical chart, so on that path this device had no Tropical chart for the run, and
+   start() stopped at "no Tropical chart for this run; nothing started": no job, and the reading page waited with nothing
+   being written. start() now calculates the chart first, silently: the Tropical engine loads in a hidden frame in its
+   export-only mode (tropical-reveal.html?cozExport=1, the mode the Ascendant pairing has used since Sep 18; not one
+   calculation line changes), and start() runs again once the chart for this exact run (runId + fingerprint) is saved.
+   While it calculates, the run's record says "starting", so the reading shows "Your reading is still being written...".
+   One calculation per run at a time in a page; the frame waits for the page change to settle (15 s at most) and is
+   removed as soon as the chart is saved. No chart within 25 s: offline, the run waits for the connection (the TSA1.5
+   retry); online, the run is marked refused, so the reading shows "This section couldn't be completed." instead of
+   waiting forever. A newer chart replacing the run ends the calculation without touching anything. The timing record
+   gets two marks, chartCalc and chartReady. Everything else is unchanged.
+   COZ TROPICAL SERVER · TSA1.5 r2 (Oct 25 2026, staging only)
    TSA1.5: a start that can't reach the server (no connection, or the request never gets an answer) is tried again after
    a pause that grows each time, 3, 6, 12, 24 and 48 seconds, then once a minute, instead of about every 50 ms (Chat's
    review: about 360 attempts in 20 seconds while offline). The count of tries and the end of the pause (retryAt) are kept
@@ -203,6 +216,49 @@
       .then(function (res) { return res.json().catch(function () { return {}; }).then(function (b) { return { status: res.status, body: b }; }); });
   }
 
+  /* ---------- VT1: the Tropical chart for a Tropical purchase made from the Vedic reveal ---------- */
+  var CALC_MS = 25000, calculating = {};                                /* VT1: runs whose chart this page is calculating now */
+  function calcChart(run, rec){
+    var key = runKey(run);
+    if (calculating[key]) { log("the Tropical chart for this run is still being calculated"); return; }
+    if (!document.body) { log("no Tropical chart for this run; nothing started"); return; }
+    calculating[key] = true;
+    lsSet(JOB, { v: 1, runId: run.runId, fingerprint: run.fingerprint, jobId: null, state: "starting", sections: {}, base: (rec && rec.base) || chosenBase(), updatedAt: new Date().toISOString(), retries: (rec && rec.retries) || 0 });
+    timing.mark("chartCalc");
+    notify();
+    log("no Tropical chart for this run yet (Tropical bought from the Vedic reveal); calculating it first");
+    var f = null, iv = null, t0 = 0;
+    function finish(outcome){
+      clearInterval(iv); try { if (f) f.remove(); } catch (e) {} delete calculating[key];
+      if (outcome === "ready") { timing.mark("chartReady"); log("Tropical chart calculated for this run"); start(); return; }
+      if (outcome === "replaced") { log("a newer chart replaced this run; its Tropical chart is no longer needed"); return; }
+      var j = record(); if (!j || runKey(j) !== key || j.jobId) return;
+      if (navigator.onLine === false) { j.state = "retry"; j.retryAt = Date.now(); log("offline: the Tropical chart is calculated when the connection is back"); }
+      else { j.state = "refused"; j.detail = "the Tropical chart could not be calculated on this device"; log("the Tropical chart could not be calculated; nothing started"); }
+      j.updatedAt = new Date().toISOString(); lsSet(JOB, j); notify(); follow();
+    }
+    function check(){
+      var cur = currentRun();
+      if (!cur || runKey(cur) !== key) finish("replaced");
+      else if (chartFor(run)) finish("ready");
+      else if (t0 && Date.now() - t0 > CALC_MS) finish("failed");
+    }
+    function load(){
+      f = document.createElement("iframe");
+      f.setAttribute("aria-hidden", "true"); f.tabIndex = -1; f.title = "preparing";
+      f.style.cssText = "position:fixed;left:-20px;top:0;width:1px;height:1px;opacity:0;border:0;pointer-events:none";
+      f.src = "tropical-reveal.html?cozExport=1&t=" + Date.now();
+      t0 = Date.now(); document.body.appendChild(f);
+    }
+    iv = setInterval(check, 250);
+    var since = Date.now();
+    function whenSettled(){                                             /* like the Combined writer: never during a page change, 15 s at most */
+      if (!calculating[key]) return;
+      if (!window.__cozNavBusy || Date.now() - since > 15000) load(); else setTimeout(whenSettled, 250);
+    }
+    setTimeout(whenSettled, 300);                                       /* index.html marks its page change right after this same message */
+  }
+
   /* ---------- start (index.html, on GOTO_TROPICAL) ---------- */
   function start(){
     var run = currentRun();
@@ -212,7 +268,7 @@
     var rec = record();
     if (rec && rec.jobId) { log("job already exists for this run; following it"); follow(); return; }
     var chart = chartFor(run);
-    if (!chart) { log("no Tropical chart for this run; nothing started"); return; }
+    if (!chart) { calcChart(run, rec); return; }                        /* VT1: bought from the Vedic reveal; calculated first */
     var code = codeForNew();
     if (!code) { lsSet(JOB, { v: 1, runId: run.runId, fingerprint: run.fingerprint, jobId: null, state: "access", reason: "missing", sections: {}, base: (rec && rec.base) || chosenBase(), updatedAt: new Date().toISOString() }); notify(); log("no tester password on this device; nothing started"); return; }   /* DTC2 */
     var why = held(run, rec);                                             /* TSA1.5 r2: every start is checked here before it is sent */
