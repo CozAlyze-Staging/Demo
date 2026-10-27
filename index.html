@@ -677,6 +677,9 @@
 #bdaybar.dt .dt-div{width:1.5px;height:24px;background:#857260}
 /* DT2 (Oct 27 2026, his ruling): in the time box BACK waits for AM or PM, in ENTER's waiting look (no gold); it still works if tapped */
 #bdaybar.dt .entry-actions .entry-back.show.dim{background:none;color:#C99378;border-color:rgba(214,169,134,.4);box-shadow:none;opacity:.35}
+/* DT2.1 (Oct 27 2026, his ruling): while the time box waits for the choice, AM shows in gold so the eye goes to it (the chosen
+   gold, without its underline until AM or PM is tapped) */
+#bdaybar.dt .dt-ampm.cue button[data-ampm="AM"]{color:#E8C7A6;text-shadow:0 0 16px rgba(232,199,166,.6),0 1px 8px rgba(0,0,0,.95)}
 #bdaybar.dt{bottom:calc(25vh - 24px)}
 /* DT1 r2 (his ruling): BACK and ENTER sit right under the boxes, BACK at the left and ENTER at the right, with AM | PM between them for the time; the city and country stay under the pin (no SV1 drop), and the Earth settles lower so they show clearly; the pin's Birthplace label stays hidden, as it was behind the old date row */
 #bdaybar.dt .entry-actions{top:calc(100% + 10px);left:0;right:0;transform:none;justify-content:space-between;gap:0}
@@ -2600,6 +2603,7 @@ function cozSegField(cfg){
     /* DT2: in the time box, BACK loses its gold until AM or PM is tapped, like ENTER (it still works if tapped) */
     const dtBack = bar.querySelector('.entry-actions .entry-back');
     if (dtBack) dtBack.classList.toggle('dim', timeOn && S.ampm === null && a !== 'done');
+    ampmEl.classList.toggle('cue', a === 'ampm' && S.ampm === null);   /* DT2.1: AM in gold while the choice is waited for */
     msgEl.textContent = message;
     enterEl.classList.toggle('ready', allIn() && pend === '' && a !== 'done' && !problem());
   }
