@@ -256,7 +256,7 @@
   document.addEventListener("click", function (ev) {
     var t = ev.target && ev.target.closest && ev.target.closest(SEL);
     var p = pageName();
-    if (!t || p === "saved-charts" || p === "index") return;
+    if (!t || p === "saved-charts" || p === "index" || p === "account") return;   /* CS1.9: the Account page's Saved only opens the list */
     ev.preventDefault(); ev.stopImmediatePropagation();
     if (/\bsaved=1\b/.test(location.search)) { location.href = "saved-charts.html"; return; }   /* a Saved Library page: nothing new to save */
     if (kindForPage(p) === "compare") { saveCompare(t); return; }                                 /* CS1.6 */
@@ -367,5 +367,6 @@
     try { localStorage.setItem("cozHomeDash", JSON.stringify({ dash: dash, page: p, at: new Date().toISOString() })); } catch (e) {}
   })();
 
-  window.CozSaved = { list: list, remove: remove, restore: restore, saveCurrent: saveCurrent, isRestoredRun: isRestoredRun, registerPayload: registerPayload, get: get, currentRecord: currentRecord, _snapshotFor: snapshotFor, STORE: STORE };
+  /* CS1.9 (Oct 27 2026, staging): note() is shared for the Account page's messages (as in CozAlyze/Test N3) */
+  window.CozSaved = { list: list, remove: remove, restore: restore, saveCurrent: saveCurrent, isRestoredRun: isRestoredRun, registerPayload: registerPayload, get: get, currentRecord: currentRecord, _snapshotFor: snapshotFor, STORE: STORE, note: note };
 })();

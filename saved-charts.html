@@ -95,7 +95,7 @@ h1{font-family:var(--head);font-weight:500;font-size:max(30px,calc(98 * var(--K)
     <nav class="nav" aria-label="Main">
       <a class="home" href="index.html" aria-label="Home"></a>
       <a class="saved" href="saved-charts.html" aria-label="Saved Charts" aria-current="page"></a>
-      <a class="acct" href="#" aria-label="Account"></a>
+      <a class="acct" href="account.html" aria-label="Account"></a>
     </nav>
     <div class="stamp">SAVED CHARTS · S1.4 · ADD-ONS D1.2</div>
   </div>
@@ -194,10 +194,10 @@ h1{font-family:var(--head);font-weight:500;font-size:max(30px,calc(98 * var(--K)
     ev.preventDefault(); location.href = "tropical-reading.html#/dashboard";
   });
   document.getElementById("create").addEventListener("click", toIndex);
-  document.querySelector(".nav .acct").addEventListener("click", function(ev){ ev.preventDefault(); });   /* Account page not built yet */
+  /* A2.1 (Oct 27 2026): Account opens the Account page (coz-nav.js r3 watches the page change) */
   render();
 })();
 </script>
-<script src="coz-nav.js?v=1"></script>
+<script src="coz-nav.js?v=2"></script>
 </body>
 </html>

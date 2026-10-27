@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Account · CozAlyze</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@400;500&family=Montserrat:wght@300;400&display=swap" rel="stylesheet">
+<script src="coz-saved.js?v=6"></script>
+<style>
+/* ACCOUNT · A2.1 (Oct 27 2026, his ruling) · CozAlyze-Staging. A2.0 brought into staging from CozAlyze/Test (nav/account.html, N3),
+   the Test-only storage guard left out, nothing else changed in the page: every Account button on the platform now opens
+   it (coz-nav.js NAV1 r3, and the purchase page's bottom bar). A2.1: Home follows the Saved Charts rule exactly, as A2.0's
+   note below says (A2.0's code fell back to the Tropical dashboard every time); the page loads coz-nav.js like the others.
+   ACCOUNT · A2.0 (Oct 22 2026) · CozAlyze/Demo. Built from the approved Test A1.2 (Test/nav/account.html, tested Oct 15),
+   Test guard removed. A2.0: the Edit Profile and Add-ons pills read at 15px or more on a phone (RD1); the Add-ons pill
+   stays centered as it grows; the version stamp shows only with developer view on (DV1); Home with no reading in use
+   yet behaves as on Saved Charts (the Tropical dashboard when opened from a Tropical page, otherwise index.html).
+   A1.2 (Oct 15 2026):
+   One Account page shared by Vedic, Tropical and Compare. A1.2: Home returns to the dashboard of whichever reading
+   is in use (A1.1 tested Tropical only).
+   Built from Jason's Account art (1183 x 2323, sent Oct 14) with only the sample profile column removed
+   (his sample name, email and Edit Profile button): acct-art.jpg. Everything else is his art as supplied.
+   The profile column is live: the owner's name, the email line and the Edit Profile button. It belongs
+   to the account owner, never to whichever chart is open. Until accounts exist it reads "Your Account"
+   and the email line is hidden (Oct 8 ruling). Every action that needs an account says so on the page,
+   in the approved wording, instead of pretending to work. Cards, Sign Out, Terms and Privacy are real
+   buttons over his art (temporary preview, approved Oct 14). Bottom nav: Home returns to the dashboard
+   of the reading in use, Saved opens the Saved Charts list, Account is this page.
+   Colors of the live profile text are sampled from his art so it matches the baked card titles. */
+:root{ --white:#FBFAFD; --mail:#EFF0F4; --pilltext:#E8E8EE; --pillline:#A88F80; --gold:#F2C898; --navy:#02040c;
+  --head:"Bodoni Moda",Georgia,serif; --sans:"Montserrat","Helvetica Neue",Arial,sans-serif; }
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--navy);color:var(--white);-webkit-text-size-adjust:100%;overflow-x:hidden}
+body{padding-bottom:env(safe-area-inset-bottom)}
+.page{position:relative;width:100%;max-width:640px;margin:0 auto;container-type:inline-size}
+.page,.page *{--K:calc(100cqw / 1183)}
+.art{display:block;width:100%;height:auto;pointer-events:none;user-select:none;-webkit-user-select:none}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.hot{position:absolute;display:block;background:none;border:0;padding:0;margin:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.hot:focus-visible,.pill:focus-visible,.nav a:focus-visible{outline:1px solid var(--gold);outline-offset:2px}
+/* profile card: border x 83-1123, y 685-953. The live column starts where his sample name did (x 397). */
+.who{position:absolute;left:calc(397 * var(--K));top:calc(var(--who-top) * var(--K));width:calc(690 * var(--K));--who-top:738}
+/* name: Bodoni Moda 400 at 56 (closest to the lettering in his art, measured against his sample name). Live text keeps
+   his art's proportions at phone widths; the small floors only matter on very narrow screens. */
+.who .name{font-family:var(--head);font-weight:400;font-size:max(16px,calc(56 * var(--K)));line-height:1.1;color:var(--white);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.who .email{display:none;font-family:var(--sans);font-weight:300;font-size:max(11px,calc(33 * var(--K)));line-height:1.3;color:var(--mail);
+  margin-top:calc(14 * var(--K));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.who.has-email{--who-top:712}
+.who.has-email .email{display:block}
+.pill{font-family:var(--sans);font-weight:300;font-size:max(10px,calc(32 * var(--K)));line-height:1;color:var(--pilltext);background:none;cursor:pointer;
+  border:max(1px, calc(3 * var(--K))) solid var(--pillline);border-radius:999px;height:calc(69 * var(--K));min-height:26px;width:calc(280 * var(--K));
+  display:inline-flex;align-items:center;justify-content:center;margin-top:calc(24 * var(--K));-webkit-tap-highlight-color:transparent;position:relative}
+/* the drawn pill stays the size in his art; its tap area extends to 44px tall */
+.pill::after{content:"";position:absolute;left:0;right:0;top:50%;height:44px;transform:translateY(-50%)}
+/* small targets on his art (Sign Out, Terms, Privacy, the nav) are at least 44px tall, centered on what is drawn */
+.tap44{height:44px !important}
+.nav a{position:absolute;display:block;-webkit-tap-highlight-color:transparent}
+.stamp{position:absolute;right:6px;bottom:4px;font-family:var(--sans);font-size:9px;letter-spacing:.08em;color:rgba(214,185,140,.45);pointer-events:none}
+.addons-acct{position:absolute;left:calc(451 * var(--K));top:calc(1975 * var(--K));width:calc(280 * var(--K));margin:0;
+  background:#D6B98C;border-color:#D6B98C;color:#040B18;font-weight:400;text-decoration:none}   /* ADD-ONS A1.2: solid, it sits on the water */
+</style>
+<style id="coz-rd1">/* RD1 (Oct 22 2026): every tappable label at least 15px on a phone. The pills grow around the larger text;
+   Add-ons stays centered where his art puts it (x 451-731, center 591). */html body .pill{font-size:max(15px,calc(32 * var(--K)));width:auto;min-width:calc(280 * var(--K));min-height:30px;padding:0 max(14px,calc(36 * var(--K)))}html body .addons-acct{left:calc(591 * var(--K));transform:translateX(-50%)}</style>
+<style id="coz-dv1">/* DV1 (Oct 22 2026): version stamps and the diagnostic launcher show only on a device with developer view on (localStorage cozDevView = "1") */html:not(.coz-dev) .stamp,html:not(.coz-dev) .stamp2,html:not(.coz-dev) .vedic-stamp,html:not(.coz-dev) .build-stamp,html:not(.coz-dev) .lc-stamp,html:not(.coz-dev) .cs-stamp,html:not(.coz-dev) .ktw-stamp,html:not(.coz-dev) .wcn-stamp,html:not(.coz-dev) #stamp,html:not(.coz-dev) #cozDiagLaunch{display:none!important}</style><script>try{if(localStorage.getItem("cozDevView")==="1")document.documentElement.classList.add("coz-dev")}catch(e){}</script>
+</head>
+<body>
+<main class="page">
+  <img class="art" src="acct-art.jpg?v=2" alt="" width="1183" height="2323">
+  <h1 class="sr-only">Account</h1>
+  <p class="sr-only">Manage your details, purchases, and preferences.</p>
+  <div class="who" id="who">
+    <p class="name" id="acctName">Your Account</p>
+    <p class="email" id="acctEmail"></p>
+    <button class="pill" type="button" data-need="account">Edit Profile</button>
+  </div>
+  <!-- his four cards as drawn (borders measured on his art) -->
+  <button class="hot" type="button" data-need="account" aria-label="Birth Information"
+    style="left:calc(83 * var(--K));top:calc(977 * var(--K));width:calc(1040 * var(--K));height:calc(173 * var(--K))"></button>
+  <button class="hot" type="button" data-need="account" aria-label="Purchases and Access"
+    style="left:calc(83 * var(--K));top:calc(1169 * var(--K));width:calc(1040 * var(--K));height:calc(171 * var(--K))"></button>
+  <button class="hot" type="button" data-need="account" aria-label="Settings"
+    style="left:calc(83 * var(--K));top:calc(1358 * var(--K));width:calc(1040 * var(--K));height:calc(169 * var(--K))"></button>
+  <button class="hot" type="button" data-need="account" aria-label="Privacy and Data"
+    style="left:calc(83 * var(--K));top:calc(1547 * var(--K));width:calc(1040 * var(--K));height:calc(168 * var(--K))"></button>
+  <!-- ADD-ONS: opens the Add-ons preview with no reading selected -->
+  <a class="pill addons-acct" href="addons.html#/?from=a">Add-ons</a>
+  <!-- Sign Out (border x 287-919, y 1757-1841); Terms (x 475-549) and Privacy (x 644-732), text y 1884-1912.
+       Tap areas meet halfway between them (y 1862) and use the empty space around them, so none overlaps. -->
+  <button class="hot" type="button" data-need="signout" aria-label="Sign Out"
+    style="left:calc(287 * var(--K));top:calc(1716 * var(--K));width:calc(632 * var(--K));height:calc(146 * var(--K))"></button>
+  <button class="hot" type="button" data-need="terms" aria-label="Terms"
+    style="left:calc(430 * var(--K));top:calc(1862 * var(--K));width:calc(168 * var(--K));height:max(44px, calc(84 * var(--K)))"></button>
+  <button class="hot" type="button" data-need="privacy" aria-label="Privacy"
+    style="left:calc(602 * var(--K));top:calc(1862 * var(--K));width:calc(168 * var(--K));height:max(44px, calc(84 * var(--K)))"></button>
+  <!-- his nav pill (x 103-1103, y 2167-2262): Home, Saved, Account (Account is drawn as the active one) -->
+  <nav class="nav" aria-label="Main">
+    <a class="home tap44" href="tropical-reading.html#/dashboard" aria-label="Home"
+      style="left:calc(103 * var(--K));top:calc(2214 * var(--K) - 22px);width:calc(333 * var(--K))"></a>
+    <a class="saved tap44" href="saved-charts.html" aria-label="Saved Charts"
+      style="left:calc(436 * var(--K));top:calc(2214 * var(--K) - 22px);width:calc(334 * var(--K))"></a>
+    <a class="acct tap44" href="account.html" aria-label="Account" aria-current="page"
+      style="left:calc(770 * var(--K));top:calc(2214 * var(--K) - 22px);width:calc(333 * var(--K))"></a>
+  </nav>
+  <div class="stamp">ACCOUNT · A2.1 · staging</div>
+</main>
+<script>
+(function(){
+  /* the approved wording (Oct 14) */
+  var SAY = {
+    account: "This will be available once you can sign in to your CozAlyze account.",
+    signout: "You aren't signed in. Accounts aren't available yet.",
+    terms:   "The Terms page isn't published yet.",
+    privacy: "The Privacy page isn't published yet."
+  };
+  function tell(text, from){ if (window.CozSaved && CozSaved.note) CozSaved.note(text, null, from); }
+  document.querySelectorAll("[data-need]").forEach(function(b){
+    b.addEventListener("click", function(ev){ ev.preventDefault(); tell(SAY[b.getAttribute("data-need")] || SAY.account, b); });
+  });
+
+  /* The account owner comes from the account backend once one exists, never from a chart or a saved
+     record (the owner is not whichever chart is open). Until then: the neutral heading, no email line. */
+  function showOwner(owner){
+    var who = document.getElementById("who"), email = owner && owner.email ? String(owner.email) : "";
+    document.getElementById("acctName").textContent = owner && owner.name ? String(owner.name) : "Your Account";
+    document.getElementById("acctEmail").textContent = email;
+    who.classList.toggle("has-email", !!email);
+  }
+  showOwner(null);
+
+  /* Home: the dashboard of the reading in use (recorded by coz-saved.js) */
+  var HOME = { vedic: "vedic-reading.html#/dashboard", tropical: "tropical-reading.html#/dashboard", compare: "compare-reading.html" };
+  function homeDash(){ try { var h = JSON.parse(localStorage.getItem("cozHomeDash") || "null"); return h && HOME[h.dash] ? HOME[h.dash] : null; } catch (e) { return null; } }
+  /* A2.0: nothing recorded yet: as on Saved Charts (the Tropical dashboard when opened from a Tropical page, else index.html) */
+  function fromTropical(){ var r = ""; try { r = document.referrer || ""; } catch (e) {} return /\/(tropical-[a-z-]+|saved-tropical-[a-z-]+)\.html/.test(r); }
+  function toIndex(){ try { window.top.location.href = "index.html"; } catch (e) { location.href = "index.html"; } }
+  document.querySelector(".nav .home").addEventListener("click", function(ev){   /* A2.1: exactly the Saved Charts rule */
+    ev.preventDefault();
+    var to = homeDash();
+    if (to) { location.href = to; return; }
+    if (fromTropical()) { location.href = HOME.tropical; return; }
+    toIndex();
+  });
+  document.querySelector(".nav .acct").addEventListener("click", function(ev){ ev.preventDefault(); window.scrollTo(0, 0); });   /* already here */
+})();
+</script>
+<script src="coz-nav.js?v=2"></script>
+</body>
+</html>

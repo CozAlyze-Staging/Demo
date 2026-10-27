@@ -1,4 +1,6 @@
-/* COZ NAV · NAV1 r2 (Oct 24 2026, staging only) · page-opening message, Account
+/* COZ NAV · NAV1 r3 (Oct 27 2026, staging only) · page-opening message, Account
+   r3 (his ruling): Account, on every page, opens the Account page (account.html, A2.1), watched like any other page
+   change; on the Account page itself it goes back to the top. The "coming soon" message below is retired.
    r2 (Jason): Home is not changed by this file. Home never goes to the start of the platform (his
    standing rule, fixed long ago): on a dashboard it stays on that dashboard, as on the live Demo, and
    on the other pages it returns to the dashboard as before. r1's dashboard Home -> index.html is removed.
@@ -130,7 +132,13 @@
     if (panel && panel.contains(ev.target)) return;
     var t = kindOf(ev.target);
     if (!t) return;
-    if (t.k === "account") { ev.preventDefault(); show(ACCOUNT, [["OK", cancel]]); return; }
+    if (t.k === "account") {                                       /* r3: the Account page */
+      ev.preventDefault();
+      if (page === "account") { try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch (e) { window.scrollTo(0, 0); } return; }
+      var go = goTo(new URL("account.html", location.href).href);
+      watch(go); if (!offline()) go();
+      return;
+    }
     var held = t.k === "link" && offline();
     if (held) ev.preventDefault();                                  /* offline: a link is not tried until Try again */
     setTimeout(function () {
