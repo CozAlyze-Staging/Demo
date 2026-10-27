@@ -59,6 +59,7 @@
      Chat's review (Oct 26) changed two phrases of the Oct 14 wording: "a central influence in this reading" and "27
      divisions of the zodiac" (with "division" and "nakshatra" in place of "star group" after it).
      3. Three pronoun errors in claim sentences are corrected (SW1_FIX). SW2 adds twenty-two more corrections to SW1_FIX.
+        SW3 adds seven: "the Ascendant" becomes "your rising sign" in the guiding-planet sentence.
      Each opening is its own paragraph; the claim sentences are split into paragraphs as before. No claim is added,
      removed or reworded beyond SW1_FIX. Sections 3-6 and the Compare selections are unchanged. */
   var sw1On = false;
@@ -117,7 +118,18 @@
     ["With Venus ruling the Ascendant, love and desire may become important guides in recognizing what you i genuinely drawn to sustain or pursue.",
      "With Venus ruling the Ascendant, love and desire may become important guides in recognizing what you are genuinely drawn to sustain or pursue."],
     ["this nakshatra's intensity may take a more initiating and immediate mode of expression in this placement.",
-     "This nakshatra's intensity may take a more initiating and immediate mode of expression in this placement."]
+     "This nakshatra's intensity may take a more initiating and immediate mode of expression in this placement."],
+    /* SW3 (Oct 27 2026, offline, Chat's fix list): each guiding-planet sentence says "the Ascendant" right after Section 1
+       has explained the same thing as the rising sign, so the reader meets an unexplained second term. The seven sentences
+       (one per guiding planet) now say "your rising sign". Each entry is the sentence's own opening clause, which occurs
+       nowhere else, so nothing else can change. Like SW1 and SW2, only with { sw1: true }; the claim files are unchanged. */
+    ["With the Sun ruling the Ascendant,", "With the Sun ruling your rising sign,"],
+    ["With the Moon ruling the Ascendant,", "With the Moon ruling your rising sign,"],
+    ["With Mars ruling the Ascendant,", "With Mars ruling your rising sign,"],
+    ["With Mercury ruling the Ascendant,", "With Mercury ruling your rising sign,"],
+    ["With Jupiter ruling the Ascendant,", "With Jupiter ruling your rising sign,"],
+    ["With Venus ruling the Ascendant,", "With Venus ruling your rising sign,"],
+    ["With Saturn ruling the Ascendant,", "With Saturn ruling your rising sign,"]
   ];
   function sw1Fix(t) { SW1_FIX.forEach(function (f) { t = String(t).split(f[0]).join(f[1]); }); return t; }
   /* ELIG1 (Oct 26 2026, offline, from Chat's review): a claim record that says it may not be used is never selected.
