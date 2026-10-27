@@ -678,6 +678,29 @@
   #unlockDash .dash-base { position:relative; }
   #unlockDash .dash-scale { transform-origin:top center; }
   #unlockDash .dash-expanding { display:block; width:100%; height:auto; }
+  /* PB1 (Oct 27 2026, his ruling, staging only): the platform's own bottom bar (CozAlyze helps you see it all, Home,
+     Saved, Account), the same one as the readings (vedic-reading.html v20.1 #cozFoot with the RD1/RD3 label size), in
+     place of the bar drawn into the art, which never opened anything. The drawn bar is cut off the art: on a phone the
+     bottom of the Expanding Perspectives art under its star divider (his tagline line and icon pill, rows 1646 to 1821
+     of 1821); on a computer the icon pill under the tagline box (rows 3308 to 3542 of 3542, hidden while the page keeps
+     its size, so every tap area stays where it is). The bar shows once the page's opening zoom has finished.
+     Home: the top of this page (the main dashboard). Saved: Saved Charts. Account: the Account page. */
+  #unlockDash .dash-crop { overflow:hidden; aspect-ratio:864 / 1646; }
+  #unlockDash .dash-scale.has-foot-room { padding-bottom:calc(env(safe-area-inset-bottom) + 98px); }
+  #unlockDash .dash-base.desktop-art > img { clip-path:inset(0 0 6.61% 0); }
+  #cozFoot { position:fixed; left:0; right:0; bottom:0; z-index:90; padding-bottom:env(safe-area-inset-bottom);
+    background:rgba(8,11,17,.86); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+    border-top:1px solid rgba(201,161,94,.18); display:none; }
+  #cozFoot.on { display:block; }
+  #cozFoot .coz-foot-tag { text-align:center; font-family:'EB Garamond',serif; font-style:italic;
+    font-size:13px; letter-spacing:.04em; color:#8b8272; padding:11px 20px 3px; }
+  #cozFoot .coz-foot-links { display:flex; height:var(--asq-nav-h,64px); }
+  #cozFoot a { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:4px; text-decoration:none; color:#8b8272; font-size:17px; letter-spacing:.06em;
+    font-family:'EB Garamond',serif; -webkit-tap-highlight-color:transparent; }
+  #cozFoot a svg { width:21px; height:21px; stroke:currentColor; fill:none; stroke-width:1.4; stroke-linecap:round; stroke-linejoin:round; }
+  #cozFoot a:active { color:var(--asq-gold,#c9a15e); }
+  #cozFoot a:focus-visible { outline:1px solid var(--asq-gold,#c9a15e); outline-offset:-4px; }
   #unlockDash .dash-hot { position:absolute; background:transparent; border:0; padding:0; margin:0; cursor:pointer;
     -webkit-tap-highlight-color:transparent; }
   #unlockDash .dash-hot.vedic-mobile { left:81%; top:72.73%; width:15%; height:4.76%; }
@@ -928,7 +951,7 @@ try { if (window.parent !== window && window.parent.EMERGE_SOUND) window.EMERGE_
 
 <!-- NEW: COMBINED CHART RESULT PAGE -->
 <main id="chartResultPage" hidden aria-hidden="true">
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=EB+Garamond:ital,wght@0,400;1,400&display=swap" rel="stylesheet">   <!-- PB1: EB Garamond for the bottom bar, as on the readings -->
   <div class="sd-page">
     <video id="sdHero" src="sidereal-hero.mp4?v=2" muted loop playsinline preload="none"></video>
     <div id="sdDetails" class="sd-details"></div>
@@ -1100,7 +1123,7 @@ var BIRTH = __ok ? {
 console.log('[EMERGE FLOW] 5. sidereal-reveal — system in storage:',
             SAVED && SAVED.system, '| data:', __ok ? 'user birth data' : 'QA fallback');
 document.getElementById('stamp').textContent =
-  'SIDEREAL v19.99 engine version · VC1 card guard · SKIP1 skip · LAHIRI · d1 · data:' + ((SAVED && SAVED.system) || 'none');
+  'SIDEREAL v19.99 engine version · VC1 card guard · SKIP1 skip · PB1 bottom bar · LAHIRI · d1 · data:' + ((SAVED && SAVED.system) || 'none');
 
 var DEG = Math.PI/180, RAD = 180/Math.PI;
 
@@ -3918,28 +3941,54 @@ function buildDashOverlay(){
   }
 
   wrap.appendChild(base);
+  if (!isMobileArt) base.classList.add('desktop-art');               /* PB1: the drawn icon pill is hidden */
   if (isMobileArt && DASH_EXPANDING_SRC){
     var ex = document.createElement('img');
     ex.className = 'dash-expanding';
     ex.src = DASH_EXPANDING_SRC;
     ex.alt = 'Expanding Perspectives — coming soon';
-    wrap.appendChild(ex);
+    var crop = document.createElement('div');                        /* PB1: the drawn tagline and icon pill are cut off */
+    crop.className = 'dash-crop';
+    crop.appendChild(ex);
+    wrap.appendChild(crop);
+    scale.classList.add('has-foot-room');                            /* PB1: the end of the page clears the bar */
   }
   scale.appendChild(wrap);
   dashOverlay.appendChild(scale);
   document.body.appendChild(dashOverlay);
+  /* PB1: the platform's bottom bar */
+  if (!document.getElementById('cozFoot')){
+    var foot = document.createElement('div');
+    foot.id = 'cozFoot';
+    foot.innerHTML = '<div class="coz-foot-tag">CozAlyze helps you see it all</div><div class="coz-foot-links">' +
+      '<a href="#" id="cozFootHome"><svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9h13v-9"/></svg>Home</a>' +
+      '<a href="saved-charts.html" data-foot="saved"><svg viewBox="0 0 24 24"><path d="M7 4h10v16l-5-4-5 4z"/></svg>Saved</a>' +
+      '<a href="account.html" data-foot="account"><svg viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 19.5c1.2-3.4 3.9-5 7-5s5.8 1.6 7 5"/></svg>Account</a>' +
+      '</div>';
+    document.body.appendChild(foot);
+    foot.querySelector('#cozFootHome').addEventListener('click', function(ev){   /* Home: the top of this page */
+      ev.preventDefault();
+      try { dashOverlay.scrollTo({ top: 0, behavior: REDUCED ? 'auto' : 'smooth' }); } catch(_){ dashOverlay.scrollTop = 0; }
+    });
+  }
   return dashOverlay;
+}
+/* PB1: the bar shows once the purchase page is on screen and its opening zoom has finished */
+function dashFootOn(){
+  var f = document.getElementById('cozFoot'); if (!f || f.classList.contains('on')) return;
+  if (!dashOverlay || !dashOverlay.classList.contains('is-visible')){ window.setTimeout(dashFootOn, 200); return; }
+  f.classList.add('on');
 }
 /* FULL PICTURE INTRO (Sep 3 ruling): the page enters as the whole picture, holds
    ~3s, then zooms in to the readable view — the same pattern as the reading
    pages. Runs on .dash-scale so it can never fight the pinch zoom (.dash-art). */
 function dashIntroZoom(ov){
-  if (REDUCED) return;
-  var sc = ov.querySelector('.dash-scale'); if (!sc || sc.__introDone) return;
+  if (REDUCED) { dashFootOn(); return; }                              /* PB1 */
+  var sc = ov.querySelector('.dash-scale'); if (!sc || sc.__introDone) { dashFootOn(); return; }
   sc.__introDone = true;
   var run = function(){
     var full = sc.offsetHeight, vh = window.innerHeight;
-    if (!full || full <= vh * 1.05) return;
+    if (!full || full <= vh * 1.05) { dashFootOn(); return; }          /* PB1: no opening zoom */
     var s = vh / full;
     /* Sep 21 fix: the intro is decorative only. Buttons stay tappable the whole
        time (no pointer-events lock; transformed hotspots still hit-test
@@ -3947,6 +3996,7 @@ function dashIntroZoom(ov){
        restores everything even if a timer or transition is lost. */
     var restored = false, restore = function(){
       if (restored) return; restored = true;
+      dashFootOn();                                                   /* PB1: the opening zoom is done */
       sc.style.transition = ''; sc.style.transform = ''; sc.style.pointerEvents = '';
       ov.style.overflow = ''; ov.__introLock = false;
       try { ov.scrollTop = 0; } catch(_){}
@@ -3986,6 +4036,7 @@ function startUnlockTransition(){
   window.setTimeout(function(){
     ov.classList.add('is-visible');
     ov.scrollTop = 0;
+    window.setTimeout(dashFootOn, 8000);                              /* PB1: never left without the bar */
     console.log('[EMERGE FLOW] 9. unlock -> pricing finale');
   }, REDUCED ? 0 : 550);
 }
