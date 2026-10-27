@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' data: https://api.geoapify.com https://api.anthropic.com https://cozalyze-tropical-server.netlify.app https://test--cozalyze-tropical-server.netlify.app https://test--cozalyze-compare-server.netlify.app; media-src 'self' data: blob:; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://unpkg.com; worker-src 'self' blob:;">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
 <title>EMERGE — Scene 1</title>
 <style>
   :root {
@@ -1481,18 +1481,21 @@ const world = Globe({ animateIn: false })(document.getElementById('globeViz'))
 // Scene 1 rule: the Earth is born at the exact center of the screen.
 // The globe itself begins far away as the point of light, then the CAMERA travels forward.
 // This is real 3D perspective motion — not a CSS opacity pop or a flat scale trick.
-const GLOBE = { driftX: 0, driftY: 0, shiftY: 0, lastSize: 0 };
+const GLOBE = { driftX: 0, driftY: 0, shiftY: 0, lastSize: 0, lastVw: 0, lastVh: 0 };
 function layoutGlobe(){
   const vw = window.innerWidth, vh = window.innerHeight;
   const size = Math.ceil(Math.max(vw, vh) * 1.55);
   const gv = document.getElementById('globeViz');
-  if (size !== GLOBE.lastSize){                       // resize ONCE, not every frame
-    GLOBE.lastSize = size;
-    gv.style.width  = size + 'px';
-    gv.style.height = size + 'px';
+  if (size !== GLOBE.lastSize || vw !== GLOBE.lastVw || vh !== GLOBE.lastVh){   // ZR1: a new width or height alone also re-centers
+    GLOBE.lastVw = vw; GLOBE.lastVh = vh;
     gv.style.left   = ((vw - size)/2) + 'px';
     gv.style.top    = (vh*0.50 - size/2) + 'px';   // Earth center = screen center, always
-    world.width(size).height(size);
+    if (size !== GLOBE.lastSize){                     // resize ONCE, not every frame
+      GLOBE.lastSize = size;
+      gv.style.width  = size + 'px';
+      gv.style.height = size + 'px';
+      world.width(size).height(size);
+    }
   }
   gv.style.transform = 'translate3d(' + GLOBE.driftX.toFixed(2) + 'px,'
     + (GLOBE.driftY + GLOBE.shiftY).toFixed(2) + 'px,0)';
@@ -1501,6 +1504,32 @@ function layoutGlobe(){
 try { world.renderer().setPixelRatio(Math.min(window.devicePixelRatio, 2)); } catch(e){}
 layoutGlobe();
 window.addEventListener('resize', layoutGlobe);
+
+/* ZR1 (Oct 26 2026, staging only): the start page always opens at normal size.
+   A pinch on a page shown inside this one (a reading, a dashboard) zooms the whole Safari tab. iOS kept that zoom
+   when the person came back or started a new chart in the same tab, the Earth and the sky were laid out for the
+   zoomed size, and the zoom lock further down stopped them pinching it back: the page came up small with the
+   Earth off to the side until the tab was closed (his reports, Oct 21 and Oct 26).
+   1. The viewport refuses any zoom below normal (minimum-scale=1 in the meta tag above).
+   2. Whenever this page opens, or comes back from the back button, while the tab is zoomed, the viewport is
+      applied again, which brings the tab back to normal size, and everything laid out from the screen size
+      (the Earth, the sky) is laid out again. At normal size nothing here does anything.
+   3. layoutGlobe re-centers the Earth on any change of the screen size, not only when its size changes. */
+(function(){
+  var vp = document.querySelector('meta[name="viewport"]'), base = vp ? vp.getAttribute('content') : '';
+  function zoomed(){ var v = window.visualViewport; return !!(v && Math.abs(v.scale - 1) > 0.01); }
+  function relayout(){ try { window.dispatchEvent(new Event('resize')); } catch(_){} }
+  function unzoom(){
+    if (!vp || !zoomed()) return;
+    console.log('[ZR1] tab zoomed to ' + window.visualViewport.scale.toFixed(3) + ' on arrival; back to normal size');
+    vp.setAttribute('content', base + ', shrink-to-fit=no');   /* a changed viewport is applied again by iOS */
+    setTimeout(function(){ vp.setAttribute('content', base); relayout(); setTimeout(relayout, 400); }, 60);
+  }
+  unzoom();
+  window.addEventListener('load', unzoom);
+  window.addEventListener('pageshow', unzoom);
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', function(){ try { layoutGlobe(); } catch(_){} });
+})();
 
 // ---------- camera: framed once, then perfectly still ----------
 // HARD STILLNESS LOCK — nothing may turn or move the Earth during its birth.
