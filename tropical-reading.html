@@ -611,7 +611,7 @@ body[data-view="reading"] .vedic-reading-page { animation: none; }
   </div>
 </div>
 
-<div class="vedic-stamp" aria-hidden="true">TROPICAL READING · T4.5 · server reading · WL1 r4 waiting line once · VT1 Tropical from Vedic · TC2 words raised · NA1 on to Ascendant · VO1.2 read aloud</div>
+<div class="vedic-stamp" aria-hidden="true">TROPICAL READING · T4.5 · server reading · WL1 r4 waiting line once · VT1 Tropical from Vedic · TC2 words raised · NA1 on to Ascendant · VO1.2 read aloud · RS1 clip first time only</div>
 
 <script src="ascendant-library.js"></script>
 <script src="coz-voice.js?v=3"></script>   <!-- VO1 (Oct 27 2026, staging only): the reading read aloud -->
@@ -1225,8 +1225,24 @@ try { revealVideo.load(); } catch (e) {}
 
 function lockScroll(on) { document.body.classList.toggle("scroll-locked", on); }
 
+/* RS1 (Oct 27 2026, his ruling, staging only): the reveal clip, with its calculating, plays the FIRST time only. Once
+   this chart's reading has been on screen, Your Tropical Reading opens Section 1 straight away. "Has been on screen" is
+   the guided doors' own record: the reading door counts as visited only when real reading text was shown, for the
+   chart that text was written for. If Section 1 of that reading is not on this device now, the clip plays as before. */
+let readNow = false;                                          /* this tap opens the reading straight away (no clip, no harmony) */
+function readBefore() {
+  try {
+    const loaded = loadReading();
+    const v = loaded ? null : ((window.CozTropicalServer && CozTropicalServer.sectionView) ? CozTropicalServer.sectionView("at-your-core") : null);
+    const run = loaded ? (loaded.source === "personal" ? loaded.run : null) : (v && v.state === "passed" ? v.run : null);
+    return !!(window.CozDoors && run && CozDoors.visited("tropical", run).reading);
+  } catch (e) { return false; }
+}
+
 function startReveal() {
+  readNow = false;
   if (revealActive || !readingReady()) return;
+  if (readBefore()) { readNow = true; location.hash = "#/at-your-core"; return; }   /* RS1 */
   revealActive = true; revealDone = false;
   { const t = TM(); if (t) t.attemptStart(); }                 /* TSA1.4: a new attempt record; earlier ones are kept */
   document.getElementById("hotReading").disabled = true;
@@ -1922,7 +1938,7 @@ function tropicalRulerLayer(sign){
 document.getElementById("hotReading").addEventListener("click", function(){
   try {
     const snd = (window.parent !== window) ? window.parent.EMERGE_SOUND : null;
-    if (snd){ snd.loop("ambient"); snd.play("harmony"); }
+    if (snd){ snd.loop("ambient"); if (!readNow) snd.play("harmony"); }   /* RS1: the harmony belongs to the clip */
   } catch(_){}
 });
 

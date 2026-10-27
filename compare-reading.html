@@ -500,7 +500,7 @@ body[data-view="reading"] .vedic-reading-page { animation: none; }
   <div class="vedic-reading-content" id="vedicContent"></div>
 </main>
 
-<div class="vedic-stamp" aria-hidden="true">COMBINED READING · C3.6 · early generation · WL1 r4 waiting line once</div>
+<div class="vedic-stamp" aria-hidden="true">COMBINED READING · C3.6 · early generation · WL1 r4 waiting line once · RS1 clip first time only</div>
 
 <script>
 /* ============================================================
@@ -808,8 +808,22 @@ try { revealVideo.load(); } catch (e) {}
 
 function lockScroll(on) { document.body.classList.toggle("scroll-locked", on); }
 
+/* RS1 (Oct 27 2026, his ruling, staging only): the reveal clip, with its calculating, plays the FIRST time only. Once
+   this chart pair's Combined Reading has been on screen, Your Combined Reading opens it straight away. "Has been on
+   screen" is the guided doors' own record: the reading door counts as visited only when real reading text was shown,
+   for the chart pair that text was written for. While Shared Themes is still being written, the clip plays as before. */
+let readNow = false;                                          /* this tap opens the reading straight away (no clip, no harmony) */
+function readBefore() {
+  try {
+    const pair = cmpPairNow();
+    return !!(window.CozDoors && pair && firstState() !== "wait" && CozDoors.visited("compare", pair).reading);
+  } catch (e) { return false; }
+}
+
 function startReveal() {
+  readNow = false;
   if (revealActive || !readingReady()) return;
+  if (readBefore()) { readNow = true; location.href = readingPageHref(); return; }   /* RS1 */
   revealActive = true; revealDone = false;
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   try { const P = cmpPairNow(); if (window.COZ_CMP_SERVER && P) window.COZ_CMP_SERVER.watchFirst(P); } catch (e) {}   /* CRG1: start following at the tap */
@@ -1134,7 +1148,7 @@ showFromHash();
 document.getElementById("hotReading").addEventListener("click", function(){
   try {
     const snd = (window.parent !== window) ? window.parent.EMERGE_SOUND : null;
-    if (snd){ snd.loop("ambient"); snd.play("harmony"); }
+    if (snd){ snd.loop("ambient"); if (!readNow) snd.play("harmony"); }   /* RS1: the harmony belongs to the clip */
   } catch(_){}
 });
 
