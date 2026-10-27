@@ -41,6 +41,7 @@ h1{font-family:var(--head);font-weight:500;font-size:calc(72 * var(--k));line-he
 .rfa:focus-visible{outline:1px solid var(--gold);outline-offset:3px}
 .acc{display:grid;grid-template-rows:0fr;transition:grid-template-rows .45s ease}
 .acc.open{grid-template-rows:1fr}
+.acc.snap{transition:none}   /* CR3.4: another part closes at once, so the screen does not slide away */
 .acc-in{overflow:hidden}
 .body{text-align:left;padding:calc(30 * var(--k)) calc(34 * var(--k)) calc(34 * var(--k));margin:calc(18 * var(--k)) 0 0;background:rgba(3,7,18,.72);border-radius:10px}   /* CR2.9: the panel stays inside its column, so no text is clipped */
 .body p{font-family:var(--sans);font-weight:300;font-size:max(19px,calc(30 * var(--k)));line-height:1.6;color:var(--cream)}
@@ -122,7 +123,7 @@ h1{font-family:var(--head);font-weight:500;font-size:calc(72 * var(--k));line-he
   </nav>
  </div>
 </main>
-<div class="stamp">COMBINED READING · CR3.3 · step 1 repair · CV1 viewer limits · VO1.2 read aloud</div>
+<div class="stamp">COMBINED READING · CR3.4 opens at the top · step 1 repair · CV1 viewer limits · VO1.2 read aloud</div>
 
 <script src="dev-review-engine.js?v=8"></script>
 <script src="ascendant-library.js?v=5"></script>
@@ -157,11 +158,39 @@ h1{font-family:var(--head);font-weight:500;font-size:calc(72 * var(--k));line-he
     btn.setAttribute("aria-expanded", open ? "true" : "false");
     acc.classList.toggle("open", open);
   }
+  /* CR3.4 (Oct 27 2026, his ruling, staging only): READ FULL ANALYSIS never leaves the screen at the bottom of a part.
+     The part open before closes at once (it is usually above, off the screen, and closing it slowly is what slid the
+     screen to the end of the part just opened), the part tapped is kept where it was, and then it glides to the top of
+     the screen, so its full analysis is read from the start. A touch on the screen stops the glide. */
+  var REST = 16, glide = null;                                          /* px left above the part's number */
+  function stopGlide(){ if (glide) { cancelAnimationFrame(glide); glide = null; } }
+  window.addEventListener("touchstart", stopGlide, { passive: true });
+  window.addEventListener("wheel", stopGlide, { passive: true });
+  function closeAtOnce(b){
+    var acc = document.getElementById(b.getAttribute("aria-controls"));
+    if (!acc.classList.contains("open")) return;
+    acc.classList.add("snap"); setOpen(b, false); void acc.offsetHeight; acc.classList.remove("snap");
+  }
+  function toTop(sec){
+    stopGlide();
+    var from = window.scrollY, t0 = performance.now();
+    var MS = (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) ? 0 : 650;
+    (function step(now){
+      var to = Math.max(0, sec.getBoundingClientRect().top + window.scrollY - REST);   /* the room below grows as the part opens */
+      var p = MS ? Math.min(1, (now - t0) / MS) : 1, e = p < .5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
+      window.scrollTo(0, from + (to - from) * e);
+      glide = (p < 1 || Math.abs(window.scrollY - to) > 1 && now - t0 < 1200) ? requestAnimationFrame(step) : null;
+    })(t0);
+  }
   buttons.forEach(function(btn){
     btn.addEventListener("click", function(){
       var opening = btn.getAttribute("aria-expanded") !== "true";
-      buttons.forEach(function(b){ if (b !== btn) setOpen(b, false); });
+      var sec = btn.closest(".sec"), was = sec.getBoundingClientRect().top;
+      buttons.forEach(function(b){ if (b !== btn) closeAtOnce(b); });
+      var moved = sec.getBoundingClientRect().top - was;
+      if (moved) { stopGlide(); window.scrollBy(0, moved); }              /* the part tapped stays where it was */
       setOpen(btn, opening);
+      if (opening) toTop(sec);
       /* r5: Shared Themes opened: what is on screen now (its text, or a waiting line) */
       if (opening && btn.getAttribute("aria-controls") === "acc-shared") {
         var acc = document.getElementById("acc-shared"), body = acc && acc.querySelector(".body");
