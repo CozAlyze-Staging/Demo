@@ -17,7 +17,11 @@
    each page starts with its first sentences as a short piece; the welcome comes in three pieces (VS2.2), so it starts
    about 2 seconds after the tap; and opening a page checks the tester password in advance. Same text, same cost.
    VO1.2 (Oct 27 2026, his ruling): the background music stays on but goes well down while the voice reads, on every
-   reading, and comes back up when the voice pauses, stops, finishes or waits for text still being written. */
+   reading, and comes back up when the voice pauses, stops, finishes or waits for text still being written.
+   VO1.3 (Oct 27 2026, his ruling after listening on Tropical, "still too distracting"): when the voice comes on, the
+   music fades out over about two seconds to practically nothing (about 40 dB down), on an even decibel curve so it
+   eases away rather than cutting (engine e28 fade; an older engine falls back to its straight-line swell). It still
+   comes back up the same way when the voice pauses, stops, finishes or waits. */
 (function () {
   if (window.CozVoice) return;
   var SERVER = "https://cozalyze-voice-server.netlify.app";
@@ -37,8 +41,9 @@
   var HEAD = 240;          /* VO1.1: the first long paragraph of a page starts with a short piece (its first sentences) */
   var FIRST = 4, AHEAD = 3, KEEP = 30;   /* VO1.1: asked for at the start; asked for ahead while playing; kept on the page */
   /* VO1.2: the app's background music (the living page's ambient bed) under the voice. 1.0 is the level index.html gives
-     the bed for every reading (its handoff to the reading page); DUCK is about 14 dB lower. */
-  var BED = 1.0, DUCK = 0.2, DOWN_S = 1.0, UP_S = 2.5;
+     the bed for every reading (its handoff to the reading page). VO1.3: DUCK is about 40 dB lower, practically silent,
+     reached over DOWN_S seconds. */
+  var BED = 1.0, DUCK = 0.01, DOWN_S = 2.0, UP_S = 2.5;
   var TURN_MS = 900;       /* the pause before the next section opens */
   var WAIT_MS = 2500;      /* how often text still being written is looked for */
 
@@ -195,9 +200,9 @@
   }
   function duck(on) {
     if (on === ducked) return;
-    var snd = engine(); if (!snd || !snd.swell) return;   /* no music on this page: nothing to lower */
+    var snd = engine(); if (!snd || !(snd.fade || snd.swell)) return;   /* no music on this page: nothing to lower */
     ducked = on;
-    try { snd.swell("ambient", on ? DUCK : BED, on ? DOWN_S : UP_S); } catch (e) {}
+    try { (snd.fade || snd.swell).call(snd, "ambient", on ? DUCK : BED, on ? DOWN_S : UP_S); } catch (e) {}   /* VO1.3: an even fade */
   }
   /* loading, playing, paused, waiting (text still being written), turning (to the next section), done, error */
   function phase(s, ph) {

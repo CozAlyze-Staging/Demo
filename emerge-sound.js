@@ -1,11 +1,17 @@
 /* ==================================================================
-   EMERGE_SOUND — Final Sound System V4 engine (e27, continuous opening)
+   EMERGE_SOUND — Final Sound System V4 engine (e28, continuous opening)
    ------------------------------------------------------------------
    Sonic law (locked): low-register, physical, dark, restrained, dry,
    spatial. No pitch sweeps. Movement expressed via gain / density /
    stereo only. Relative WAV levels are preserved — every cue plays
    at gain 1.0; the master limiter exists strictly to guard against
    stacking, never to reshape a single cue.
+   e28 (Oct 27 2026, staging, VO1.3): fade(name, level, secs) takes a
+   running loop to a level along an even decibel curve (an exponential
+   ramp), so a fade is heard steadily from start to finish instead of
+   holding and then dropping away at the end. Used only by the read-aloud
+   voice (coz-voice.js) to take the reading music out under the voice
+   and bring it back after. Additive: no cue, level or wav changed.
    e27: the Earth-arrival cue (07) is retired — the wav is no longer
    in the master, so it is out of FILES and DUCKS and its call site in
    Scene 1 is a silent no-op (play() drops any cue with no buffer).
@@ -73,7 +79,7 @@
   var DUCKS   = { harmony:1, impact:1, fold:1, ascension:1 };
 
   var AUDIO_VER = '18';
-  var ENGINE_VER = '27';   /* bump on ANY wav content change — defeats stale wav caching */
+  var ENGINE_VER = '28';   /* bump on ANY wav content change — defeats stale wav caching */
   var ctx = null, master = null, limiter = null;
   var buffers = {}, loading = {}, loops = {}, wantLoop = {};
   var fired = {};                   /* timeline cues fired once per page */
@@ -259,6 +265,20 @@
     } catch(_){}
   }
 
+  /* e28: fade a running loop to a level on an even decibel curve (see the header) */
+  function fade(name, level, secs){
+    var n = loops[name];
+    if (!n || !ctx) return;
+    var to = Math.max(0.0001, (typeof level === 'number') ? level : 1.0);   /* an exponential ramp never reaches 0 */
+    var s = (typeof secs === 'number' && secs > 0) ? secs : 2.0;
+    try {
+      var t = ctx.currentTime;
+      n.gain.gain.cancelScheduledValues(t);
+      n.gain.gain.setValueAtTime(Math.max(0.0001, n.gain.gain.value), t);
+      n.gain.gain.exponentialRampToValueAtTime(to, t + s);
+    } catch(_){}
+  }
+
   function stopAll(){
     for (var k in loops) if (loops[k] && k !== 'ambient') stopLoop(k, 0.35);
   }
@@ -303,7 +323,7 @@
 
   window.EMERGE_SOUND = {
     unlock: unlock, play: play, grain: grain,
-    loop: startLoop, stopLoop: stopLoop, stopAll: stopAll, swell: swell,
+    loop: startLoop, stopLoop: stopLoop, stopAll: stopAll, swell: swell, fade: fade,
     motion: motion, tick: tick, haptic: haptic, numpulse: numpulse, status: status
   };
 })();
