@@ -357,11 +357,12 @@ body[data-view="reading"] .dash { display: none; }
    Section 1 is not ready yet. His existing "Calculating your sky" line from index.html, same style (.gn-title .t1)
    and the same pulse used by "Tap the Sky" (twinkle 3.2s). Nothing else is drawn. */
 @keyframes cozTwinkle { 0%,100%{opacity:1} 50%{opacity:.45} }
-.reveal .coz-wait { position:absolute; left:0; right:0; bottom:14vh; text-align:center; z-index:5;
+.reveal .coz-wait { position:absolute; left:0; right:0; bottom:22vh; text-align:center; z-index:5;   /* WL1: was 14vh */
   text-shadow:0 2px 14px rgba(0,0,0,.85); pointer-events:none; opacity:0; transition:opacity 1.2s ease; }
 .reveal .coz-wait .t1 { font-family:Georgia,serif; font-size:17px; letter-spacing:.14em; color:#E8C7A6; }
 .reveal .coz-wait.on { opacity:1; }
 .reveal .coz-wait.on .t1 { animation:cozTwinkle 3.2s ease-in-out 1.2s infinite; }
+.reveal .coz-wait.on.wl-swap { opacity:0; }   /* WL1: the line's own fade, out and back in, when its words change */
 .sr-only {
   position: absolute; width: 1px; height: 1px; overflow: hidden;
   clip: rect(0 0 0 0); white-space: nowrap;
@@ -577,7 +578,7 @@ body[data-view="reading"] .vedic-reading-page { animation: none; }
     <svg viewBox="0 0 30 20" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M29 10H2M9 3 2 10l7 7"/></svg>
   </button>
   <span class="sr-only" aria-live="polite" id="revealLive"></span>
-  <div class="coz-wait" id="cozWait" aria-hidden="true"><div class="t1">Calculating your sky</div></div>
+  <div class="coz-wait" id="cozWait" aria-hidden="true"><div class="t1">Calculating reading</div></div>
 </div>
 
 <main class="vedic-reading-page" id="vedicPage">
@@ -612,7 +613,7 @@ body[data-view="reading"] .vedic-reading-page { animation: none; }
   </div>
 </div>
 
-<div class="vedic-stamp" aria-hidden="true">TROPICAL READING · T4.5 · server reading</div>
+<div class="vedic-stamp" aria-hidden="true">TROPICAL READING · T4.5 · server reading · WL1 waiting line</div>
 
 <script src="ascendant-library.js"></script>
 <script>
@@ -894,7 +895,7 @@ function startPullAway() {
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const t0 = performance.now();
   console.log("[COZ TSA1.4] Section 1 not ready: pulling away into the dark");
-  document.getElementById("revealLive").textContent = "Calculating your sky";
+  waitLine(true);                                                     /* WL1: the line (normally already on since 2 s into the clip) */
   /* Section 1 may arrive while the picture is still receding: close that wait record at once (the landing itself
      still comes from the clip's end, or from whenS1Ready once the clip has ended) */
   waitUp = () => { if (s1Settled()) { closeWaits("section 1 " + s1State()); window.removeEventListener("COZ_TROPICAL_SERVER_UPDATE", waitUp); waitUp = null; } };
@@ -922,7 +923,32 @@ function stopPullAway() {
   pullLayers().forEach((v) => { ["transform", "opacity", "maskImage", "webkitMaskImage"].forEach((k) => { v.style[k] = ""; }); });
   document.getElementById("revealStage").style.visibility = "";
   revealEl.classList.remove("is-pulling");
-  document.getElementById("cozWait").classList.remove("on");
+  waitLine(false);                                                    /* WL1 */
+}
+/* WL1 (Oct 26 2026, Jason's ruling, staging only): the waiting line now also shows during the reveal itself, a little
+   higher (22vh from the bottom, was 14vh), same size, colour and pulse. Two lines only: "Calculating reading" from 2 s
+   into the clip, then at 20 s the same 1.2 s fade out and back in to "Your reading will be done shortly", which stays
+   (through the dark wait, if there is one) until the reading opens. It shows only while Section 1 is not
+   ready, so a finished reading never shows it; if it is ready during the clip the line leaves, and it leaves with every
+   landing and Back. Nothing else changes: the clip, the waiting and the landing are as before. */
+const WL_FIRST = "Calculating reading", WL_SECOND = "Your reading will be done shortly";
+let wlTimer = 0, wlWatch = 0;
+function wlNotReady() { return !s1Settled(); }
+function waitLine(on) {
+  const w = document.getElementById("cozWait"), t1 = w.querySelector(".t1"), live = document.getElementById("revealLive");
+  if (!on) {
+    if (wlTimer) { clearTimeout(wlTimer); wlTimer = 0; }
+    if (wlWatch) { clearInterval(wlWatch); wlWatch = 0; }
+    w.classList.remove("on", "wl-swap"); t1.textContent = WL_FIRST;
+    return;
+  }
+  if (wlWatch) return;                                            /* already showing: it keeps its own timing */
+  t1.textContent = WL_FIRST; w.classList.remove("wl-swap"); w.classList.add("on"); live.textContent = WL_FIRST;
+  wlTimer = setTimeout(() => {                                    /* 18 s after it came in, 20 s into the clip */
+    w.classList.add("wl-swap");                                   /* out with the line's own 1.2 s fade, back in with the new words */
+    wlTimer = setTimeout(() => { wlTimer = 0; t1.textContent = WL_SECOND; live.textContent = WL_SECOND; w.classList.remove("wl-swap"); }, 1200);
+  }, 18000);
+  wlWatch = setInterval(() => { if (!pullOn && !wlNotReady()) waitLine(false); }, 500);
 }
 let entryHold = null;
 function whenS1Ready(go) {
@@ -1216,6 +1242,7 @@ revealVideo.addEventListener("playing", () => {
      blooming, the light takes the screen while the stage is still growing, the page
      lands under the light and the light clears. No hold anywhere. */
   revealTimers.push(setTimeout(() => revealEl.classList.add("is-through"), 1500));
+  revealTimers.push(setTimeout(() => { if (wlNotReady()) waitLine(true); }, 2000));   /* WL1: the waiting line, 2 s into the clip */
   /* Sep 20: the reveal, the drive through the sun, the light and the space flight are now ONE clip
      (tropical-reading-reveal-full.mp4). The page just plays it and lands when it ends. */
   // hard cap a little past the clip's 2.5s so a stalled clip never traps anyone
