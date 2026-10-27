@@ -1,4 +1,8 @@
-/* COZ TROPICAL SERVER · VT1 (Oct 26 2026, staging only)
+/* COZ TROPICAL SERVER · VT1 + DX1
+   DX1 (Oct 27 2026, staging only): when this page's own status poll sees a job end, the server's final record (requests,
+   tokens, cost, timeline, section checks, soft findings; not the sections or rejected drafts, no password) is kept in
+   "cozTropicalServerFinal" for review. No other change.
+   VT1 (Oct 26 2026, staging only)
    VT1: the Tropical reading bought from the Vedic reveal (the Tropical option on the Vedic result page). Only
    tropical-reveal.html calculates the Tropical chart, so on that path this device had no Tropical chart for the run, and
    start() stopped at "no Tropical chart for this run; nothing started": no job, and the reading page waited with nothing
@@ -124,6 +128,25 @@
   function lsJSON(k){ try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } }
   function lsSet(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } }
   function log(m){ try { console.log("[TROPICAL SERVER] " + m); } catch (e) {} }
+  /* DX1: the server's final record for a job, exactly as this page's own status poll received it, kept on this device
+     for review (newest first, 8 jobs). Requests, tokens, cost, timeline, each section's checks and the soft findings
+     (which quote only the sentences they flag); never the sections themselves, a rejected draft or a password. Nothing
+     extra is sent; the page is unchanged. */
+  var FINAL = "cozTropicalServerFinal", FINAL_MAX = 8;
+  function num(x){ return typeof x === "number" ? x : null; }
+  function keepFinal(view, j){
+    try {
+      var a = lsJSON(FINAL); a = Array.isArray(a) ? a.filter(function (x) { return x && x.jobId !== view.jobId; }) : [];
+      a.unshift({ keptAt: new Date().toISOString(), server: String((j && j.base) || "").replace("/.netlify/functions", "") || null, runId: (j && j.runId) || null,
+        jobId: view.jobId, state: view.state, config: view.config || null, note: view.note || "", launches: num(view.launches),
+        requests: Array.isArray(view.requests) ? view.requests : [], cost: view.cost || null, timeline: view.timeline || null,
+        sections: (view.sections || []).map(function (s) { return { id: s.id, state: s.state, source: s.source || null, words: num(s.words),
+          arrivedMs: num(s.arrivedMs), readableMs: num(s.readableMs), soft: s.soft || [], error: s.error || null,
+          checks: (s.checks || []).map(function (c) { return { source: c.source || null, hard: c.hard || null, soft: c.soft || null, words: num(c.words) }; }) }; }),
+        quality: view.quality || null });
+      lsSet(FINAL, a.slice(0, FINAL_MAX));
+    } catch (e) {}
+  }
   function notify(){ try { window.dispatchEvent(new CustomEvent("COZ_TROPICAL_SERVER_UPDATE")); } catch (e) {} }
   /* ---------- DTC2: one tester password for the whole Demo (identical block in coz-tropical-server.js and coz-vedic-server.js) ----------
      Saved once as "cozDemoTesterCode"; the old per-reading names are still read. A job keeps only a short fingerprint of the
@@ -356,6 +379,7 @@
     else if (secs["at-your-core"] && secs["at-your-core"].state === "failed") timing.mark("s1Failed");
     j.sections = secs; j.state = final ? (view.state === "complete" ? "complete" : "finished") : "writing"; j.updatedAt = new Date().toISOString();
     lsSet(JOB, j); lastSeen = (j.jobId || "") + "|" + j.state + "|" + j.updatedAt;
+    if (final) keepFinal(view, j);                                        /* DX1 */
     if (j.state === "complete") writeFinal(j);
     notify();
   }

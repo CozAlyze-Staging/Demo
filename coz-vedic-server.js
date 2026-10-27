@@ -1,4 +1,8 @@
-/* COZ VEDIC SERVER · VSA1.2 (DTC2, Oct 14 2026, offline, not deployed)
+/* COZ VEDIC SERVER · VSA1.2 + DX1
+   DX1 (Oct 27 2026, staging only): when this page's own status poll sees a job finish, the server's final record
+   (requests, tokens, cost, timing, soft findings; not the sections, no password) is kept in "cozVedicServerFinal" for
+   review. No other change.
+   VSA1.2 (DTC2, Oct 14 2026)
    DTC2: one tester password for the whole Demo (see the DTC2 block below), read before the old names. A job is followed
    with the password that started it. No password, or a refused one, marks the run "access": polling stops, released
    sections stay, the others show the tester line, which the reader taps to enter the password. After a verified
@@ -25,6 +29,22 @@
   function lsJSON(k){ try { return JSON.parse(ls(k) || "null"); } catch (e) { return null; } }
   function lsSet(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
   function notify(){ try { window.dispatchEvent(new CustomEvent("COZ_VEDIC_SERVER_UPDATE")); } catch (e) {} }
+  /* DX1: the server's final record for a job, exactly as this page's own status poll received it, kept on this device
+     for review (newest first, 8 jobs). Requests, tokens, cost, timing and the soft findings (which quote only the
+     sentences they flag); never the sections themselves, never a password. Nothing extra is sent; the page is unchanged. */
+  var FINAL = "cozVedicServerFinal", FINAL_MAX = 8;
+  function num(x){ return typeof x === "number" ? x : null; }
+  function keepFinal(v, runId, b){
+    try {
+      var a = lsJSON(FINAL); a = Array.isArray(a) ? a.filter(function (x) { return x && x.jobId !== v.jobId; }) : [];
+      a.unshift({ keptAt: new Date().toISOString(), server: String(b || "").replace("/.netlify/functions", ""), runId: runId || null,
+        jobId: v.jobId, state: v.state, version: v.version, model: v.model, launches: num(v.launches),
+        requests: Array.isArray(v.requests) ? v.requests : [], cost: v.cost || null, finishedMs: num(v.finishedMs),
+        sections: (v.sections || []).map(function (s) { return { id: s.id, state: s.state, source: s.source || null, readableMs: num(s.readableMs) }; }),
+        quality: v.quality || null });
+      lsSet(FINAL, a.slice(0, FINAL_MAX));
+    } catch (e) {}
+  }
   /* ---------- DTC2: one tester password for the whole Demo (identical block in coz-tropical-server.js and coz-vedic-server.js) ----------
      Saved once as "cozDemoTesterCode"; the old per-reading names are still read. A job keeps only a short fingerprint of the
      password that started it (never the password) and is always followed with that same password, so a newer saved password
@@ -112,6 +132,7 @@
             var v = r.body, secs = {}; v.sections.forEach(function (s) { secs[s.id] = s.state === "released" ? { state: "released", body: s.body } : (cur.sections && cur.sections[s.id] && cur.sections[s.id].state === "released" ? cur.sections[s.id] : { state: s.state }); }); if (!cur.cred) cur.cred = credOf(code);   /* DTC2: keep released text; bind a job from before DTC2 */
             var changed = JSON.stringify(cur.sections) !== JSON.stringify(secs) || cur.state !== v.state;
             cur.sections = secs; cur.state = v.state; lsSet(JOB, cur); if (changed) notify();
+            if (v.state === "complete" || v.state === "finished") keepFinal(v, run.runId, b);   /* DX1 */
             if (v.state === "complete") {
               var sections = {}; IDS.forEach(function (id) { sections[id] = secs[id].body; });
               return resolve({ sections: sections, inputs: { runId: run.runId, fingerprint: run.fingerprint, server: true },
