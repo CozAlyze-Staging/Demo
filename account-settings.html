@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Settings · CozAlyze</title>
+<!-- SETTINGS · AC1 (Oct 27 2026, staging only). Built from Jason's approved Settings mockup, three cards and Save
+     Preferences. Sign-in & Security and Email Preferences belong to the account, and no sign-in provider, account or
+     email service exists on this site yet (see account-area.js): Change Password and News & Updates say, in the
+     approved wording, that they will be available once sign-in exists; News & Updates stays off and is never recorded.
+     Account Emails are essential messages and have no switch. Display & Accessibility needs no account: Text Size and
+     Reduce Motion are saved on this device ("cozDisplayPrefs") and apply to the account pages. A choice shows at once
+     as a preview; "saved" is said only after the device has really stored it, and a failed save keeps the choices on
+     screen. Reduce Motion starts from the device's own setting until a choice is saved. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@400;500&family=Montserrat:wght@300;400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="account-area.css?v=1">
+<script src="account-area.js?v=1"></script>
+<script src="coz-saved.js?v=6"></script>
+</head>
+<body>
+<div class="acct">
+  <img class="acct-sky" src="acct-sky-top.jpg?v=1" alt="CozAlyze" width="1024" height="311">
+  <main class="acct-main" id="main">
+    <header class="acct-head">
+      <h1>Settings</h1>
+      <p class="sub">Choose what works for you.</p>
+      <div class="acct-div" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0 13.6 10.4 24 12 13.6 13.6 12 24 10.4 13.6 0 12 10.4 10.4Z"/></svg></div>
+    </header>
+    <form class="acct-body" id="prefsForm" novalidate>
+      <section class="card" aria-labelledby="secTitle">
+        <h2 class="card-title ruled" id="secTitle">Sign-in &amp; Security</h2>
+        <div class="opt">
+          <div class="what"><p class="name" id="pwName">Password</p></div>
+          <button type="button" class="btn" id="changePw" aria-describedby="pwName">Change Password</button>
+        </div>
+      </section>
+      <section class="card" aria-labelledby="mailTitle">
+        <h2 class="card-title ruled" id="mailTitle">Email Preferences</h2>
+        <div class="opt">
+          <div class="what">
+            <label class="name" for="news">News &amp; Updates</label>
+            <p class="help" id="newsHelp">Occasional CozAlyze news and new features.</p>
+          </div>
+          <input class="switch" type="checkbox" role="switch" id="news" aria-describedby="newsHelp">
+        </div>
+        <div class="opt">
+          <div class="what">
+            <p class="name">Account Emails</p>
+            <p class="help">Purchase confirmations and essential account messages.</p>
+          </div>
+          <p class="state">Always on</p>
+        </div>
+      </section>
+      <section class="card" aria-labelledby="dispTitle">
+        <h2 class="card-title ruled" id="dispTitle">Display &amp; Accessibility</h2>
+        <fieldset class="opt stack">
+          <legend class="name">Text Size</legend>
+          <div class="seg wide" id="sizeSeg">
+            <label><input type="radio" name="textSize" value="standard">Standard</label>
+            <label><input type="radio" name="textSize" value="large">Large</label>
+            <label><input type="radio" name="textSize" value="larger">Larger</label>
+          </div>
+        </fieldset>
+        <div class="opt">
+          <div class="what">
+            <label class="name" for="motion">Reduce Motion</label>
+            <p class="help" id="motionHelp">Limit decorative movement and animation.</p>
+          </div>
+          <input class="switch" type="checkbox" role="switch" id="motion" aria-describedby="motionHelp">
+        </div>
+      </section>
+      <div class="save-row">
+        <button class="btn-gold" type="submit" id="savePrefs">Save Preferences</button>
+        <p class="status" id="prefsStatus" role="status"></p>
+      </div>
+    </form>
+  </main>
+  <footer class="acct-foot">
+    <a class="back" href="account.html"><svg viewBox="0 0 32 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M30 10H3M10 3 3 10l7 7"/></svg><span>Back to Account</span></a>
+    <p class="legal"><button type="button" class="link" data-unpublished="terms">Terms</button><span class="bar" aria-hidden="true"></span><button type="button" class="link" data-unpublished="privacy">Privacy</button></p>
+  </footer>
+  <img class="acct-cloud l" src="acct-cloud-left.webp?v=1" alt="" width="368" height="293">
+  <img class="acct-cloud r" src="acct-cloud-right.webp?v=1" alt="" width="356" height="293">
+  <div class="stamp">ACCOUNT · AC1 · staging</div>
+</div>
+<script>
+(function(){
+  function $(id){ return document.getElementById(id); }
+  var form = $("prefsForm"), save = $("savePrefs"), status = $("prefsStatus"), motion = $("motion"), news = $("news");
+  var sizes = Array.prototype.slice.call(form.querySelectorAll('input[name="textSize"]'));
+  function say(text, kind){ status.textContent = text || ""; status.className = "status" + (kind ? " " + kind : ""); }
+  function size(){ var r = sizes.filter(function (x) { return x.checked; })[0]; return r ? r.value : "standard"; }
+  function marks(){ sizes.forEach(function (r) { r.parentNode.classList.toggle("on", r.checked); }); }
+
+  /* what is saved on this device now (Standard, and the device's own Reduce Motion, until something is saved) */
+  function fill(){
+    var e = CozAcct.prefs.effective(CozAcct.prefs.read());
+    sizes.forEach(function (r) { r.checked = r.value === e.textSize; }); marks();
+    motion.checked = e.reduceMotion;
+  }
+  fill();
+  /* a choice shows at once; it is kept only by Save Preferences */
+  function preview(){
+    CozAcct.previewing = true;
+    marks();
+    CozAcct.prefs.apply({ textSize: size(), reduceMotion: motion.checked });
+    say("");
+  }
+  sizes.forEach(function (r) { r.addEventListener("change", preview); });
+  motion.addEventListener("change", preview);
+  window.addEventListener("pageshow", function (ev) { if (ev.persisted && CozAcct.previewing) CozAcct.prefs.apply({ textSize: size(), reduceMotion: motion.checked }); });
+
+  /* account settings: no account service yet; News & Updates stays off and is never recorded */
+  news.checked = false; news.setAttribute("aria-disabled", "true");
+  function noAccount(ev){ ev.preventDefault(); CozAcct.tell(CozAcct.UNAVAILABLE, news); }
+  news.addEventListener("click", noAccount);                 /* a tap or the space bar: the switch does not move */
+  $("changePw").addEventListener("click", function (ev) {
+    var b = ev.currentTarget;
+    CozAccount.call("password.change").catch(function (e) { CozAcct.tell(e && e.code === "unavailable" ? CozAcct.UNAVAILABLE : "Your password can’t be changed right now. Please try again.", b); });
+  });
+
+  form.addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    if (CozAcct.isBusy(save)) return;                       /* one save at a time */
+    CozAcct.busy(save, true); say("");
+    CozAcct.prefs.save({ textSize: size(), reduceMotion: motion.checked }).then(function (p) {
+      CozAcct.previewing = false;
+      CozAcct.prefs.apply(CozAcct.prefs.effective(p));
+      say("Your display preferences are saved on this device.", "ok");
+    }, function () {
+      say("Your preferences couldn’t be saved on this device. Your choices are still selected, so you can try again.", "bad");
+    }).then(function () { CozAcct.busy(save, false); });
+  });
+})();
+</script>
+<script src="coz-nav.js?v=2"></script>
+</body>
+</html>

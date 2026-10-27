@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Edit Profile · CozAlyze</title>
+<!-- EDIT PROFILE · AC1 (Oct 27 2026, staging only). Built from Jason's approved Edit Profile mockup. The account display
+     name belongs to the account owner and is separate from the names on saved charts: nothing here reads or renames a
+     chart. The email is shown read-only; changing it is its own verified flow from the sign-in provider. No sign-in
+     provider or account records exist on this site yet (see account-area.js), so the page says the visitor isn't
+     signed in, prefills nothing, and Save Changes reports, in the approved wording, that it will be available once
+     sign-in exists. Typed changes stay in the field; nothing is ever shown as saved when it was not. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@400;500&family=Montserrat:wght@300;400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="account-area.css?v=1">
+<script src="account-area.js?v=1"></script>
+<script src="coz-saved.js?v=6"></script>
+</head>
+<body>
+<div class="acct">
+  <img class="acct-sky" src="acct-sky-top.jpg?v=1" alt="CozAlyze" width="1024" height="311">
+  <main class="acct-main" id="main">
+    <header class="acct-head">
+      <h1>Edit Profile</h1>
+      <p class="sub">Manage your account details.</p>
+      <div class="acct-div" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0 13.6 10.4 24 12 13.6 13.6 12 24 10.4 13.6 0 12 10.4 10.4Z"/></svg></div>
+    </header>
+    <div class="acct-body">
+      <section class="card" aria-label="Account details">
+        <p class="notice" id="profNotice"></p>
+        <form id="profForm" novalidate>
+          <div class="field">
+            <label class="label" for="displayName">Display Name</label>
+            <input class="input" id="displayName" name="displayName" type="text" autocomplete="nickname" autocapitalize="words" spellcheck="false"
+              maxlength="40" aria-describedby="displayNameHelp displayNameErr">
+            <p class="help" id="displayNameHelp">How we address you in CozAlyze.</p>
+            <p class="err" id="displayNameErr"></p>
+          </div>
+          <div class="field">
+            <label class="label" for="email">Email Address</label>
+            <input class="input" id="email" type="email" readonly aria-describedby="emailHelp" placeholder="Not signed in">
+            <button type="button" class="link tap" id="changeEmail">Change email address</button>
+            <p class="help flush" id="emailHelp">Used for sign-in and account updates.</p>
+          </div>
+          <button class="btn-gold gap" type="submit" id="saveProfile">Save Changes</button>
+          <p class="status" id="profStatus" role="status"></p>
+        </form>
+        <p class="in-card-back"><a class="back" href="account.html"><svg viewBox="0 0 32 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M30 10H3M10 3 3 10l7 7"/></svg><span>Back to Account</span></a></p>
+      </section>
+    </div>
+  </main>
+  <footer class="acct-foot">
+    <p class="legal"><button type="button" class="link" data-unpublished="terms">Terms</button><span class="bar" aria-hidden="true"></span><button type="button" class="link" data-unpublished="privacy">Privacy</button></p>
+  </footer>
+  <img class="acct-cloud l" src="acct-cloud-left.webp?v=1" alt="" width="368" height="293">
+  <img class="acct-cloud r" src="acct-cloud-right.webp?v=1" alt="" width="356" height="293">
+  <div class="stamp">ACCOUNT · AC1 · staging</div>
+</div>
+<script>
+(function(){
+  var form = document.getElementById("profForm"), nameEl = document.getElementById("displayName"), email = document.getElementById("email");
+  var save = document.getElementById("saveProfile"), status = document.getElementById("profStatus"), err = document.getElementById("displayNameErr");
+  var NAME_OK = /^[\p{L}\p{M}][\p{L}\p{M}' .’-]*$/u;
+  var loaded = null;   /* the profile as it came from the account, once there is one */
+
+  function say(text, kind){ status.textContent = text || ""; status.className = "status" + (kind ? " " + kind : ""); }
+  function problem(text){
+    err.textContent = text || "";
+    if (text) nameEl.setAttribute("aria-invalid", "true"); else nameEl.removeAttribute("aria-invalid");
+  }
+
+  /* the account owner's own profile (never a chart's name); nobody can be signed in yet */
+  CozAccount.session().then(function (s) {
+    if (!s) { document.getElementById("profNotice").textContent = CozAcct.SIGNED_OUT; return; }
+    nameEl.value = s.displayName || ""; email.value = s.email || "";
+    loaded = { displayName: nameEl.value };
+  });
+
+  nameEl.addEventListener("input", function () { if (err.textContent) problem(""); say(""); });
+
+  /* a separate, verified flow run by the sign-in provider */
+  document.getElementById("changeEmail").addEventListener("click", function (ev) {
+    var b = ev.currentTarget;
+    CozAccount.call("email.change").catch(function (e) { CozAcct.tell(e && e.code === "unavailable" ? CozAcct.UNAVAILABLE : "Your email address can’t be changed right now. Please try again.", b); });
+  });
+
+  form.addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    if (CozAcct.isBusy(save)) return;                         /* one save at a time */
+    var v = nameEl.value.replace(/\s+/g, " ").trim();
+    var bad = !v ? "Enter the name you’d like us to use." :
+              v.length > 40 ? "Use 40 characters or fewer." :
+              !NAME_OK.test(v) ? "Use letters, spaces, apostrophes, hyphens or periods." : "";
+    problem(bad);
+    if (bad) { say(""); nameEl.focus(); return; }
+    if (loaded && v === loaded.displayName) { say("Nothing has changed."); return; }
+    CozAcct.busy(save, true); say("");
+    CozAccount.call("profile.update", { displayName: v }).then(function () {
+      loaded = { displayName: v };
+      say("Your profile has been updated.", "ok");              /* only after the account confirms it */
+    }, function (e) {
+      if (e && e.code === "unavailable") CozAcct.tell(CozAcct.UNAVAILABLE, save);
+      else say("Your profile couldn’t be updated. Your changes are still here, so you can try again.", "bad");
+    }).then(function () { CozAcct.busy(save, false); });
+  });
+})();
+</script>
+<script src="coz-nav.js?v=2"></script>
+</body>
+</html>

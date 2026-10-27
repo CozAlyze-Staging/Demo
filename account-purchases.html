@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Purchases &amp; Access · CozAlyze</title>
+<!-- PURCHASES & ACCESS · AC1 (Oct 27 2026, staging only). Built from Jason's approved Purchases & Access mockup.
+     Access can only come from the account's purchase and entitlement records, never from a flag, an address or a
+     checkout-return page. Those records don't exist on this site yet (see account-area.js), so this page never says
+     Purchased or Not purchased: it says purchase records will show once sign-in exists, and for the chart selected it
+     shows which readings are saved on this device, each with Open Reading. Open Reading reopens the saved copy exactly
+     as Saved Charts does (CozSaved.restore, so the reopened chart can never call the model) and opens the reading
+     itself; nothing is generated again. A device with tester access is told its readings are test readings, not
+     purchases. Charts are chosen by run ID; access and history for a chart are drawn together, and an answer that
+     arrives after another chart was chosen is dropped. When the account service exists, its entitlement answer
+     drives the designed states: Purchased (gold check) with Open Reading, Purchased while the reading is still being
+     written or after it failed (with Try again, never a second payment), Tester access, and Not purchased (lock);
+     each receipt opens from its own transaction. Explore Readings opens the existing Add-ons screen and its prices. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@400;500&family=Montserrat:wght@300;400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="account-area.css?v=1">
+<script src="account-area.js?v=1"></script>
+<script src="coz-saved.js?v=6"></script>
+</head>
+<body>
+<div class="acct">
+  <img class="acct-sky" src="acct-sky-top.jpg?v=1" alt="CozAlyze" width="1024" height="311">
+  <main class="acct-main" id="main">
+    <header class="acct-head">
+      <h1>Purchases &amp; Access</h1>
+      <p class="sub">Your readings and purchase history.</p>
+      <div class="acct-div" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0 13.6 10.4 24 12 13.6 13.6 12 24 10.4 13.6 0 12 10.4 10.4Z"/></svg></div>
+    </header>
+    <div class="acct-body">
+      <section class="card" aria-labelledby="accessTitle">
+        <h2 class="card-title" id="accessTitle">Your Reading Access</h2>
+        <div class="notice" id="accessNotice" aria-live="polite"><p>Loading your saved charts…</p></div>
+        <div class="pickrow inline" id="chartRow" hidden>
+          <label class="label" for="chartSel">Chart</label>
+          <select class="select" id="chartSel"></select>
+        </div>
+        <div class="readings" id="readings" aria-live="polite"></div>
+        <a class="btn serif block explore" href="addons.html#/?from=p">Explore Readings</a>
+        <div class="rule" aria-hidden="true"></div>
+        <h2 class="card-title sub2" id="histTitle">Purchase History</h2>
+        <div class="history" id="history" aria-live="polite"></div>
+        <p class="help center">Purchases apply to the chart selected above.</p>
+      </section>
+    </div>
+  </main>
+  <footer class="acct-foot">
+    <a class="back" href="account.html"><svg viewBox="0 0 32 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M30 10H3M10 3 3 10l7 7"/></svg><span>Back to Account</span></a>
+    <p class="legal"><button type="button" class="link" data-unpublished="terms">Terms</button><span class="bar" aria-hidden="true"></span><button type="button" class="link" data-unpublished="privacy">Privacy</button></p>
+  </footer>
+  <img class="acct-cloud l" src="acct-cloud-left.webp?v=1" alt="" width="368" height="293">
+  <img class="acct-cloud r" src="acct-cloud-right.webp?v=1" alt="" width="356" height="293">
+  <div class="stamp">ACCOUNT · AC1 · staging</div>
+</div>
+<script>
+(function(){
+  function $(id){ return document.getElementById(id); }
+  var notice = $("accessNotice"), rows = $("readings"), hist = $("history"), sel = $("chartSel");
+  var READINGS = [["tropical", "Tropical Reading"], ["vedic", "Vedic Reading"], ["combined", "Combined Reading"]];
+  var CHECK = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="currentColor"/><path d="m7 12.3 3.2 3.2L17.2 8.5" fill="none" stroke="#0A0D14" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  var LOCK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2.2"/><path d="M8.2 10.5V7.8a3.8 3.8 0 0 1 7.6 0v2.7M12 14.6v2.4"/></svg>';
+  var VIEW = { tropical: "saved-tropical-document.html?view=reading&id=", vedic: "saved-vedic-document.html?view=reading&id=",
+               combined: "saved-compare-document.html?view=combined&id=" };
+  var charts = [], chart = null, seq = 0, shown = {};
+  var tester = false; try { tester = !!localStorage.getItem("cozDemoTesterCode"); } catch (e) {}
+
+  function esc(s){ return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function paras(list){ notice.innerHTML = list.map(function (t) { return "<p>" + esc(t) + "</p>"; }).join(""); }
+
+  /* the readings this device has saved for one chart (coz-saved.js records; never written here) */
+  function deviceCopies(g){
+    var c = g.chart, k = g.compare, out = {};
+    function done(rec, flag){ var r = rec.readings || {}; return r[flag] === true || (r[flag] === undefined && rec.complete === true); }
+    if (c && c.systems && c.systems.tropical) out.tropical = { rec: c, target: "tropical", done: done(c, "tropicalReading") };
+    if (c && c.systems && c.systems.vedic) out.vedic = { rec: c, target: "vedic", done: done(c, "vedicReading") };
+    if (k) out.combined = { rec: k, target: null, done: k.complete === true };
+    return out;
+  }
+  /* one reading card: { state: text, icon, tone, more, action: { label, kind, key } } */
+  function card(key, title, v){
+    var a = v.action ? '<button type="button" class="' + (v.action.kind === "retry" ? "btn" : "btn-gold small") + '" data-act="' + v.action.kind + '" data-key="' + key + '">' + esc(v.action.label) + "</button>" : "";
+    return '<div class="reading" data-reading="' + key + '"><div class="r-what"><h3 class="r-title">' + esc(title) + "</h3>" +
+      '<p class="r-state ' + (v.tone || "") + '">' + (v.icon === "check" ? CHECK : v.icon === "lock" ? LOCK : "") + "<span>" + esc(v.state) + "</span></p>" +
+      (v.more ? '<p class="r-more">' + esc(v.more) + "</p>" : "") + "</div>" + a + "</div>";
+  }
+  /* the account's answer for one reading, once there is an account service:
+     { reading, access: "purchased" | "tester" | "none", generation: "ready" | "processing" | "failed" | "not_started", openUrl } */
+  function fromAccount(e){
+    if (!e || e.access === "none") return { state: "Not purchased", icon: "lock", tone: "muted" };
+    var mine = e.access === "purchased";
+    var v = { state: mine ? "Purchased" : "Tester access", icon: mine ? "check" : null, tone: mine ? "gold" : "" };
+    if (e.generation === "ready" && e.openUrl) v.action = { label: "Open Reading", kind: "url" };
+    else if (e.generation === "failed") { v.more = "This reading didn’t finish. Try again at no charge; you won’t be asked to pay again."; v.action = { label: "Try again", kind: "retry" }; }
+    else v.more = "Your reading is being written. It will open here when it’s ready.";
+    return v;
+  }
+  function fromDevice(copy){
+    if (!copy) return { state: "Not saved on this device", tone: "muted" };
+    return { state: copy.done ? "Saved on this device" : "Saved before it finished", action: { label: "Open Reading", kind: "device" } };
+  }
+  function settle(p){ return p.then(function (d) { return { ok: true, data: d }; }, function (e) { return { ok: false, err: e }; }); }
+
+  function showChart(id){
+    var mine = ++seq;
+    chart = null; charts.forEach(function (g) { if (g.id === id) chart = g; });
+    if (!chart) return;
+    var dev = deviceCopies(chart);
+    rows.innerHTML = READINGS.map(function (r) { return card(r[0], r[1], { state: "Checking…", tone: "muted" }); }).join("");
+    hist.innerHTML = '<p class="help">Loading your purchase history…</p>';
+    Promise.all([settle(CozAccount.call("entitlements.list", { chartId: id })), settle(CozAccount.call("purchases.list", { chartId: id }))])
+      .then(function (res) {
+        if (mine !== seq) return;                       /* another chart was chosen meanwhile: this answer is not shown */
+        var ent = res[0], buys = res[1], byKey = {};
+        shown = { chart: chart, device: dev, account: ent.ok ? ent.data : null };
+        if (ent.ok) (ent.data || []).forEach(function (e) { if (e && e.reading) byKey[e.reading] = e; });
+        rows.innerHTML = READINGS.map(function (r) {
+          if (ent.ok) return card(r[0], r[1], fromAccount(byKey[r[0]]));
+          return card(r[0], r[1], fromDevice(dev[r[0]]));
+        }).join("");
+        /* the history, drawn with the access above, for the same chart */
+        if (buys.ok && buys.data && buys.data.length) {
+          hist.innerHTML = buys.data.map(function (t, i) {
+            var when = t.date ? new Date(t.date) : null, line = [chart.name || "Your Chart"];
+            if (when && !isNaN(when)) line.push(when.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }));
+            if (t.amountText) line.push(t.amountText);
+            return '<div class="purchase"><div class="r-what"><h3 class="r-title">' + esc(t.product) + '</h3><p class="r-more">' + esc(line.join(" · ")) + "</p></div>" +
+              (t.receiptUrl ? '<a class="link tap" href="' + esc(t.receiptUrl) + '">View Receipt</a>' : "") + "</div>";
+          }).join("");
+        } else if (buys.ok) {
+          hist.innerHTML = '<p class="help">No purchases for this chart.</p>';
+        } else if (buys.err && buys.err.code === "unavailable") {
+          hist.innerHTML = '<p class="help">Your purchase history will show here once you can sign in to your CozAlyze account.</p>';
+        } else {
+          hist.innerHTML = '<p class="help">Your purchase history couldn’t be loaded. This doesn’t change what you own. Please try again later.</p>';
+        }
+        if (!ent.ok && !(ent.err && ent.err.code === "unavailable"))
+          rows.insertAdjacentHTML("afterbegin", '<p class="help">Your reading access couldn’t be checked right now. This doesn’t change what you own.</p>');
+      });
+  }
+
+  CozAcct.charts().then(function (list) {
+    charts = list;
+    var lines = ["Purchase records will show here once you can sign in to your CozAlyze account. Until then, this shows the readings saved on this device."];
+    if (tester) lines.push("This device has tester access. Readings opened here are test readings, not purchases.");
+    paras(lines);
+    if (!list.length) {
+      rows.innerHTML = '<p class="help">You haven’t saved a chart yet. The readings you save show here with their chart.</p>';
+      hist.innerHTML = '<p class="help">Your purchase history will show here once you can sign in to your CozAlyze account.</p>';
+      return;
+    }
+    $("chartRow").hidden = false;
+    CozAcct.picker(sel, list, function (id) { showChart(id); });
+  }, function () {
+    paras(["Your saved charts couldn’t be read on this device."]);
+    hist.innerHTML = '<p class="help">Your purchase history will show here once you can sign in to your CozAlyze account.</p>';
+  });
+
+  /* Open Reading: the saved copy reopens as on Saved Charts (no model call, nothing regenerated), at the reading itself */
+  rows.addEventListener("click", function (ev) {
+    var b = ev.target.closest && ev.target.closest("[data-act]");
+    if (!b || CozAcct.isBusy(b) || !shown.chart) return;
+    var key = b.getAttribute("data-key"), act = b.getAttribute("data-act");
+    if (act === "device") {
+      var copy = shown.device[key]; if (!copy) return;
+      CozAcct.busy(b, true);
+      try { CozSaved.restore(copy.rec.id, copy.target); location.href = VIEW[key] + encodeURIComponent(copy.rec.id); }
+      catch (e) { CozAcct.busy(b, false); CozAcct.tell("This saved chart couldn’t be opened.", b); }
+    } else if (act === "url") {
+      var e1 = (shown.account || []).filter(function (e) { return e && e.reading === key; })[0];
+      if (e1 && e1.openUrl) location.href = e1.openUrl;
+    } else if (act === "retry") {
+      CozAcct.busy(b, true);
+      CozAccount.call("reading.retry", { chartId: shown.chart.id, reading: key }).then(function () { showChart(shown.chart.id); }, function (e) {
+        CozAcct.busy(b, false);
+        CozAcct.tell(e && e.code === "unavailable" ? CozAcct.UNAVAILABLE : "That didn’t work. Please try again in a moment.", b);
+      });
+    }
+  });
+})();
+</script>
+<script src="coz-nav.js?v=2"></script>
+</body>
+</html>

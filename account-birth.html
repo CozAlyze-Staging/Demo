@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Birth Information · CozAlyze</title>
+<!-- BIRTH INFORMATION · AC1 (Oct 27 2026, staging only). Built from Jason's approved Birth Information mockup (one card,
+     stacked fields). The details shown are the birth record saved with each chart on this device (coz-saved.js records,
+     read only). Charts are chosen by their run ID, never by name; with more than one chart a Chart selector shows which
+     one is open, and switching with unsaved changes asks first. Date and time follow the start page's rules (a month
+     digit 2-9 is that month, 8 shows 08; the time is typed as it reads on a clock, DT4; the start page's messages);
+     nothing is guessed: a chart saved without a time shows no time and no AM/PM until one is entered. Birthplace uses
+     the start page's own place search (Geoapify, the same key) and keeps the chosen place's coordinates, time zone and
+     place ID; changing the text clears the choice until a result is chosen again. The time is checked against the
+     birthplace's historical time zone with the start page's resolver (v19.85, copied below).
+     Saving: no account service exists yet, and there is no policy yet for correcting the birth details of a chart that
+     already has readings. So Save Changes checks everything and then says, in the approved wording, that saving will be
+     available once sign-in exists. Nothing is written: no saved chart, reading or birth record on this device changes,
+     and nothing is recalculated or regenerated. Saving birth details and writing a new reading stay separate steps. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@400;500&family=Montserrat:wght@300;400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="account-area.css?v=1">
+<script src="account-area.js?v=1"></script>
+<script src="coz-saved.js?v=6"></script>
+</head>
+<body>
+<div class="acct">
+  <img class="acct-sky" src="acct-sky-top.jpg?v=1" alt="CozAlyze" width="1024" height="311">
+  <main class="acct-main" id="main">
+    <header class="acct-head">
+      <h1>Birth Information</h1>
+      <p class="sub">Enter the details recorded at birth.</p>
+      <div class="acct-div" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0 13.6 10.4 24 12 13.6 13.6 12 24 10.4 13.6 0 12 10.4 10.4Z"/></svg></div>
+    </header>
+    <div class="acct-body">
+      <section class="card" aria-label="Birth details">
+        <p class="notice" id="birthNotice" aria-live="polite">Loading your saved charts…</p>
+        <form id="birthForm" novalidate hidden>
+          <div class="field pickrow" id="chartRow" hidden>
+            <label class="label" for="chartSel">Chart</label>
+            <select class="select" id="chartSel"></select>
+          </div>
+          <div class="field">
+            <label class="label" for="bName">Name</label>
+            <input class="input" id="bName" type="text" autocomplete="off" autocapitalize="words" spellcheck="false" maxlength="60" aria-describedby="bNameErr">
+            <p class="err" id="bNameErr"></p>
+          </div>
+          <div class="field">
+            <label class="label" for="bDate">Birth Date</label>
+            <input class="input" id="bDate" type="text" inputmode="numeric" autocomplete="off" placeholder="MM / DD / YYYY" maxlength="14" aria-describedby="bDateErr">
+            <p class="err" id="bDateErr"></p>
+          </div>
+          <div class="field">
+            <label class="label" for="bTime">Birth Time</label>
+            <div class="row2">
+              <input class="input grow" id="bTime" type="text" inputmode="numeric" autocomplete="off" placeholder="HH : MM" maxlength="7" aria-describedby="bTimeHelp bTimeErr">
+              <fieldset class="ampm" id="bAmPm" aria-describedby="bTimeErr">
+                <legend class="sr-only">AM or PM</legend>
+                <div class="seg">
+                  <label><input type="radio" name="ampm" value="AM">AM</label>
+                  <label><input type="radio" name="ampm" value="PM">PM</label>
+                </div>
+              </fieldset>
+            </div>
+            <p class="help" id="bTimeHelp">Use the local time at your birthplace.</p>
+            <p class="err" id="bTimeErr"></p>
+          </div>
+          <div class="field">
+            <label class="label" for="bPlace">Birthplace</label>
+            <div class="with-icon">
+              <input class="input" id="bPlace" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="bPlaceList"
+                autocomplete="off" autocapitalize="words" spellcheck="false" placeholder="Search city or town" aria-describedby="bPlaceHelp bPlaceErr">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/></svg>
+            </div>
+            <ul class="places" id="bPlaceList" role="listbox" aria-label="Places" hidden></ul>
+            <p class="help" id="bPlaceHelp">Select a location from the search results.</p>
+            <p class="err" id="bPlaceErr"></p>
+          </div>
+          <button class="btn-gold gap" type="submit" id="saveBirth">Save Changes</button>
+          <p class="status" id="birthStatus" role="status"></p>
+        </form>
+      </section>
+    </div>
+  </main>
+  <footer class="acct-foot">
+    <a class="back" href="account.html"><svg viewBox="0 0 32 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M30 10H3M10 3 3 10l7 7"/></svg><span>Back to Account</span></a>
+    <p class="legal"><button type="button" class="link" data-unpublished="terms">Terms</button><span class="bar" aria-hidden="true"></span><button type="button" class="link" data-unpublished="privacy">Privacy</button></p>
+  </footer>
+  <img class="acct-cloud l" src="acct-cloud-left.webp?v=1" alt="" width="368" height="293">
+  <img class="acct-cloud r" src="acct-cloud-right.webp?v=1" alt="" width="356" height="293">
+  <div class="stamp">ACCOUNT · AC1 · staging</div>
+</div>
+<script>
+/* the start page's time zone resolver (index.html v19.85), unchanged: the local time is read only in the birthplace's
+   IANA zone with the offset in force on that date; no zone = no time (it throws) */
+function wallInTz(ms, tz){
+  const p = new Intl.DateTimeFormat('en-US', { timeZone: tz, hourCycle:'h23',
+    year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }).formatToParts(new Date(ms));
+  const g = t => +p.find(x => x.type === t).value;
+  return Date.UTC(g('year'), g('month')-1, g('day'), g('hour'), g('minute'));
+}
+function cozResolveBirthTime(dateStr, h12, mi, ampm, tz){
+  if (!tz) throw new Error('NO_TIMEZONE');
+  let h = h12 % 12; if (ampm === 'PM') h += 12;
+  const [Y,M,D] = dateStr.split('-').map(Number);
+  const want = Date.UTC(Y, M-1, D, h, mi);
+  const offAt = ms => (wallInTz(ms, tz) - ms) / 60000;
+  const cands = [];
+  const seen = {};
+  [-86400000, 0, 86400000].forEach(d => {
+    const off = offAt(want + d);
+    const utc = want - off * 60000;
+    if (!seen[utc] && offAt(utc) === off && wallInTz(utc, tz) === want){ seen[utc] = 1; cands.push({ utc: utc, offsetMinutes: off }); }
+  });
+  let r;
+  if (cands.length === 1){
+    r = { utc: new Date(cands[0].utc), offsetMinutes: cands[0].offsetMinutes, ambiguous: false, nonexistent: false, resolution: 'unique' };
+  } else if (cands.length >= 2){
+    cands.sort((a, b) => a.utc - b.utc);
+    r = { utc: new Date(cands[0].utc), offsetMinutes: cands[0].offsetMinutes, ambiguous: true, nonexistent: false,
+          resolution: 'ambiguous local time (clocks fell back); earlier instant used',
+          alternate_utc: new Date(cands[1].utc).toISOString() };
+  } else {
+    const offAfter = offAt(want + 3 * 3600000);
+    const utc = want - offAfter * 60000;
+    r = { utc: new Date(utc), offsetMinutes: offAfter, ambiguous: false, nonexistent: true,
+          resolution: 'nonexistent local time (clocks sprang forward); post-transition instant used' };
+  }
+  r.timezone = tz;
+  return r;
+}
+
+(function(){
+  var GEOAPIFY_KEY = "c8e0278068f24dec92ad52b1b17253d9";   /* the start page's own place search key (index.html) */
+  var MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  var NAME_OK = /^[\p{L}\p{M}][\p{L}\p{M}' .’-]*$/u;
+  function $(id){ return document.getElementById(id); }
+  var form = $("birthForm"), notice = $("birthNotice"), sel = $("chartSel"), save = $("saveBirth"), status = $("birthStatus");
+  var nameEl = $("bName"), dateEl = $("bDate"), timeEl = $("bTime"), placeEl = $("bPlace"), listEl = $("bPlaceList");
+  var radios = Array.prototype.slice.call(form.querySelectorAll('input[name="ampm"]'));
+  var charts = [], pick = null, chart = null, orig = null;
+  var place = null, placeText = "";   /* the chosen place, and the field text it was chosen with */
+
+  function pad2(n){ return (n < 10 ? "0" : "") + n; }
+  function say(text, kind){ status.textContent = text || ""; status.className = "status" + (kind ? " " + kind : ""); }
+  function fieldErr(input, errId, text){
+    $(errId).textContent = text || "";
+    if (text) input.setAttribute("aria-invalid", "true"); else input.removeAttribute("aria-invalid");
+  }
+
+  /* ---------- Birth Date: MM / DD / YYYY on the number pad ---------- */
+  function maskDate(raw){
+    var d = String(raw).replace(/\D/g, ""), i = 0, mo = "", da = "", yr = "";
+    if (d.length > i) {
+      if (d[i] >= "2") { mo = "0" + d[i]; i += 1; }                                        /* 8 shows 08 */
+      else if (d[i] === "1" && d.length > i + 1 && d[i + 1] > "2") { mo = "01"; i += 1; }   /* 1 then 5: January, 5 starts the day */
+      else { mo = d.slice(i, i + 2); i += mo.length; }
+    }
+    if (mo.length === 2 && d.length > i) {
+      if (d[i] >= "4") { da = "0" + d[i]; i += 1; }                                        /* a day digit 4-9 is that day */
+      else { da = d.slice(i, i + 2); i += da.length; }
+    }
+    if (da.length === 2 && d.length > i) yr = d.slice(i, i + 4);
+    return [mo, da, yr].filter(Boolean).join(" / ");
+  }
+  function isLeap(y){ return (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0; }
+  function daysIn(m, y){ return m === 2 ? (isLeap(y) ? 29 : 28) : [31,28,31,30,31,30,31,31,30,31,30,31][m - 1]; }
+  /* the start page's rules and messages (DT1): two-digit years 77 = 1977, 04 = 2004; years from 1900; no future dates */
+  function readDate(){
+    var m = /^(\d{2}) \/ (\d{2}) \/ (\d{2,4})$/.exec(dateEl.value.trim());
+    if (!m) return { err: "Enter the birth date as MM / DD / YYYY." };
+    var mo = +m[1], da = +m[2], ys = m[3], y = +ys;
+    if (ys.length === 2) { if (ys[0] === "1" || ys[0] === "2") return { err: "Type the year in four digits." }; y = ys[0] === "0" ? 2000 + y : 1900 + y; }
+    else if (ys.length !== 4) return { err: "Type the year in four digits." };
+    if (mo < 1 || mo > 12) return { err: "Enter a month from 01 to 12." };
+    var now = new Date();
+    if (y > now.getFullYear()) return { err: y + " hasn’t happened yet." };
+    if (y < 1900) return { err: "Type a year from 1900 on." };
+    if (da < 1 || da > daysIn(mo, y)) return { err: (mo === 2 ? "February " + y : MONTHS[mo - 1]) + " has " + daysIn(mo, y) + " days." };
+    if (y * 10000 + mo * 100 + da > now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate()) return { err: "That date hasn’t happened yet." };
+    return { iso: y + "-" + pad2(mo) + "-" + pad2(da), y: y, mo: mo, da: da };
+  }
+  dateEl.addEventListener("input", function () { var v = maskDate(dateEl.value); if (v !== dateEl.value) dateEl.value = v; fieldErr(dateEl, "bDateErr", ""); say(""); });
+  dateEl.addEventListener("blur", function () {                                             /* 08 / 20 / 77 becomes 08 / 20 / 1977 */
+    var m = /^(\d{2} \/ \d{2} \/ )(\d{2})$/.exec(dateEl.value.trim());
+    if (m && m[2][0] !== "1" && m[2][0] !== "2") dateEl.value = m[1] + (m[2][0] === "0" ? "20" : "19") + m[2];
+  });
+
+  /* ---------- Birth Time: typed as it reads on a clock (the start page's DT4 rules) ---------- */
+  var TIMES = new Map();
+  for (var h = 1; h <= 12; h++) {
+    TIMES.set(String(h), [h, 0]); if (h < 10) TIMES.set("0" + h, [h, 0]);
+    for (var mi = 0; mi < 60; mi++) { TIMES.set(h + pad2(mi), [h, mi]); if (h < 10) TIMES.set("0" + h + pad2(mi), [h, mi]); }
+  }
+  var STARTS = new Set([""]);
+  TIMES.forEach(function (v, k) { for (var i = 1; i <= k.length; i++) STARTS.add(k.slice(0, i)); });
+  function clockOf(s){
+    if (!s) return "";
+    if (s.charAt(0) === "0") return s.length <= 2 ? s : s.slice(0, 2) + ":" + s.slice(2);
+    if (s.length === 1) return s;
+    if (s.length === 2) return TIMES.has(s) ? s : s.charAt(0) + ":" + s.charAt(1);
+    return s.slice(0, -2) + ":" + s.slice(-2);
+  }
+  var tdig = "";
+  function showTime(){ timeEl.value = clockOf(tdig).replace(":", " : "); }
+  timeEl.addEventListener("input", function () {
+    var d = timeEl.value.replace(/\D/g, "").slice(0, 4);
+    if (STARTS.has(d)) tdig = d;                         /* a number that cannot make a time is not taken */
+    showTime(); fieldErr(timeEl, "bTimeErr", ""); say("");
+  });
+  function ampm(){ var r = radios.filter(function (x) { return x.checked; })[0]; return r ? r.value : null; }
+  function setAmPm(v){ radios.forEach(function (r) { r.checked = r.value === v; r.parentNode.classList.toggle("on", r.checked); }); }
+  radios.forEach(function (r) { r.addEventListener("change", function () { setAmPm(ampm()); $("bAmPm").removeAttribute("aria-invalid"); fieldErr(timeEl, "bTimeErr", ""); say(""); }); });
+
+  /* ---------- Birthplace: the start page's place search ---------- */
+  var searchSeq = 0, searchTimer = null, items = [], active = -1;
+  function placeLabel(L){ return [L.name, L.country].filter(Boolean).join(", "); }
+  function normalize(data){
+    if (Array.isArray(data.features)) {
+      return data.features.map(function (f) {
+        var p = f.properties || {}, c = (f.geometry && f.geometry.coordinates) || [];
+        return { formatted: p.formatted || [p.city, p.state, p.country].filter(Boolean).join(", "),
+                 lat: typeof p.lat === "number" ? p.lat : c[1], lon: typeof p.lon === "number" ? p.lon : c[0],
+                 city: p.city || p.name || p.county || p.state, country: p.country,
+                 tz: p.timezone && p.timezone.name ? p.timezone.name : null, placeId: p.place_id || null };
+      });
+    }
+    if (Array.isArray(data.results)) {
+      return data.results.map(function (r) {
+        return { formatted: r.formatted, lat: r.lat, lon: r.lon, city: r.city || r.state, country: r.country,
+                 tz: r.timezone && r.timezone.name ? r.timezone.name : null, placeId: r.place_id || null };
+      });
+    }
+    return [];
+  }
+  function closeList(){ listEl.hidden = true; listEl.innerHTML = ""; placeEl.setAttribute("aria-expanded", "false"); placeEl.removeAttribute("aria-activedescendant"); items = []; active = -1; }
+  function hint(text){ listEl.innerHTML = ""; var li = document.createElement("li"); li.className = "hint"; li.setAttribute("role", "presentation"); li.textContent = text; listEl.appendChild(li); listEl.hidden = false; placeEl.setAttribute("aria-expanded", "false"); items = []; active = -1; }
+  function render(list){
+    listEl.innerHTML = ""; items = list; active = -1;
+    list.forEach(function (it, i) {
+      var li = document.createElement("li"); li.id = "bPlaceOpt" + i; li.setAttribute("role", "option"); li.setAttribute("aria-selected", "false");
+      li.textContent = it.formatted;
+      li.addEventListener("pointerdown", function (ev) { ev.preventDefault(); });   /* keeps the field focused while choosing */
+      li.addEventListener("click", function () { choose(i); });
+      listEl.appendChild(li);
+    });
+    listEl.hidden = false; placeEl.setAttribute("aria-expanded", "true");
+  }
+  function mark(i){
+    active = i;
+    Array.prototype.forEach.call(listEl.children, function (li, j) { li.setAttribute("aria-selected", j === i ? "true" : "false"); });
+    if (i >= 0) { placeEl.setAttribute("aria-activedescendant", "bPlaceOpt" + i); try { listEl.children[i].scrollIntoView({ block: "nearest" }); } catch (e) {} }
+    else placeEl.removeAttribute("aria-activedescendant");
+  }
+  function choose(i){
+    var it = items[i]; if (!it) return;
+    place = { label: it.formatted, city: it.city || it.formatted.split(",")[0], country: it.country || "", lat: it.lat, lon: it.lon, tz: it.tz || null, placeId: it.placeId || null };
+    placeEl.value = it.formatted; placeText = placeEl.value;
+    closeList(); fieldErr(placeEl, "bPlaceErr", ""); say("");
+  }
+  function search(text){
+    var mine = ++searchSeq;
+    hint("Searching…");
+    fetch("https://api.geoapify.com/v1/geocode/autocomplete?text=" + encodeURIComponent(text) + "&limit=5&apiKey=" + GEOAPIFY_KEY)
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function (data) {
+        if (mine !== searchSeq || placeEl.value.trim() !== text) return;                   /* an older search answering late */
+        var list = normalize(data).filter(function (it) { return isFinite(it.lat) && isFinite(it.lon); });
+        if (!list.length) hint("No places match “" + text + "”.");
+        else render(list);
+      }, function () {
+        if (mine !== searchSeq) return;
+        hint("Places can’t be searched right now. Check your connection and try again.");
+      });
+  }
+  placeEl.addEventListener("input", function () {
+    if (placeEl.value !== placeText) place = null;   /* changed text: the earlier choice no longer counts */
+    fieldErr(placeEl, "bPlaceErr", ""); say("");
+    clearTimeout(searchTimer); searchSeq++;
+    var text = placeEl.value.trim();
+    if (text.length < 3) { closeList(); return; }
+    searchTimer = setTimeout(function () { search(text); }, 300);
+  });
+  placeEl.addEventListener("keydown", function (ev) {
+    if (listEl.hidden || !items.length) { if (ev.key === "Escape" && !listEl.hidden) closeList(); return; }
+    if (ev.key === "ArrowDown") { ev.preventDefault(); mark(Math.min(items.length - 1, active + 1)); }
+    else if (ev.key === "ArrowUp") { ev.preventDefault(); mark(Math.max(0, active - 1)); }
+    else if (ev.key === "Enter" && active >= 0) { ev.preventDefault(); choose(active); }
+    else if (ev.key === "Escape") { ev.preventDefault(); closeList(); }
+  });
+  placeEl.addEventListener("blur", function () { setTimeout(function () { if (document.activeElement !== placeEl) closeList(); }, 150); });
+
+  /* ---------- one chart at a time ---------- */
+  function current(){
+    return JSON.stringify([nameEl.value.replace(/\s+/g, " ").trim(), dateEl.value.trim(), tdig, ampm(),
+      place ? [Number(place.lat).toFixed(4), Number(place.lon).toFixed(4), place.tz || ""].join("|") : "text:" + placeEl.value.trim()]);
+  }
+  function dirty(){ return orig !== null && current() !== orig; }
+  function load(id){
+    chart = null; charts.forEach(function (g) { if (g.id === id) chart = g; });
+    var b = (chart && chart.birth) || {};
+    nameEl.value = b.name || (chart && chart.name) || "";
+    dateEl.value = /^\d{4}-\d{2}-\d{2}$/.test(b.birthDate || "") ? b.birthDate.slice(5, 7) + " / " + b.birthDate.slice(8, 10) + " / " + b.birthDate.slice(0, 4) : "";
+    var t = /^(\d{1,2}):(\d{2})\s*(AM|PM)$/i.exec(String(b.birthTime || "").trim());
+    tdig = t && TIMES.has(pad2(+t[1]) + t[2]) ? pad2(+t[1]) + t[2] : "";                     /* a missing time stays missing */
+    showTime();
+    setAmPm(t && tdig ? t[3].toUpperCase() : null);
+    var L = b.location || null;
+    place = L && isFinite(L.latitude) && isFinite(L.longitude)
+      ? { label: placeLabel(L), city: L.name || "", country: L.country || "", lat: +L.latitude, lon: +L.longitude, tz: L.timezone || null, placeId: L.placeId || null }
+      : null;
+    placeEl.value = place ? place.label : ""; placeText = placeEl.value;
+    closeList();
+    ["bNameErr", "bDateErr", "bTimeErr", "bPlaceErr"].forEach(function (id) { $(id).textContent = ""; });
+    [nameEl, dateEl, timeEl, placeEl, $("bAmPm")].forEach(function (el) { el.removeAttribute("aria-invalid"); });
+    say("");
+    orig = current();
+  }
+  function empty(text){ notice.textContent = text; form.hidden = true; }
+
+  CozAcct.charts().then(function (list) {
+    charts = list.filter(function (g) { return g.birth; });
+    if (!charts.length) return empty(list.length ? "The saved charts on this device don’t include their birth details." :
+                                                    "You haven’t saved a chart yet. The birth details of each chart you save will show here.");
+    notice.textContent = "From the charts saved on this device. Saving changes will be available once you can sign in to your CozAlyze account.";
+    form.hidden = false;
+    $("chartRow").hidden = charts.length < 2;
+    pick = CozAcct.picker(sel, charts, function (id, from) {
+      if (from && dirty()) {                                                                   /* never carry edits to another chart */
+        CozAcct.note({ text: "Your changes to this chart haven’t been saved. Switch charts and leave them?",
+          buttons: [["Switch", function () { pick.set(id); load(id); }], ["Stay", function () { try { sel.focus(); } catch (e) {} }]], from: sel });
+        return false;
+      }
+      load(id);
+    });
+  }, function () { empty("Your saved charts couldn’t be read on this device."); });
+
+  /* ---------- Save Changes ---------- */
+  function check(){
+    var first = null, out = {};
+    function bad(input, errId, text){ fieldErr(input, errId, text); if (text && !first) first = input; }
+    var nm = nameEl.value.replace(/\s+/g, " ").trim(), was = String((chart.birth && chart.birth.name) || chart.name || "").replace(/\s+/g, " ").trim();
+    bad(nameEl, "bNameErr", nm && nm !== was && !NAME_OK.test(nm) ? "Use letters, spaces, apostrophes, hyphens or periods." : "");
+    out.name = nm || null;
+    var d = readDate(); bad(dateEl, "bDateErr", d.err || ""); out.birthDate = d.iso;
+    var t = TIMES.get(tdig) || null, ap = ampm(), terr = "";
+    if (!t) terr = "Enter the birth time as HH : MM.";
+    else if (!ap) { terr = "Choose AM or PM."; $("bAmPm").setAttribute("aria-invalid", "true"); }
+    else if (d.iso) {
+      var now = new Date(), h24 = (t[0] % 12) + (ap === "PM" ? 12 : 0);
+      if (d.y === now.getFullYear() && d.mo === now.getMonth() + 1 && d.da === now.getDate() && h24 * 60 + t[1] > now.getHours() * 60 + now.getMinutes())
+        terr = "That time hasn’t happened yet today.";
+    }
+    bad(timeEl, "bTimeErr", terr);
+    if (t && ap) out.birthTime = pad2(t[0]) + ":" + pad2(t[1]) + " " + ap;
+    var perr = !place ? "Select a location from the search results." :
+               !place.tz ? "We could not determine the time zone of that birthplace. Please choose the birthplace again." : "";
+    if (!perr && out.birthDate && out.birthTime) {
+      try { out.resolved = cozResolveBirthTime(out.birthDate, t[0], t[1], ap, place.tz); }
+      catch (e) { perr = "We could not determine the time zone of that birthplace. Please choose the birthplace again."; }
+    }
+    bad(placeEl, "bPlaceErr", perr);
+    if (place) out.location = { name: place.city, country: place.country, latitude: place.lat, longitude: place.lon, timezone: place.tz, placeId: place.placeId };
+    return { first: first, birth: out };
+  }
+  function changed(next){
+    var b = chart.birth || {}, L = b.location || {}, n = next.location || {};
+    var what = [];
+    if ((next.name || "") !== String(b.name || chart.name || "").replace(/\s+/g, " ").trim()) what.push("name");
+    if (next.birthDate !== b.birthDate) what.push("date");
+    if (next.birthTime !== String(b.birthTime || "").toUpperCase().replace(/\s+/g, " ").trim()) what.push("time");
+    if (Number(n.latitude).toFixed(4) !== Number(L.latitude).toFixed(4) || Number(n.longitude).toFixed(4) !== Number(L.longitude).toFixed(4) ||
+        (n.timezone || null) !== (L.timezone || null)) what.push("place");
+    return what;
+  }
+  form.addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    if (!chart || CozAcct.isBusy(save)) return;                                   /* one save at a time */
+    closeList();
+    var r = check();
+    if (r.first) { say("Check the details marked above.", "bad"); try { r.first.focus(); } catch (e) {} return; }
+    var what = changed(r.birth);
+    if (!what.length) { say("Nothing has changed."); return; }
+    CozAcct.busy(save, true); say("");
+    /* saving goes to the account (by run ID, never by name) and never starts a reading */
+    CozAccount.call("birth.update", { chartId: chart.id, changes: what, birth: r.birth }).then(function () {
+      orig = current(); say("Your birth details have been saved.", "ok");
+    }, function (e) {
+      if (e && e.code === "unavailable") CozAcct.tell(CozAcct.UNAVAILABLE, save);
+      else say("Your changes couldn’t be saved. They’re still here, so you can try again.", "bad");
+    }).then(function () { CozAcct.busy(save, false); });
+  });
+  [nameEl].forEach(function (el) { el.addEventListener("input", function () { fieldErr(el, "bNameErr", ""); say(""); }); });
+})();
+</script>
+<script src="coz-nav.js?v=2"></script>
+</body>
+</html>

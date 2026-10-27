@@ -1,0 +1,230 @@
+/* ACCOUNT AREA · AC1 (Oct 27 2026, staging only) · shared by the five account pages
+   (account-profile, account-birth, account-purchases, account-settings, account-privacy).
+   Built from Jason's five approved mockups (Oct 27). Art is his, cut from those mockups with no text in it:
+   acct-sky-top.jpg (stars, moon and the CozAlyze logo above the Edit Profile title) and the two lower cloud
+   corners from Privacy & Data (acct-cloud-left/right.webp). Everything else is live HTML.
+   Sizes are in rem so the Text Size setting (Standard / Large / Larger) scales every page in this area.
+   Colors are sampled from the mockups. */
+:root{
+  --bg:#00040e;            /* the mockups' sky */
+  --card:#060e17;          /* card and field fill */
+  --line:#DDB680;          /* champagne gold rules and borders */
+  --rule:rgba(221,182,128,.32);
+  --gold:#ECC793;          /* links, outlined buttons, status words */
+  --cream:#F6F0E6;         /* headings */
+  --text:#E8E5E8;          /* body */
+  --muted:#BEB9BC;         /* helper lines */
+  --ph:#8B898F;            /* placeholders */
+  --btn1:#F2CB9C; --btn2:#CBA175; --ink:#0A0D14;   /* the gold buttons */
+  --rose:#E98A8C;          /* account deletion */
+  --track:#1E2329;         /* switch track, off */
+  --knob:#F2EADD;
+  --head:"Bodoni Moda",Georgia,"Times New Roman",serif;
+  --sans:"Montserrat","Helvetica Neue",Arial,sans-serif;
+  --gutter:clamp(14px,4.4vw,40px);
+  --radius:14px;
+}
+/* Text Size (Settings): the whole area is in rem */
+html{font-size:100%}
+html[data-coz-text="large"]{font-size:115%}
+html[data-coz-text="larger"]{font-size:130%}
+/* Reduce Motion (Settings): this area's small transitions stop */
+html[data-coz-motion="reduce"] *,html[data-coz-motion="reduce"] *::before,html[data-coz-motion="reduce"] *::after{
+  transition:none!important;animation:none!important;scroll-behavior:auto!important}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text);-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{font-family:var(--sans);font-weight:300;line-height:1.45;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap}
+[hidden]{display:none!important}
+
+/* ---------- page ---------- */
+.acct{position:relative;isolation:isolate;max-width:640px;margin:0 auto;min-height:100vh;min-height:100svh;
+  display:flex;flex-direction:column;background:var(--bg);
+  padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
+.acct-sky{display:block;width:100%;height:auto;user-select:none;-webkit-user-select:none;pointer-events:none}
+.acct-cloud{position:absolute;bottom:0;height:auto;z-index:-1;pointer-events:none;user-select:none;-webkit-user-select:none}
+.acct-cloud.l{left:0;width:35.94%}        /* 368 of the mockup's 1024 */
+.acct-cloud.r{right:0;width:34.77%}       /* 356 of 1024 */
+.acct-head{text-align:center;padding:0 var(--gutter)}
+.acct-head h1{font-family:var(--head);font-weight:500;font-size:2.125rem;line-height:1.12;color:var(--cream);letter-spacing:.005em;text-wrap:balance}
+.acct-head .sub{font-size:1.0625rem;line-height:1.4;color:var(--text);margin-top:.45rem;text-wrap:balance}
+.acct-div{display:flex;align-items:center;width:min(78%,27rem);margin:1rem auto 0;color:var(--gold)}
+.acct-div::before,.acct-div::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(221,182,128,0),var(--line))}
+.acct-div::after{background:linear-gradient(90deg,var(--line),rgba(221,182,128,0))}
+.acct-div svg{width:1.05rem;height:1.05rem;margin:0 .6rem;flex:none}
+.acct-body{flex:1;display:flex;flex-direction:column;gap:1rem;padding:1.5rem var(--gutter) 0}
+.acct-foot{position:relative;text-align:center;padding:1.6rem var(--gutter) calc(1.75rem + env(safe-area-inset-bottom));
+  display:flex;flex-direction:column;align-items:center;gap:.9rem}
+
+/* ---------- cards ---------- */
+.card{position:relative;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:1.25rem 1.125rem 1.4rem}
+.card-title{font-family:var(--head);font-weight:500;font-size:1.375rem;line-height:1.2;color:var(--cream)}
+.card-title.ruled{padding-bottom:.85rem;border-bottom:1px solid var(--rule);margin-bottom:.35rem}
+.notice{font-size:.9375rem;line-height:1.45;color:var(--muted);margin-bottom:1.25rem}
+.notice:empty{display:none}
+
+/* ---------- fields ---------- */
+.field+.field{margin-top:1.4rem}
+.label{display:block;font-weight:400;font-size:1.0625rem;line-height:1.3;color:var(--cream);margin-bottom:.55rem}
+.help{font-size:.9375rem;line-height:1.4;color:var(--muted);margin-top:.55rem}
+.err{font-size:.9375rem;line-height:1.4;color:var(--rose);margin-top:.5rem}
+.err:empty{display:none}
+.input,.select{display:block;width:100%;min-height:3.25rem;padding:.7rem 1rem;background:var(--card);border:1px solid var(--line);border-radius:10px;
+  font-weight:400;font-size:1.0625rem;line-height:1.3;color:#FFFDF8;outline:none;-webkit-appearance:none;appearance:none}
+.input::placeholder{color:var(--ph);opacity:1}
+.input[readonly]{color:var(--text)}
+.input[aria-invalid="true"],.select[aria-invalid="true"],.seg[aria-invalid="true"]{border-color:var(--rose)}
+.select{padding-right:2.75rem;cursor:pointer;text-overflow:ellipsis;
+  background:var(--card) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ECC793' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right .9rem center/1.25rem}
+.select option{background:#0b121c;color:#FFFDF8}
+.with-icon{position:relative}
+.with-icon .input{padding-right:3rem}
+.with-icon svg{position:absolute;right:1rem;top:50%;width:1.35rem;height:1.35rem;transform:translateY(-50%);color:var(--gold);pointer-events:none}
+.row2{display:flex;gap:.75rem;align-items:stretch;flex-wrap:wrap}
+.row2>.grow{flex:1 1 9rem;min-width:0}
+
+/* segmented controls (AM / PM, Text Size) */
+.seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;min-height:3.25rem;flex:0 1 auto}
+.seg label{position:relative;flex:1 1 0;display:flex;align-items:center;justify-content:center;text-align:center;cursor:pointer;
+  padding:.55rem .9rem;font-weight:400;font-size:1.0625rem;line-height:1.2;color:var(--gold);min-width:4.25rem;-webkit-tap-highlight-color:transparent}
+.seg label+label{border-left:1px solid var(--line)}
+.seg input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
+.seg label:has(input:checked){background:linear-gradient(180deg,var(--btn1),var(--btn2));color:var(--ink)}
+.seg label.on{background:linear-gradient(180deg,var(--btn1),var(--btn2));color:var(--ink)}   /* for browsers without :has() */
+.seg label:has(input:focus-visible){outline:2px solid var(--gold);outline-offset:-4px}
+.seg.wide{width:100%}
+.seg.wide label{min-width:0;padding:.55rem .4rem}
+/* at Larger the three Text Size choices stack, so each word keeps its room */
+html[data-coz-text="larger"] .seg.wide{flex-direction:column}
+html[data-coz-text="larger"] .seg.wide label+label{border-left:0;border-top:1px solid var(--line)}
+
+/* switch */
+.switch{-webkit-appearance:none;appearance:none;position:relative;flex:none;width:3.25rem;height:1.875rem;border-radius:999px;cursor:pointer;
+  background:var(--track);border:1px solid rgba(242,234,221,.22);transition:background .2s ease,border-color .2s ease;margin:0}
+.switch::after{content:"";position:absolute;top:50%;left:.2rem;width:1.35rem;height:1.35rem;border-radius:50%;background:var(--knob);
+  transform:translateY(-50%);transition:transform .2s ease;box-shadow:0 1px 2px rgba(0,0,0,.4)}
+.switch:checked{background:linear-gradient(180deg,var(--btn1),var(--btn2));border-color:var(--btn2)}
+.switch:checked::after{transform:translate(1.3rem,-50%);background:#FFFBF4}
+.switch[aria-disabled="true"]{opacity:.75}
+
+/* option rows (Settings) */
+.opt{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:1rem 0;flex-wrap:wrap}
+.opt+.opt{border-top:1px solid var(--rule)}
+.opt .what{flex:1 1 6rem;min-width:0}
+.opt .name{font-weight:400;font-size:1.0625rem;line-height:1.3;color:var(--cream)}
+.opt .help{margin-top:.3rem}
+.opt .state{font-weight:400;font-size:1rem;color:var(--gold);flex:none}
+.opt.stack{display:block}
+.opt.stack .name{margin-bottom:.75rem}
+.card .opt:last-child{padding-bottom:0}
+
+/* ---------- buttons and links ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;min-height:2.875rem;padding:.55rem 1.25rem;border-radius:10px;
+  border:1px solid var(--line);background:transparent;color:var(--gold);font-weight:400;font-size:1.0625rem;line-height:1.2;text-align:center;
+  text-decoration:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.btn.serif{font-family:var(--head);font-weight:500;font-size:1.25rem}
+.btn.rose{border-color:var(--rose);color:var(--rose)}
+.btn.block{display:flex;width:100%}
+.btn-gold{display:flex;width:100%;align-items:center;justify-content:center;min-height:3.5rem;padding:.6rem 1.25rem;border:0;border-radius:12px;cursor:pointer;
+  background:linear-gradient(180deg,var(--btn1),var(--btn2));color:var(--ink);font-family:var(--head);font-weight:500;font-size:1.5rem;line-height:1.15;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 2px 10px rgba(0,0,0,.35);text-decoration:none;-webkit-tap-highlight-color:transparent}
+.btn-gold.small{display:inline-flex;width:auto;min-height:2.75rem;font-size:1.0625rem;padding:.5rem .95rem;border-radius:10px}
+.btn-gold[aria-busy="true"],.btn[aria-busy="true"]{opacity:.7;cursor:progress}
+.link{background:none;border:0;padding:0;color:var(--gold);font-weight:400;font-size:1.0625rem;line-height:1.3;cursor:pointer;
+  text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.25em;-webkit-tap-highlight-color:transparent}
+.link.tap{display:inline-flex;align-items:center;min-height:44px}
+.back{display:inline-flex;align-items:center;gap:.75rem;min-height:44px;color:var(--gold);font-weight:400;font-size:1.125rem;text-decoration:none;
+  -webkit-tap-highlight-color:transparent}
+.back span{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.25em}
+.back svg{width:2rem;height:1.25rem;flex:none}
+.legal{display:flex;align-items:center;justify-content:center;gap:1rem;color:var(--gold)}
+.legal .link{font-size:.9375rem;min-height:44px;padding:0 .35rem}
+.legal .bar{width:1px;height:1.1rem;background:var(--gold);opacity:.8}
+.status{font-size:.9375rem;line-height:1.45;color:var(--text);margin-top:.85rem;text-align:center}
+.status:empty{display:none}
+.status.ok{color:var(--gold)}
+.status.bad{color:var(--rose)}
+a:focus-visible,button:focus-visible,.input:focus-visible,.select:focus-visible,.switch:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+.input:focus,.select:focus{border-color:#F3D6AA;box-shadow:0 0 0 1px #F3D6AA}
+
+/* ---------- page pieces ---------- */
+.acct-main{flex:1;display:flex;flex-direction:column}
+fieldset{border:0;min-width:0}
+legend{padding:0}
+.help.flush{margin-top:.1rem}
+.btn-gold.gap{margin-top:1.6rem}
+.in-card-back{text-align:center;margin-top:1.1rem}
+.card-title+.notice{margin-top:.85rem}
+.notice p+p{margin-top:.5rem}
+.help.center{text-align:center;margin-top:1.1rem}
+
+/* chart selector: stacked (Birth Information) or beside its label (Purchases & Access) */
+.pickrow.inline{display:flex;align-items:center;gap:.6rem 1rem;flex-wrap:wrap;margin:.25rem 0 1.1rem}
+.pickrow.inline .label{margin:0;color:var(--muted);font-weight:400}
+.pickrow.inline .select{flex:1 1 12rem;width:auto;min-width:0}
+
+/* Birth Time: the time, then AM / PM */
+.row2 .grow{flex:1 1 8rem}
+.ampm{flex:0 0 auto;display:flex}
+.ampm .seg{flex:1}
+#bAmPm[aria-invalid="true"] .seg{border-color:var(--rose)}
+
+/* Birthplace results */
+.places{list-style:none;margin-top:.5rem;border:1px solid var(--line);border-radius:10px;background:#07101a;overflow:hidden;max-height:19rem;overflow-y:auto}
+.places li{padding:.8rem 1rem;min-height:44px;font-weight:400;font-size:1rem;line-height:1.35;color:var(--text);cursor:pointer;-webkit-tap-highlight-color:transparent}
+.places li+li{border-top:1px solid var(--rule)}
+.places li[aria-selected="true"]{background:rgba(236,199,147,.14);color:#FFFDF8}
+.places li.hint{color:var(--muted);cursor:default;font-weight:300}
+@media (hover:hover){.places li[role="option"]:hover{background:rgba(236,199,147,.1)}}
+
+/* Purchases & Access */
+.readings,.history{display:flex;flex-direction:column;gap:.85rem}
+.reading,.purchase{display:flex;align-items:center;justify-content:space-between;gap:.75rem 1rem;flex-wrap:wrap;
+  border:1px solid var(--line);border-radius:12px;padding:.9rem .9rem}
+.r-what{flex:1 1 9rem;min-width:0}
+.r-title{font-family:var(--head);font-weight:500;font-size:1.25rem;line-height:1.2;color:var(--cream)}
+.r-state{display:flex;align-items:center;gap:.55rem;margin-top:.4rem;font-weight:400;font-size:1rem;line-height:1.35;color:var(--text)}
+.r-state svg{width:1.45rem;height:1.45rem;flex:none}
+.r-state.gold{color:var(--gold)}
+.r-state.muted{color:var(--muted)}
+.r-more{font-size:.9375rem;line-height:1.4;color:var(--muted);margin-top:.35rem}
+.explore{margin-top:1rem}
+.rule{height:1px;background:var(--rule);margin:1.4rem 0 1.1rem}
+.card-title.sub2{margin-bottom:.9rem}
+
+/* Settings */
+.opt.stack legend{float:left;width:100%;margin-bottom:.75rem}
+.opt.stack .seg{clear:both}
+label.name{display:block;cursor:pointer}
+.save-row{margin-top:.5rem}
+
+/* Privacy & Data */
+.pcard{display:grid;grid-template-columns:auto minmax(0,1fr);gap:1rem;align-items:start}
+.p-ico{width:2.6rem;height:2.6rem;color:var(--gold);margin-top:.1rem}
+.p-ico.rose{color:var(--rose)}
+.pcard .card-title{font-size:1.5rem}
+.p-text{font-size:1.0625rem;line-height:1.45;color:var(--text);margin-top:.5rem}
+.p-body .help{margin-top:.5rem}
+.p-act{display:flex;justify-content:flex-end;margin-top:1.1rem}
+.p-act .btn{min-width:min(100%,13.5rem)}
+.link.policy{display:inline-flex;align-items:center;gap:.4rem;font-size:1.125rem}
+.link.policy svg{width:1.15rem;height:1.15rem;flex:none}
+
+/* ---------- version stamp: developer view only (DV1) ---------- */
+.stamp{position:absolute;right:6px;bottom:4px;font-size:9px;letter-spacing:.08em;color:rgba(214,185,140,.45);pointer-events:none}
+html:not(.coz-dev) .stamp{display:none!important}
+
+/* ---------- message panel: the approved on-page message (CS1.8 look: Saved Charts' strip, its text, its pills) ---------- */
+#acctNote{position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;background:transparent;
+  padding:0 0 env(safe-area-inset-bottom);-webkit-tap-highlight-color:transparent}
+#acctNote .box{width:min(100%,640px);max-height:100%;overflow:auto;background:url("sc-mid.png?v=1") center top/100% 1px repeat-y #00050f;color:#EEE7D8;
+  text-align:center;padding:1.6rem var(--gutter);display:flex;flex-direction:column;align-items:center;gap:1rem}
+#acctNote h2{font-family:var(--head);font-weight:500;font-size:1.5rem;line-height:1.2;color:var(--cream)}
+#acctNote p{font-size:1rem;line-height:1.5;max-width:30rem}
+#acctNote .pills{display:flex;gap:.9rem;flex-wrap:wrap;justify-content:center;margin-top:.25rem}
+#acctNote .pill{position:relative;font-weight:300;font-size:1rem;line-height:1;color:#EEE7D8;background:none;cursor:pointer;
+  border:1.5px solid #C9A27C;border-radius:999px;min-height:2.5rem;padding:0 1.4rem;display:inline-flex;align-items:center}
+#acctNote .pill::after{content:"";position:absolute;left:-6px;right:-6px;top:50%;height:44px;transform:translateY(-50%)}
+#acctNote .pill:focus-visible{outline:2px solid #F2C898;outline-offset:2px}

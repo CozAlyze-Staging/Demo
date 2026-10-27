@@ -9,7 +9,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@400;500&family=Montserrat:wght@300;400&display=swap" rel="stylesheet">
 <script src="coz-saved.js?v=6"></script>
 <style>
-/* ACCOUNT · A2.1 (Oct 27 2026, his ruling) · CozAlyze-Staging. A2.0 brought into staging from CozAlyze/Test (nav/account.html, N3),
+/* ACCOUNT · A2.2 (Oct 27 2026, his spec, staging only): Edit Profile and the four cards open the five account pages built
+   from his approved mockups (account-profile, account-birth, account-purchases, account-settings, account-privacy). They
+   are ordinary links, so Back works and coz-nav.js watches the page change. Sign Out, Terms and Privacy unchanged.
+   ACCOUNT · A2.1 (Oct 27 2026, his ruling) · CozAlyze-Staging. A2.0 brought into staging from CozAlyze/Test (nav/account.html, N3),
    the Test-only storage guard left out, nothing else changed in the page: every Account button on the platform now opens
    it (coz-nav.js NAV1 r3, and the purchase page's bottom bar). A2.1: Home follows the Saved Charts rule exactly, as A2.0's
    note below says (A2.0's code fell back to the Tropical dashboard every time); the page loads coz-nav.js like the others.
@@ -59,6 +62,7 @@ body{padding-bottom:env(safe-area-inset-bottom)}
 .tap44{height:44px !important}
 .nav a{position:absolute;display:block;-webkit-tap-highlight-color:transparent}
 .stamp{position:absolute;right:6px;bottom:4px;font-family:var(--sans);font-size:9px;letter-spacing:.08em;color:rgba(214,185,140,.45);pointer-events:none}
+.acct-link{text-decoration:none}   /* A2.2: Edit Profile is a link, drawn exactly as the pill was */
 .addons-acct{position:absolute;left:calc(451 * var(--K));top:calc(1975 * var(--K));width:calc(280 * var(--K));margin:0;
   background:#D6B98C;border-color:#D6B98C;color:#040B18;font-weight:400;text-decoration:none}   /* ADD-ONS A1.2: solid, it sits on the water */
 </style>
@@ -74,17 +78,17 @@ body{padding-bottom:env(safe-area-inset-bottom)}
   <div class="who" id="who">
     <p class="name" id="acctName">Your Account</p>
     <p class="email" id="acctEmail"></p>
-    <button class="pill" type="button" data-need="account">Edit Profile</button>
+    <a class="pill acct-link" href="account-profile.html">Edit Profile</a>
   </div>
-  <!-- his four cards as drawn (borders measured on his art) -->
-  <button class="hot" type="button" data-need="account" aria-label="Birth Information"
-    style="left:calc(83 * var(--K));top:calc(977 * var(--K));width:calc(1040 * var(--K));height:calc(173 * var(--K))"></button>
-  <button class="hot" type="button" data-need="account" aria-label="Purchases and Access"
-    style="left:calc(83 * var(--K));top:calc(1169 * var(--K));width:calc(1040 * var(--K));height:calc(171 * var(--K))"></button>
-  <button class="hot" type="button" data-need="account" aria-label="Settings"
-    style="left:calc(83 * var(--K));top:calc(1358 * var(--K));width:calc(1040 * var(--K));height:calc(169 * var(--K))"></button>
-  <button class="hot" type="button" data-need="account" aria-label="Privacy and Data"
-    style="left:calc(83 * var(--K));top:calc(1547 * var(--K));width:calc(1040 * var(--K));height:calc(168 * var(--K))"></button>
+  <!-- his four cards as drawn (borders measured on his art); A2.2: each opens its account page -->
+  <a class="hot" href="account-birth.html" aria-label="Birth Information"
+    style="left:calc(83 * var(--K));top:calc(977 * var(--K));width:calc(1040 * var(--K));height:calc(173 * var(--K))"></a>
+  <a class="hot" href="account-purchases.html" aria-label="Purchases and Access"
+    style="left:calc(83 * var(--K));top:calc(1169 * var(--K));width:calc(1040 * var(--K));height:calc(171 * var(--K))"></a>
+  <a class="hot" href="account-settings.html" aria-label="Settings"
+    style="left:calc(83 * var(--K));top:calc(1358 * var(--K));width:calc(1040 * var(--K));height:calc(169 * var(--K))"></a>
+  <a class="hot" href="account-privacy.html" aria-label="Privacy and Data"
+    style="left:calc(83 * var(--K));top:calc(1547 * var(--K));width:calc(1040 * var(--K));height:calc(168 * var(--K))"></a>
   <!-- ADD-ONS: opens the Add-ons preview with no reading selected -->
   <a class="pill addons-acct" href="addons.html#/?from=a">Add-ons</a>
   <!-- Sign Out (border x 287-919, y 1757-1841); Terms (x 475-549) and Privacy (x 644-732), text y 1884-1912.
@@ -104,7 +108,7 @@ body{padding-bottom:env(safe-area-inset-bottom)}
     <a class="acct tap44" href="account.html" aria-label="Account" aria-current="page"
       style="left:calc(770 * var(--K));top:calc(2214 * var(--K) - 22px);width:calc(333 * var(--K))"></a>
   </nav>
-  <div class="stamp">ACCOUNT · A2.1 · staging</div>
+  <div class="stamp">ACCOUNT · A2.2 · staging</div>
 </main>
 <script>
 (function(){

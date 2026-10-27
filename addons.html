@@ -10,6 +10,7 @@
   opened from the entry points Jason approved on Oct 15 (visual proposal, solid buttons on the water):
     Saved Charts (below the list) ......................... addons.html#/?from=s
     Account (Add-ons button, when Account comes into the Demo) addons.html#/?from=a
+    Account, Purchases & Access: Explore Readings (AC1) ..... addons.html#/?from=p   (staging; Not Now returns there)
     end of the Vedic / Tropical birth chart ............... addons.html#/?from=v&own=v  /  from=t&own=t
     end of a saved Vedic / Tropical chart ................. addons.html#/?from=vs&id=<record>  /  from=ts&id=<record>
     Compare, Your Birth Charts ............................ addons.html#/?from=c&own=c
@@ -160,16 +161,16 @@ h1{font-family:var(--head);font-weight:500;font-size:max(30px,calc(98 * var(--K)
     return { v: "vedic-birth-chart.html", t: "tropical-birth-chart.html", c: "compare-birth-charts.html", ca: "ascendant-reading.html?sys=combined",
              vs: st.id ? "vedic-birth-chart.html?saved=1" + id : "saved-charts.html",
              ts: st.id ? "tropical-birth-chart.html?saved=1" + id : "saved-charts.html",
-             s: "saved-charts.html", a: "account.html" }[st.from];
+             s: "saved-charts.html", a: "account.html", p: "account-purchases.html" }[st.from];   /* AC1: p = Purchases & Access */
   }
   function parse(){
     var m = /^#\/?(?:\?(.*))?$/.exec(location.hash || "#/") || [];
     var q = {}; (m[1] || "").split("&").forEach(function(p){ var i = p.indexOf("="); if (i > 0) q[p.slice(0, i)] = p.slice(i + 1); });
-    var from = /^(v|t|c|ca|vs|ts|s|a)$/.test(q.from || "") ? q.from : "s";   /* D1.3: ca = Compare, How They Work Together */
+    var from = /^(v|t|c|ca|vs|ts|s|a|p)$/.test(q.from || "") ? q.from : "s";   /* D1.3: ca = Compare, How They Work Together */
     /* A1.4 (Jason, Oct 15): the Add-ons page is always the add-on view. Opened from Saved Charts, Account or a saved Vedic
        chart it simulates Your Vedic Reading (a saved Tropical chart: Your Tropical Reading), labelled "Simulated", so
        nothing claims a purchase. An address that already says what is simulated (own=) keeps it. */
-    var dflt = { s: "v", a: "v", vs: "v", ts: "t" }[from] || "";
+    var dflt = { s: "v", a: "v", p: "v", vs: "v", ts: "t" }[from] || "";   /* AC1: Purchases & Access opens it as Account does (A1.4) */
     return { from: from, id: /^[A-Za-z0-9_-]{1,80}$/.test(q.id || "") ? q.id : "", own: key(("own" in q ? q.own : dflt).replace(/[^vtc]/g, "")),
              x: q.x === "1", nw: /^[vtcx]$/.test(q["new"] || "") ? q["new"] : "" };
   }
