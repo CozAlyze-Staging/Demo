@@ -416,8 +416,7 @@ body[data-view="reading"] .vedic-reading-page { animation: none; }
 .reveal .coz-wait { position:absolute; left:0; right:0; bottom:22vh; text-align:center; z-index:5;   /* WL1: was 14vh */
   text-shadow:0 2px 14px rgba(0,0,0,.85); pointer-events:none; opacity:0; transition:opacity 1.2s ease; }
 .reveal .coz-wait .t1 { font-family:Georgia,serif; font-size:17px; letter-spacing:.14em; color:#E8C7A6; }
-.reveal .coz-wait.on { opacity:1; }
-.reveal .coz-wait.on .t1 { animation:cozTwinkle 3.2s ease-in-out 1.2s infinite; }
+.reveal .coz-wait.on, .reveal .coz-wait.flash { opacity:1; }   /* WL1 r4: steady, no pulse */
 /* CRG2 r5: with reduced motion there is no clip to recede, so the waiting screen is shown at once, line included */
 @media (prefers-reduced-motion: reduce) { .reveal .coz-wait { transition: none; } }
 </style>
@@ -501,7 +500,7 @@ body[data-view="reading"] .vedic-reading-page { animation: none; }
   <div class="vedic-reading-content" id="vedicContent"></div>
 </main>
 
-<div class="vedic-stamp" aria-hidden="true">COMBINED READING · C3.6 · early generation · WL1 r3 waiting line</div>
+<div class="vedic-stamp" aria-hidden="true">COMBINED READING · C3.6 · early generation · WL1 r4 waiting line once</div>
 
 <script>
 /* ============================================================
@@ -848,7 +847,7 @@ revealVideo.addEventListener("playing", () => {
      blooming, the light takes the screen while the stage is still growing, the page
      lands under the light and the light clears. No hold anywhere. */
   revealTimers.push(setTimeout(() => revealEl.classList.add("is-through"), 1500));
-  revealTimers.push(setTimeout(() => waitLine(true), 20000));   /* WL1 r3: the waiting line, 20 s into every clip */
+  revealTimers.push(setTimeout(waitFlash, 20000));   /* WL1 r4: the waiting line once, 20 s into every clip */
   /* Sep 20: the reveal, the drive through the sun, the light and the space flight are now ONE clip
      (compare-reading-reveal-full.mp4). The page just plays it and lands when it ends. */
   // hard cap a little past the clip's 2.5s so a stalled clip never traps anyone
@@ -899,7 +898,7 @@ function startPullAway(from) {
   revealEl.classList.add("is-on", "is-pulling");                      /* r5: reduced motion never showed the overlay: black, the line and Back need it */
   const L = pullLayers(), w = document.getElementById("cozWait"), stage = document.getElementById("revealStage");
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  waitLine(true);                                                     /* WL1 r3: the line (already on since 20 s into the clip) */
+  waitLine(true);                                                     /* WL1 r4: the dark wait shows the line, steady, until the reading opens */
   console.log("[COZ CRG2] Shared Themes not ready: pulling away into the dark");
   /* Shared Themes may arrive while the picture is still receding: that closes the waiting-screen record at once
      (the landing itself still comes from the clip's end, as before) */
@@ -940,11 +939,20 @@ function stopPullAway() {
    there is one) until the reading opens; it leaves with every landing and Back. r3: shown every time, like the clip's
    own "Calculating reading" (r2 showed it only while the reading was not ready, and the reading is usually written
    while the dashboard is open, so it rarely appeared). Nothing else changes: the clip, the waiting and the landing. */
+/* WL1 r4 (Oct 26 2026, his ruling, staging only): during the clip the line shows ONCE, 20 s in: it fades in (1.2 s),
+   holds and fades out from 24 s (gone by about 25 s), with no pulse; it no longer stays until the reading opens.
+   If the reading is not ready when the clip ends, the dark wait shows it again, steady, until
+   the reading opens. The pulse is gone everywhere ("it just keeps flashing"). */
 const WL_TEXT = "Your reading will be done shortly";
 function waitLine(on) {
   const w = document.getElementById("cozWait"), live = document.getElementById("revealLive");
-  if (!on) { w.classList.remove("on"); return; }
+  if (!on) { w.classList.remove("on", "flash"); return; }
   w.querySelector(".t1").textContent = WL_TEXT; w.classList.add("on"); live.textContent = WL_TEXT;
+}
+function waitFlash() {                                             /* WL1 r4: once; fades out from 4 s after it appears */
+  const w = document.getElementById("cozWait"), live = document.getElementById("revealLive");
+  w.querySelector(".t1").textContent = WL_TEXT; w.classList.add("flash"); live.textContent = WL_TEXT;
+  revealTimers.push(setTimeout(() => w.classList.remove("flash"), 4000));
 }
 /* r5: give control back after a landing from the black screen that has not left the page: stop that page load
    first, so it can never arrive later and interrupt a new reveal, then restore. Back, or the 15 s recovery when the

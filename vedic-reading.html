@@ -430,8 +430,7 @@ body[data-view="reading"] .dash { display: none; }
 .reveal .coz-wait { position:absolute; left:0; right:0; bottom:22vh; text-align:center; z-index:5;
   text-shadow:0 2px 14px rgba(0,0,0,.85); pointer-events:none; opacity:0; transition:opacity 1.2s ease; }
 .reveal .coz-wait .t1 { font-family:Georgia,serif; font-size:17px; letter-spacing:.14em; color:#E8C7A6; }
-.reveal .coz-wait.on { opacity:1; }
-.reveal .coz-wait.on .t1 { animation:cozTwinkle 3.2s ease-in-out 1.2s infinite; }
+.reveal .coz-wait.on, .reveal .coz-wait.flash { opacity:1; }   /* WL1 r4: steady, no pulse */
 .sr-only {
   position: absolute; width: 1px; height: 1px; overflow: hidden;
   clip: rect(0 0 0 0); white-space: nowrap;
@@ -715,7 +714,7 @@ body[data-view="reading"] .vedic-reading-page { animation: none; }
   </div>
 </div>
 
-<div class="vedic-stamp" aria-hidden="true">VEDIC READING · R5.2 · quiet pre-write · VD1.2 diagnostic · VW1 waiting · VSP1.2 server switch · DV1 load order · DV2 tap guard · S2C section 2 · SW1 r3 sections 1-2 · ELIG1 eligible records · SW2 claim text · WL1 r3 waiting line</div>
+<div class="vedic-stamp" aria-hidden="true">VEDIC READING · R5.2 · quiet pre-write · VD1.2 diagnostic · VW1 waiting · VSP1.2 server switch · DV1 load order · DV2 tap guard · S2C section 2 · SW1 r3 sections 1-2 · ELIG1 eligible records · SW2 claim text · WL1 r4 waiting line once</div>
 
 <script src="ascendant-library.js"></script>
 <script src="dev-review-engine.js?v=12"></script>
@@ -1693,7 +1692,7 @@ revealVideo.addEventListener("playing", () => {
      blooming, the light takes the screen while the stage is still growing, the page
      lands under the light and the light clears. No hold anywhere. */
   revealTimers.push(setTimeout(() => revealEl.classList.add("is-through"), 1500));
-  revealTimers.push(setTimeout(() => waitLine(true), 20000));   /* WL1 r3: the waiting line, 20 s into every clip */
+  revealTimers.push(setTimeout(waitFlash, 20000));   /* WL1 r4: the waiting line once, 20 s into every clip */
   /* Sep 20: the reveal, the drive through the sun, the light and the space flight are now ONE clip
      (vedic-reading-reveal-full.mp4). The page just plays it and lands when it ends. */
   // hard cap a little past the clip's 2.5s so a stalled clip never traps anyone
@@ -1715,11 +1714,19 @@ revealVideo.addEventListener("playing", () => {
    there is one) until the reading opens; it leaves with every landing and Back. r3: shown every time, like the clip's
    own "Calculating reading" (r2 showed it only while the reading was not ready, and the reading is usually written
    while the dashboard is open, so it rarely appeared). Nothing else changes: the clip, the waiting and the landing. */
+/* WL1 r4 (Oct 26 2026, his ruling, staging only): during the clip the line shows ONCE, 20 s in: it fades in (1.2 s),
+   holds and fades out from 24 s (gone by about 25 s), with no pulse; it no longer stays until the reading opens.
+   The Vedic reading opens when the clip ends, as before. The pulse is gone everywhere ("it just keeps flashing"). */
 const WL_TEXT = "Your reading will be done shortly";
 function waitLine(on) {
   const w = document.getElementById("cozWait"), live = document.getElementById("revealLive");
-  if (!on) { w.classList.remove("on"); return; }
+  if (!on) { w.classList.remove("on", "flash"); return; }
   w.querySelector(".t1").textContent = WL_TEXT; w.classList.add("on"); live.textContent = WL_TEXT;
+}
+function waitFlash() {                                             /* WL1 r4: once; fades out from 4 s after it appears */
+  const w = document.getElementById("cozWait"), live = document.getElementById("revealLive");
+  w.querySelector(".t1").textContent = WL_TEXT; w.classList.add("flash"); live.textContent = WL_TEXT;
+  revealTimers.push(setTimeout(() => w.classList.remove("flash"), 4000));
 }
 function finishReveal(immediate) {
   if (!revealActive || revealDone) return;   // ignore clip events while the reveal is not running
