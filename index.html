@@ -680,6 +680,16 @@
 /* DT2.1 (Oct 27 2026, his ruling): while the time box waits for the choice, AM shows in gold so the eye goes to it (the chosen
    gold, without its underline until AM or PM is tapped) */
 #bdaybar.dt .dt-ampm.cue button[data-ampm="AM"]{color:#E8C7A6;text-shadow:0 0 16px rgba(232,199,166,.6),0 1px 8px rgba(0,0,0,.95)}
+/* DT3 (Oct 27 2026, his request): AM and PM each sit in a box, in the date boxes' own look (plain border and fill); both boxes
+   take the TIME box's gold "on" look while the choice is waited for; once one is tapped it keeps the gold box and the other goes
+   back to the plain box. The boxes are the BACK and ENTER pills' height (39px) and line up with them; the tap area stays 45px
+   (::before). Narrower phones get less room inside and between the boxes so they never touch BACK or ENTER. */
+#bdaybar.dt .dt-under{align-items:flex-start}
+#bdaybar.dt .dt-ampm button{min-height:39px;padding:0 13px;margin:0 7px;border:1.5px solid #4F4544;border-radius:12px;background:#121116}
+#bdaybar.dt .dt-ampm button::before{content:"";position:absolute;left:0;right:0;top:-4.5px;bottom:-4.5px}
+#bdaybar.dt .dt-ampm.cue button,#bdaybar.dt .dt-ampm button[aria-pressed="true"]{border-color:#E5C9BA;background:#31251F}
+@media (max-width:409px){#bdaybar.dt .dt-ampm button{padding:0 8px;margin:0 3px}}
+@media (max-width:369px){#bdaybar.dt .dt-ampm button{padding:0 5px;margin:0 2px}}
 #bdaybar.dt{bottom:calc(25vh - 24px)}
 /* DT1 r2 (his ruling): BACK and ENTER sit right under the boxes, BACK at the left and ENTER at the right, with AM | PM between them for the time; the city and country stay under the pin (no SV1 drop), and the Earth settles lower so they show clearly; the pin's Birthplace label stays hidden, as it was behind the old date row */
 #bdaybar.dt .entry-actions{top:calc(100% + 10px);left:0;right:0;transform:none;justify-content:space-between;gap:0}
