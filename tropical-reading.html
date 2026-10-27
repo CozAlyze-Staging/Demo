@@ -612,7 +612,7 @@ body[data-view="reading"] .vedic-reading-page { animation: none; }
   </div>
 </div>
 
-<div class="vedic-stamp" aria-hidden="true">TROPICAL READING · T4.5 · server reading · WL1 r2 waiting line</div>
+<div class="vedic-stamp" aria-hidden="true">TROPICAL READING · T4.5 · server reading · WL1 r3 waiting line</div>
 
 <script src="ascendant-library.js"></script>
 <script>
@@ -894,7 +894,7 @@ function startPullAway() {
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const t0 = performance.now();
   console.log("[COZ TSA1.4] Section 1 not ready: pulling away into the dark");
-  waitLine(true);                                                     /* WL1 r2: the line (normally already on since 20 s into the clip) */
+  waitLine(true);                                                     /* WL1 r3: the line (already on since 20 s into the clip) */
   /* Section 1 may arrive while the picture is still receding: close that wait record at once (the landing itself
      still comes from the clip's end, or from whenS1Ready once the clip has ended) */
   waitUp = () => { if (s1Settled()) { closeWaits("section 1 " + s1State()); window.removeEventListener("COZ_TROPICAL_SERVER_UPDATE", waitUp); waitUp = null; } };
@@ -924,22 +924,17 @@ function stopPullAway() {
   revealEl.classList.remove("is-pulling");
   waitLine(false);                                                    /* WL1 */
 }
-/* WL1 r2 (Oct 26 2026, Jason's ruling, staging only): one waiting line, "Your reading will be done shortly", a little
-   higher (22vh from the bottom, was 14vh), same size, colour and pulse. It fades in 20 s into the reveal clip (the clip
-   shows its own "Calculating reading" earlier, so nothing is added there) and stays (through the dark wait, if there
-   is one) until the reading opens. It shows only while Section 1 is not ready, so a finished reading
-   never shows it; if it is ready during the clip the line leaves, and it leaves with every landing and Back. Nothing
-   else changes: the clip, the waiting and the landing are as before. (r1 also showed "Calculating reading" at 2 s:
-   removed, it overlapped the clip's own.) */
+/* WL1 r3 (Oct 26 2026, Jason's ruling, staging only): one waiting line, "Your reading will be done shortly", a little
+   higher (22vh from the bottom, was 14vh), same size, colour and pulse. It fades in 20 s into every reveal clip (the
+   clip shows its own "Calculating reading" earlier, so nothing is added there) and stays (through the dark wait, if
+   there is one) until the reading opens; it leaves with every landing and Back. r3: shown every time, like the clip's
+   own "Calculating reading" (r2 showed it only while the reading was not ready, and the reading is usually written
+   while the dashboard is open, so it rarely appeared). Nothing else changes: the clip, the waiting and the landing. */
 const WL_TEXT = "Your reading will be done shortly";
-let wlWatch = 0;
-function wlNotReady() { return !s1Settled(); }
 function waitLine(on) {
   const w = document.getElementById("cozWait"), live = document.getElementById("revealLive");
-  if (!on) { if (wlWatch) { clearInterval(wlWatch); wlWatch = 0; } w.classList.remove("on"); return; }
-  if (wlWatch) return;                                            /* already showing */
+  if (!on) { w.classList.remove("on"); return; }
   w.querySelector(".t1").textContent = WL_TEXT; w.classList.add("on"); live.textContent = WL_TEXT;
-  wlWatch = setInterval(() => { if (!pullOn && !wlNotReady()) waitLine(false); }, 500);
 }
 let entryHold = null;
 function whenS1Ready(go) {
@@ -1233,7 +1228,7 @@ revealVideo.addEventListener("playing", () => {
      blooming, the light takes the screen while the stage is still growing, the page
      lands under the light and the light clears. No hold anywhere. */
   revealTimers.push(setTimeout(() => revealEl.classList.add("is-through"), 1500));
-  revealTimers.push(setTimeout(() => { if (wlNotReady()) waitLine(true); }, 20000));   /* WL1 r2: the waiting line, 20 s into the clip */
+  revealTimers.push(setTimeout(() => waitLine(true), 20000));   /* WL1 r3: the waiting line, 20 s into every clip */
   /* Sep 20: the reveal, the drive through the sun, the light and the space flight are now ONE clip
      (tropical-reading-reveal-full.mp4). The page just plays it and lands when it ends. */
   // hard cap a little past the clip's 2.5s so a stalled clip never traps anyone
