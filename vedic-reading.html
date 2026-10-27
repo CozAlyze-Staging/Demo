@@ -714,11 +714,12 @@ body[data-view="reading"] .vedic-reading-page { animation: none; }
   </div>
 </div>
 
-<div class="vedic-stamp" aria-hidden="true">VEDIC READING · R5.2 · quiet pre-write · VD1.2 diagnostic · VW1 waiting · VSP1.2 server switch · DV1 load order · DV2 tap guard · S2C section 2 · SW1 r3 sections 1-2 · ELIG1 eligible records · SW2 claim text · WL1 r4 waiting line once · NA1 on to Ascendant</div>
+<div class="vedic-stamp" aria-hidden="true">VEDIC READING · R5.2 · quiet pre-write · VD1.2 diagnostic · VW1 waiting · VSP1.2 server switch · DV1 load order · DV2 tap guard · S2C section 2 · SW1 r3 sections 1-2 · ELIG1 eligible records · SW2 claim text · WL1 r4 waiting line once · NA1 on to Ascendant · VO1 read aloud</div>
 
 <script src="ascendant-library.js"></script>
 <script src="dev-review-engine.js?v=12"></script>
 <script src="coz-vedic-server.js?v=1"></script>
+<script src="coz-voice.js?v=1"></script>   <!-- VO1 (Oct 27 2026, staging only): the reading read aloud -->
 <script>
 /* ============================================================
    SECTION DATA (spec, verbatim)
@@ -1393,6 +1394,20 @@ function renderSection(section) {
     if (real && document.body.dataset.view === "reading")
       (window.CozDoors ? CozDoors.mark : function (s, d, r) { (window.__cozDoorsQ = window.__cozDoorsQ || []).push([s, d, r]); })("vedic", "reading", reading.run);
   } catch (e) {}
+  /* VO1 (Oct 27 2026, his ruling, staging only): the reading read aloud, under the title, only on real reading text
+     (never a status line). Section 01: "Have Your Chart Read By" with the two pictures; Sections 02 to 06: "Have This
+     Page Read". When a section finishes, the voice turns to the next one and keeps reading, through Section 06. */
+  try {
+    const voiceText = paragraphs.some(p => typeof p === "string" && p.trim().length > 0) &&
+      (!!full || section.number <= 2 || ((window.CozVedicServer && CozVedicServer.sectionView(reading.run, section.id)) || {}).state === "released");
+    const under = fresh.querySelector("h1.vedic-title + .vedic-divider");
+    if (window.CozVoice && voiceText && under) CozVoice.attach(under, "afterend", {
+      sys: "vedic", kind: section.number === 1 ? "first" : "next", key: "vedic:" + section.id,
+      label: `Section ${String(section.number).padStart(2, "0")} of ${SECTION_TOTAL}`,
+      collect: () => CozVoice.collect(fresh, { include: "h1.vedic-title, .vedic-body h3, .vedic-body p" }),
+      then: next ? { key: "vedic:" + next.id, hash: "#/" + next.id } : null
+    });
+  } catch (e) {}
 
   document.title = `${section.title} · Your Vedic Reading · CozAlyze`;
 
@@ -1997,6 +2012,13 @@ const SIGNS = {
       }
       fill("asqSecSidereal", SHARED.sidereal);
       fill("asqSecEssence", S.essence); fill("asqSecDharma", S.dharma);
+      /* VO1 (Oct 27 2026, his ruling, staging only): "Have This Page Read By" with the two voices, above the reading */
+      try {
+        if (window.CozVoice) CozVoice.attach(host, "afterbegin", {
+          sys: "vedic", kind: "page", key: "vedic:ascendant", label: "Your Ascendant",
+          collect: () => CozVoice.collect(content, { include: "#asqEyebrow, #asqTitle, #asqSub, #asqSections h2, #asqSections .reading-copy p" })
+        });
+      } catch (e) {}
       /* item 3 (Sep 21): same pager as the reading pages. Back to the dashboard, Next to
          the dashboard's Current Life Cycle door (its existing data-href). */
       const lc = document.querySelector('.hot[data-dash="life-cycle"]');

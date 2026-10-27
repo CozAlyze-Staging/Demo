@@ -159,9 +159,10 @@ h1.wcn-h1{text-align:center;font-family:var(--display-font);font-weight:500;
   </div>
 </div>
 
-<div class="wcn-stamp" aria-hidden="true">WHAT COMES NEXT · WCN1.3</div>
+<div class="wcn-stamp" aria-hidden="true">WHAT COMES NEXT · WCN1.3 · VO1 read aloud</div>
 
 <script src="coz-graha.js"></script>
+<script src="coz-voice.js?v=1"></script>   <!-- VO1 (Oct 27 2026, staging only): the page read aloud -->
 <script>
 (function () {
   'use strict';
@@ -329,6 +330,16 @@ h1.wcn-h1{text-align:center;font-family:var(--display-font);font-weight:500;
     '<div class="wcn-explore">' +
       '<div class="wcn-nav"><a href="current-life-cycle.html">\u2190 Back to Life Cycle Overview</a><a href="vedic-birth-chart.html">Next: Your Birth Chart \u2192</a></div>' +
     '</div>';
+
+  /* VO1 (Oct 27 2026, his ruling, staging only): "Have This Page Read By" with the two voices, under the title and its
+     rule. The voice reads the page from the top, the closing line included, never the links. */
+  try {
+    var voiceAt = panel.querySelector('h1.wcn-h1 + .wcn-rule');
+    if (window.CozVoice && voiceAt) CozVoice.attach(voiceAt, 'afterend', {
+      sys: 'vedic', kind: 'page', key: 'vedic:what-comes-next', label: 'What Comes Next',
+      collect: function () { return CozVoice.collect(panel, { include: '.wcn-eyebrow, h1.wcn-h1, .wcn-lede, .wcn-lord, .wcn-when, .wcn-span, .wcn-body p, .wcn-disclaimer' }); }
+    });
+  } catch (e) {}
 
   if (window.console) {
     var words = panel.querySelector('.wcn-body').textContent.trim().split(/\s+/).length;

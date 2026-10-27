@@ -184,9 +184,10 @@ h1.ktw-h1{text-align:center;font-family:var(--display-font);font-weight:500;
   </div>
 </div>
 
-<div class="ktw-stamp" aria-hidden="true">KEY TIME WINDOWS · KTW1.3</div>
+<div class="ktw-stamp" aria-hidden="true">KEY TIME WINDOWS · KTW1.3 · VO1 read aloud</div>
 
 <script src="coz-graha.js"></script>
+<script src="coz-voice.js?v=1"></script>   <!-- VO1 (Oct 27 2026, staging only): the page read aloud -->
 <script>
 (function () {
   'use strict';
@@ -408,6 +409,16 @@ h1.ktw-h1{text-align:center;font-family:var(--display-font);font-weight:500;
         '<a href="what-comes-next.html">Next: What Comes Next \u2192</a>' +
       '</div>' +
     '</div>';
+
+  /* VO1 (Oct 27 2026, his ruling, staging only): "Have This Page Read By" with the two voices, under the title.
+     The voice reads the page from the top, the closing line included, never the links. */
+  try {
+    var voiceAt = panel.querySelector('h1.ktw-h1');
+    if (window.CozVoice && voiceAt) CozVoice.attach(voiceAt, 'afterend', {
+      sys: 'vedic', kind: 'page', key: 'vedic:key-time-windows', label: 'Key Time Windows',
+      collect: function () { return CozVoice.collect(panel, { include: '.ktw-eyebrow, h1.ktw-h1, .ktw-intro p, .ktw-pair, .ktw-when, .ktw-body, .ktw-line, .ktw-disclaimer' }); }
+    });
+  } catch (e) {}
 
   if (window.console) {
     console.log('[KEY TIME WINDOWS] mode=' + lc.mode + ' year=' + lc.yearLengthDays + 'd status=' + lc.validationStatus);

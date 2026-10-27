@@ -122,13 +122,14 @@ h1{font-family:var(--head);font-weight:500;font-size:calc(72 * var(--k));line-he
   </nav>
  </div>
 </main>
-<div class="stamp">COMBINED READING · CR3.3 · step 1 repair · CV1 viewer limits</div>
+<div class="stamp">COMBINED READING · CR3.3 · step 1 repair · CV1 viewer limits · VO1 read aloud</div>
 
 <script src="dev-review-engine.js?v=8"></script>
 <script src="ascendant-library.js?v=5"></script>
 <script src="compare-evidence.js?v=3"></script>
 <script src="compare-generator.js?v=11"></script>
 <script src="coz-compare-server.js?v=4"></script>
+<script src="coz-voice.js?v=1"></script>   <!-- VO1 (Oct 27 2026, staging only): the reading read aloud -->
 <script>
 (function(){
   var FAIL = "We couldn\u2019t load both charts for this reading. Please return and run your chart again.";
@@ -371,6 +372,33 @@ h1{font-family:var(--head);font-weight:500;font-size:calc(72 * var(--k));line-he
     window.addEventListener("pagehide", function(){ clearInterval(tick); clearTimeout(watchTimer); });
     run();
     buttons.forEach(function(b){ b.hidden = false; });
+    /* VO1 (Oct 27 2026, his ruling, staging only): "Have Your Chart Read By" with all four pictures, under the title,
+       in this page's own Cinzel and gold. The voice opens with the welcome, then reads the title and each section
+       (heading, its line, the full analysis), opening the analysis it is reading (one open at a time, as a tap
+       does). A section still being written is read the moment it arrives. Never a waiting or development line. */
+    try {
+      var content = document.querySelector(".content");
+      var voiceText = function(){
+        var out = CozVoice.collect(content, { include: "h1, .theme" }), secs = [].slice.call(document.querySelectorAll(".sec")), i;
+        for (i = 0; i < secs.length; i++) {
+          var paras = CozVoice.collect(secs[i].querySelector(".body"), { include: "p" });
+          if (!paras.length) break;                                            /* still being written: the voice waits here */
+          out = out.concat(CozVoice.collect(secs[i], { include: "h2, .prev" }), paras);
+        }
+        return i === secs.length ? out.concat(CozVoice.collect(content, { include: ".note" })) : out;
+      };
+      if (window.CozVoice) CozVoice.attach(document.querySelector(".short"), "afterend", {
+        sys: "compare", kind: "first", key: "compare:combined", label: "Your Combined Reading", font: "cinzel",
+        style: { "padding": "0 calc(110 * var(--k))", "--cv-title-font": "var(--head)", "--cv-text-font": "var(--sans)", "--cv-btn-font": "var(--head)",
+                 "--cv-btn-size": "clamp(17px,4.6vw,20px)", "--cv-btn-spacing": ".1em" },
+        collect: voiceText,
+        more: function(){ return !!document.querySelector(".body .wait"); },
+        follow: function(el){
+          var acc = el.closest && el.closest(".acc"), b = acc && document.querySelector('.rfa[aria-controls="' + acc.id + '"]');
+          if (b && b.getAttribute("aria-expanded") !== "true") b.click();
+        }
+      });
+    } catch (e) {}
   });
 })();
 </script>

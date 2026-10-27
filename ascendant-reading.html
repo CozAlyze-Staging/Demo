@@ -85,11 +85,12 @@ main{position:relative;z-index:1;max-width:640px;margin:0 auto;padding:max(22px,
     <a class="back next" id="next" href="#" hidden></a>
   </div>
 </main>
-<div class="stamp">ASCENDANT READING · R1.4 · early readings · ADD-ONS D1.3 · AN1 third reading in the flow</div>
+<div class="stamp">ASCENDANT READING · R1.4 · early readings · ADD-ONS D1.3 · AN1 third reading in the flow · VO1 read aloud</div>
 
 <script src="dev-review-engine.js?v=8"></script>
 <script src="coz-compare-server.js?v=4"></script>
 <script src="ascendant-library.js?v=5"></script>
+<script src="coz-voice.js?v=1"></script>   <!-- VO1 (Oct 27 2026, staging only): the reading read aloud -->
 <script>
 (function(){
   var A=window.COZ_ASC, q=new URLSearchParams(location.search);
@@ -139,6 +140,17 @@ main{position:relative;z-index:1;max-width:640px;margin:0 auto;padding:max(22px,
     }
     return A.getReading(sys,res).then(function(rec){
       r.innerHTML=rec.paragraphs.map(function(t){ return "<p>"+esc(t)+"</p>"; }).join("");
+      /* VO1 (Oct 27 2026, his ruling, staging only): "Have This Page Read By" with the four voices, above the reading,
+         in this page's own Cinzel and champagne. Read: the heading lines, the reading, the closing line. */
+      try {
+        if (window.CozVoice && rec.paragraphs.length) CozVoice.attach(r, "beforebegin", {
+          sys: "compare", kind: "page", key: "compare:ascendant-" + page, font: "cinzel",
+          label: page === "combined" ? "How They Work Together" : page === "vedic" ? "Your Vedic Ascendant" : "Your Western Ascendant",
+          style: { "--cv-gold": "var(--champ)", "--cv-title-font": "var(--head)", "--cv-text-font": "var(--body)", "--cv-btn-font": "var(--head)",
+                   "--cv-btn-size": "clamp(17px,4.6vw,20px)", "--cv-btn-spacing": ".1em" },
+          collect: function(){ return CozVoice.collect(main, { include: "#your, #sign, #meet, #reading p, .note" }); }
+        });
+      } catch (e) {}
     }).catch(function(e){
       r.innerHTML='<p class="dev">'+esc((e&&e.message)||"DEV: reading unavailable")+'</p>';
     });

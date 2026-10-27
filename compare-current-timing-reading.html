@@ -133,7 +133,7 @@ dialog.mdl::backdrop{background:rgba(0,2,8,.78)}
     <div id="mdlBody"></div>
   </div>
 </dialog>
-<div class="stamp">CURRENT TIMING · CT3.2 · larger text</div>
+<div class="stamp">CURRENT TIMING · CT3.2 · larger text · VO1 read aloud</div>
 
 <script src="https://cdn.jsdelivr.net/npm/astronomy-engine@2.1.19/astronomy.browser.min.js"></script>
 <script src="coz-graha.js"></script>
@@ -141,6 +141,7 @@ dialog.mdl::backdrop{background:rgba(0,2,8,.78)}
 <script src="ascendant-library.js?v=4"></script>
 <!-- Oct 2: ?v=6 so this page loads compare-current-timing.js CT3.4 (loadFresh for Compare saves), not a cached copy -->
 <script src="compare-current-timing.js?v=6"></script>
+<script src="coz-voice.js?v=1"></script>   <!-- VO1 (Oct 27 2026, staging only): the reading read aloud -->
 <script>
 (function(){
   'use strict';
@@ -249,6 +250,22 @@ dialog.mdl::backdrop{background:rgba(0,2,8,.78)}
     wireAccordion();
     methodology(d);
     wireMethodology();
+    /* VO1 (Oct 27 2026, his ruling, staging only): "Have This Page Read By" with the four voices, above the reading,
+       in this page's own Cinzel and gold. The voice reads the title lines, then each section (its title, its line, its
+       reading), opening the section it is reading (one open at a time, as a tap does), then the closing line. Never
+       the tags or the Methodology. */
+    try {
+      if (window.CozVoice) CozVoice.attach($('reading'), 'beforebegin', {
+        sys: 'compare', kind: 'page', key: 'compare:current-timing', label: 'Your Current Timing', font: 'cinzel',
+        style: { '--cv-title-font': 'var(--head)', '--cv-text-font': 'var(--sans)', '--cv-btn-font': 'var(--head)',
+                 '--cv-btn-size': 'clamp(17px,4.6vw,20px)', '--cv-btn-spacing': '.1em' },
+        collect: function(){ return CozVoice.collect(document.querySelector('.content'), { include: 'h1, .full, .sys, #reading .acc-btn .t, #reading .acc-btn .sub, #reading .body h3, #reading .body p, #reading .note' }); },
+        follow: function(el){
+          var sec = el.closest && el.closest('.sec'), b = sec && sec.querySelector('.acc-btn');
+          if (b && b.getAttribute('aria-expanded') !== 'true') b.click();
+        }
+      });
+    } catch (e) {}
   });
 })();
 </script>

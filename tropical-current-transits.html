@@ -106,7 +106,7 @@ h3{font-family:var(--head);font-weight:500;font-size:clamp(16px,4.5cqw,19.5px);l
       <a href="tropical-reading.html">&lsaquo; Back to Your Tropical Reading</a>
       <a href="tropical-birth-chart.html">Next: Your Birth Chart &rsaquo;</a>
     </nav>
-    <div class="stamp" aria-hidden="true">CURRENT TRANSITS · TT1.1</div>
+    <div class="stamp" aria-hidden="true">CURRENT TRANSITS · TT1.1 · VO1 read aloud</div>
   </div>
  </div>
 </main>
@@ -122,6 +122,7 @@ h3{font-family:var(--head);font-weight:500;font-size:clamp(16px,4.5cqw,19.5px);l
 <script src="https://cdn.jsdelivr.net/npm/astronomy-engine@2.1.19/astronomy.browser.min.js"></script>
 <script src="ascendant-library.js?v=4"></script>
 <script src="compare-current-timing.js?v=4"></script>
+<script src="coz-voice.js?v=1"></script>   <!-- VO1 (Oct 27 2026, staging only): the page read aloud -->
 <script>
 (function(){
   'use strict';
@@ -206,6 +207,21 @@ h3{font-family:var(--head);font-weight:500;font-size:clamp(16px,4.5cqw,19.5px);l
         setOpen(b, opening);
       });
     });
+    /* VO1 (Oct 27 2026, his ruling, staging only): "Have This Page Read By" with the two voices, at the top of the
+       reading, in this page's own Cinzel and gold. The voice reads the summary, then each section, opening the
+       drop-down it is reading (one open at a time, as a tap does), then the closing line. Never the as-of line, the
+       planet detail lines or How This Was Calculated. */
+    try {
+      if (window.CozVoice) CozVoice.attach($('reading'), 'afterbegin', {
+        sys: 'tropical', kind: 'page', key: 'tropical:transits', label: 'Your Current Transits', font: 'cinzel',
+        style: { '--cv-title-font': 'var(--head)', '--cv-text-font': 'var(--body)', '--cv-btn-font': 'var(--head)', '--cv-btn-size': 'clamp(15.5px,4.3vw,18px)', '--cv-btn-spacing': '.05em' },
+        collect: function () { return CozVoice.collect($('reading'), { include: '.summary, .drop:not(#method) .acc-btn > span, .drop:not(#method) .sec-body h3, .drop:not(#method) .sec-body p:not(.meta), .note' }); },
+        follow: function (el) {
+          var d = el.closest && el.closest('.drop'), b = d && d.querySelector('.acc-btn');
+          if (b && b.getAttribute('aria-expanded') !== 'true') b.click();
+        }
+      });
+    } catch (e) {}
   }
 
   /* Account mirrors the Tropical reading footer: an event only, until that screen exists.

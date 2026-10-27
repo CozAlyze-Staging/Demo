@@ -245,9 +245,10 @@ h1.cs-h1 {
   </div>
 </div>
 
-<div class="cs-stamp" aria-hidden="true">CURRENT SEASON · CS2.3</div>
+<div class="cs-stamp" aria-hidden="true">CURRENT SEASON · CS2.3 · VO1 read aloud</div>
 
 <script src="coz-graha.js"></script>
+<script src="coz-voice.js?v=1"></script>   <!-- VO1 (Oct 27 2026, staging only): the page read aloud -->
 <script>
 (function () {
   'use strict';
@@ -470,6 +471,16 @@ h1.cs-h1 {
         '<a href="key-time-windows.html">Next: Key Time Windows \u2192</a>' +
       '</div>' +
     '</div>';
+
+  /* VO1 (Oct 27 2026, his ruling, staging only): "Have This Page Read By" with the two voices, under the season's
+     heading. The voice reads the page from the top, the closing line included, never the links. */
+  try {
+    var voiceAt = panel.querySelectorAll('.cs-rule')[1];
+    if (window.CozVoice && voiceAt) CozVoice.attach(voiceAt, 'afterend', {
+      sys: 'vedic', kind: 'page', key: 'vedic:current-season', label: 'Your Current Season',
+      collect: function () { return CozVoice.collect(panel, { include: '.cs-eyebrow, .cs-pair, .cs-dates, .cs-lede, h1.cs-h1, .cs-intro p, .cs-reading p, .cs-disclaimer' }); }
+    });
+  } catch (e) {}
 
   /* ---------------- Developer-only output ---------------- */
   if (window.console) {
