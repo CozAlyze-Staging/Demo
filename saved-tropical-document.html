@@ -6,6 +6,10 @@
 <title>Saved Reading · CozAlyze</title>
 <!--
   COZALYZE · SAVED TROPICAL DOCUMENT · TD1.4 (Oct 14 2026)
+  PL1 (Oct 27 2026, Print Your Chart, staging only): ?view=...&id=live opens the Tropical chart now on this device
+  without saving it, from the birth chart page's Print Your Chart and Your Readings. print-live-tropical.js builds
+  that unsaved record in memory (nothing is written to Saved Charts). Only the wording for an unsaved chart, the
+  links and the Back button differ. A saved record opens exactly as before.
   TD1.4 (Jason): every view ends with the Your Saved Chart links, like the saved Vedic document
   (saved-vedic-document.html SVD1.1): Your Birth Chart, Your Tropical Reading, Your Ascendant,
   Your Current Transits. The page being read shows unlinked. The links are hidden in print.
@@ -61,6 +65,7 @@
 </style>
 <script src="coz-saved.js?v=4"></script>
 <script src="saved-tropical-library.js?v=2"></script>
+<script src="print-live-tropical.js?v=1"></script>
 <script src="https://cdn.jsdelivr.net/npm/astronomy-engine@2.1.19/astronomy.browser.min.js"></script>
 <script src="compare-current-timing.js?v=5"></script>
 <style id="coz-rd1">/* RD1 (Oct 22 2026): every tappable label at least 15px on a phone */html body #cozFoot a{font-size:15px}html body .doc-button{font-size:max(15px,0.88rem)}/* RD3: Vedic/Tropical/Life Cycle Back/Next and the bottom bar labels larger */html body #cozFoot a{font-size:17px}</style>
@@ -90,6 +95,7 @@
   var MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
   var DISCLOSURE = "This AI-generated astrological content is provided for reflection and entertainment only. It is not scientific, medical, legal, financial, or professional advice.";
   var TITLES = { "reading": "Your Tropical Reading", "ascendant": "Your Ascendant", "transits": "Your Current Transits" };
+  var LIVE = new URLSearchParams(location.search).get("id") === "live";   /* PL1: the chart on this device, not saved (print-live-tropical.js) */
 
   function el(tag,cls,text){ var n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; }
   function paras(host, list){ (list || []).forEach(function(t){ t = t == null ? "" : String(t); if (!t.trim()) return; host.appendChild(t.indexOf("## ") === 0 ? el("h3",null,t.slice(3)) : el("p",null,t)); }); return host; }
@@ -105,8 +111,8 @@
   }
   function empty(msg, heading){
     var c = el("div","doc-empty");
-    c.appendChild(el("h2",null,heading || "This saved reading could not be opened"));
-    var p = el("p",null,msg + " "); var a = el("a",null,"Open Saved Charts"); a.href = "saved-charts.html"; p.appendChild(a); c.appendChild(p);
+    c.appendChild(el("h2",null,heading || (LIVE ? "This reading isn\u2019t ready to print" : "This saved reading could not be opened")));
+    var p = el("p",null,msg + " "); var a = el("a",null,LIVE ? "Back to Birth Chart" : "Open Saved Charts"); a.href = LIVE ? "tropical-birth-chart.html" : "saved-charts.html"; p.appendChild(a); c.appendChild(p);
     return c;
   }
   function cozPrint(){
@@ -132,9 +138,10 @@
   window.addEventListener("beforeprint", function(){ document.querySelectorAll("details.doc-section").forEach(function(d){ d.dataset.wasOpen = d.open ? "1" : "0"; d.open = true; }); });
   window.addEventListener("afterprint", function(){ document.querySelectorAll("details.doc-section").forEach(function(d){ if (d.dataset.wasOpen === "0") d.open = false; }); });
 
+  if (LIVE) document.getElementById("backBtn").href = "tropical-birth-chart.html";              /* PL1 */
   var lib = window.CozSavedTropical ? window.CozSavedTropical.load() : null;
-  if (!lib){ mount.appendChild(empty("It may have been removed from this device.")); return; }
-  document.getElementById("backBtn").href = "tropical-birth-chart.html?saved=1&id=" + encodeURIComponent(lib.id);
+  if (!lib){ mount.appendChild(empty(LIVE ? "There\u2019s no chart on this device to print yet." : "It may have been removed from this device.")); return; }
+  if (!LIVE) document.getElementById("backBtn").href = "tropical-birth-chart.html?saved=1&id=" + encodeURIComponent(lib.id);
   if (qp.get("from") === "compare") {                                  /* opened from Compare: go back there */
     var bb = document.getElementById("backBtn");
     bb.href = "compare-system.html?sys=tropical#reading";
@@ -158,7 +165,7 @@
 
   if (view === "reading"){
     var R = L.reading;
-    if (!R || !R.sections){ ok = false; mount.appendChild(empty("The Tropical Reading hadn't finished when this chart was saved.")); }
+    if (!R || !R.sections){ ok = false; mount.appendChild(empty(LIVE ? "Your Tropical Reading isn\u2019t finished yet. Open it from your dashboard first." : "The Tropical Reading hadn't finished when this chart was saved.")); }
     else (R.order || []).forEach(function(s, i){
       var d = section(s.number, s.title, i === 0);
       d.appendChild(paras(el("div","doc-copy"), R.sections[s.id]));
@@ -167,7 +174,7 @@
   }
   else if (view === "ascendant"){
     var A = L.ascendant;
-    if (!A || !A.sign){ ok = false; mount.appendChild(empty("The Ascendant reading wasn't saved with this chart.")); }
+    if (!A || !A.sign){ ok = false; mount.appendChild(empty(LIVE ? "Your Ascendant reading isn\u2019t ready yet. Open it from your dashboard first." : "The Ascendant reading wasn't saved with this chart.")); }
     else {
       var head = el("div");
       head.appendChild(el("p","doc-label","Tropical Ascendant"));
@@ -182,7 +189,7 @@
   }
   else if (view === "transits"){
     var TM = window.COZ_TIMING;
-    if (!lib.chart || !TM || !TM.loadTropicalChart){ ok = false; mount.appendChild(empty("The Tropical chart wasn't saved with this record.")); }
+    if (!lib.chart || !TM || !TM.loadTropicalChart){ ok = false; mount.appendChild(empty(LIVE ? "There\u2019s no Tropical chart on this device to print yet." : "The Tropical chart wasn't saved with this record.")); }
     else {
       mount.appendChild(paper);
       var wait = el("p","doc-copy","Calculating your current transits\u2026"); inner.appendChild(wait);
@@ -205,7 +212,7 @@
         function stamp(x){ return new Date(x).toLocaleString("en-US",{dateStyle:"medium",timeStyle:"short"}); }
         var shown = d.fast.concat(d.slow ? [d.slow] : []);
         [["Zodiac", st.zodiac || "Tropical"],
-         ["Calculated", stamp(now) + ". Transits are recalculated each time this page opens; they are not part of the saved record."],
+         ["Calculated", stamp(now) + (LIVE ? ". Transits are recalculated each time this page opens." : ". Transits are recalculated each time this page opens; they are not part of the saved record.")],
          ["Natal chart", [cl.birthDate, cl.birthTime, cl.locationLabel].filter(Boolean).join(", ")],
          ["Transiting planets", P.fastPlanets.join(", ") + " (faster); " + P.slowPlanets.join(", ") + " (slower)" + (P.moonIncluded ? "; the Moon" : ". The Moon is not included.")],
          ["Natal points", P.natalTargets.join(", ") + ". The nodes are " + (st.nodeType || P.nodeType) + " nodes."],
@@ -225,13 +232,13 @@
   /* TD1.4: chaining links at the end of every saved Tropical page, like the saved Vedic document */
   function links(host){
     var box = el("div","doc-links"), from = qp.get("from") === "compare" ? "&from=compare" : "";
-    box.appendChild(el("p","doc-label","Your Saved Chart"));
+    box.appendChild(el("p","doc-label",LIVE ? "Your Readings" : "Your Saved Chart"));
     [["chart","Your Birth Chart"],["reading","Your Tropical Reading"],["ascendant","Your Ascendant"],["transits","Your Current Transits"]].forEach(function(v){
       var p = el("p");
       if (v[0] === view) p.appendChild(el("span","here",v[1]));
       else {
         var a = el("a",null,v[1] + " \u203A");
-        a.href = v[0] === "chart" ? "tropical-birth-chart.html?saved=1&id=" + encodeURIComponent(lib.id)
+        a.href = v[0] === "chart" ? (LIVE ? "tropical-birth-chart.html" : "tropical-birth-chart.html?saved=1&id=" + encodeURIComponent(lib.id))
                                   : "saved-tropical-document.html?view=" + v[0] + "&id=" + encodeURIComponent(lib.id) + from;
         p.appendChild(a);
       }
@@ -247,7 +254,9 @@
     inner.appendChild(foot);
     if (!paper.parentNode) mount.appendChild(paper);
     var savedAt = lib.rec.updatedAt || lib.rec.savedAt;
-    document.getElementById("savedNote").textContent = live
+    document.getElementById("savedNote").textContent = LIVE                       /* PL1: the chart on this device, not saved */
+      ? (live ? "Calculated for the chart on this device when this page opened. To keep it, use Save Chart." : "From the chart on this device. To keep it, use Save Chart.")
+      : live
       ? "Calculated for this saved chart at the moment this page opened. No animation. No rewrite."
       : "These are your saved results. No animation. No rewrite." + (savedAt ? " \u00B7 Saved " + longDate(savedAt) : "");
     cozAutoPrint();

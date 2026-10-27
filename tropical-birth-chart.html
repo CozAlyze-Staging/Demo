@@ -6,6 +6,13 @@
 <title>Tropical Birth Chart</title>
 <!--
   COZALYZE · TROPICAL BIRTH CHART · TBC1.9 birth details (Oct 6 2026, presentation fixes P1, local build for review)
+  PL1 (Oct 27 2026, Print Your Chart, staging only): the bottom row reads Save Chart · Print Your Chart · Add-ons.
+  Print Your Chart opens Your Tropical Reading as a document with Expand All and Print / Save PDF at the top
+  (saved-tropical-document.html), without saving: the chart on this device opens as id=live
+  (print-live-tropical.js); a saved or reopened saved chart opens its own saved record. The live chart also lists
+  Your Readings (Your Tropical Reading, Your Ascendant, Your Current Transits) above the footer, in the Saved
+  Readings style; a reading not finished yet shows as unavailable. With in=compare (a comparison document) the
+  chart is shown alone, saved or live. Not on a sample chart.
   TBC1.9: date and time shown as "August 20, 1977" and "9:30 PM" (display only, stored values unchanged).
   TBC1.8: ?saved=1&id=<compare record>&in=compare renders the chart only, inside the saved comparison
   (saved-compare-document.html): no toolbar, no Saved Readings links, no footer nav, no build stamp,
@@ -290,11 +297,17 @@ body.embed-compare #cozFoot{display:none !important}
 .chart-end .pl{font-family:"Montserrat","Helvetica Neue",Arial,sans-serif;font-weight:300;font-size:14px;line-height:1;color:#EEE7D8;background:none;border:1.5px solid #C9A27C;
   border-radius:999px;height:40px;padding:0 24px;display:inline-flex;align-items:center;text-decoration:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .chart-end .pl:focus-visible{outline:1px solid #F2C898;outline-offset:3px}
+.chart-end .row{flex-wrap:wrap}   /* PL1: three pills; a very narrow screen wraps them rather than run off it */
+.chart-end .pl[hidden]{display:none}
+.saved-readings-links a{font-size:max(15px,.9rem)}   /* PL1, RD1 rule: the Your Readings and Saved Readings links are tappable labels, at least 15px */
+@media (max-width:479px){ .chart-end .row{gap:8px} .chart-end .pl{padding:0 12px} }   /* PL1: one phone row, the same 15px labels */
+@media (max-width:374px){ .chart-end .row{gap:6px} .chart-end .pl{padding:0 10px} }   /* PL1: still one row on a 360px phone */
 @media print{.chart-end{display:none !important}}
 </style>
 <!-- Oct 2: ?v=5 so this page loads coz-saved.js CS1.6, not a cached copy -->
 <script src="coz-saved.js?v=5"></script>
 <script src="saved-tropical-library.js?v=3"></script>
+<script src="print-live-tropical.js?v=1"></script>
 <style id="coz-rd1">/* RD1 (Oct 22 2026): every tappable label at least 15px on a phone */html body #cozFoot a{font-size:15px}html body .print-button{font-size:max(15px,0.88rem)}html body .chart-end .pl{font-size:15px}/* RD3: Vedic/Tropical/Life Cycle Back/Next and the bottom bar labels larger */html body #cozFoot a{font-size:17px}</style>
 <style id="coz-dv1">/* DV1 (Oct 22 2026): version stamps and the diagnostic launcher show only on a device with developer view on (localStorage cozDevView = "1") */html:not(.coz-dev) .stamp,html:not(.coz-dev) .stamp2,html:not(.coz-dev) .vedic-stamp,html:not(.coz-dev) .build-stamp,html:not(.coz-dev) .lc-stamp,html:not(.coz-dev) .cs-stamp,html:not(.coz-dev) .ktw-stamp,html:not(.coz-dev) .wcn-stamp,html:not(.coz-dev) #stamp,html:not(.coz-dev) #cozDiagLaunch{display:none!important}</style><script>try{if(localStorage.getItem("cozDevView")==="1")document.documentElement.classList.add("coz-dev")}catch(e){}</script>
 </head>
@@ -316,7 +329,7 @@ body.embed-compare #cozFoot{display:none !important}
   <div class="sample-banner" id="sampleBanner" hidden>Sample report · Illustrative data for design review</div>
   <div id="reportMount"></div>
   <!-- ADD-ONS D1.2: Save Chart (the Demo's save, coz-saved.js data-foot="saved") and Add-ons at the end of the chart. Not shown inside Compare. -->
-  <div class="chart-end" id="cozChartEnd"><div class="dv" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0 13.6 10.4 24 12 13.6 13.6 12 24 10.4 13.6 0 12 10.4 10.4Z"/></svg></div><div class="row"><button class="pl" type="button" data-foot="saved" aria-label="Save Chart">Save Chart</button><a class="pl" id="cozAddons" href="addons.html#/?from=t&amp;own=t">Add-ons</a></div></div>
+  <div class="chart-end" id="cozChartEnd"><div class="dv" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0 13.6 10.4 24 12 13.6 13.6 12 24 10.4 13.6 0 12 10.4 10.4Z"/></svg></div><div class="row"><button class="pl" type="button" data-foot="saved" aria-label="Save Chart">Save Chart</button><a class="pl" id="cozPrintChart" href="saved-tropical-document.html?view=reading&amp;id=live" hidden>Print Your Chart</a><a class="pl" id="cozAddons" href="addons.html#/?from=t&amp;own=t">Add-ons</a></div></div>
   <script>
   /* ADD-ONS D1.2: inside Compare (from=compare, in=compare) the chart has no end buttons. On a saved chart (saved=1)
      Add-ons returns to that saved chart. */
@@ -345,7 +358,7 @@ document.querySelectorAll('#cozFoot a[data-foot="account"]').forEach(function(a)
 /* inside Compare (from=compare, in=compare) this chart has no bar of its own */
 if (/[?&](from|in)=compare\b/.test(location.search)) { var cf = document.getElementById("cozFoot"); if (cf) cf.parentNode.removeChild(cf); }
 </script>
-<div class="build-stamp">BIRTH CHART · TBC1.9 · birth details · ADD-ONS D1.2 · BAR D1.3</div>
+<div class="build-stamp">BIRTH CHART · TBC1.9 · birth details · ADD-ONS D1.2 · BAR D1.3 · PRINT PL1</div>
 <script>
 "use strict";
 /* Renderer only. This page never calculates astronomy; every value comes from
@@ -872,6 +885,29 @@ function cozAutoPrint(){
   var go = function(){ setTimeout(function(){ window.print(); }, 250); };
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(go); else go();
 }
+/* PL1 (Oct 27 2026, Print Your Chart): the Your Readings links on the live chart, in the Saved Readings style. Each
+   opens the same clean document a saved chart opens (Expand All, Print / Save PDF), for the chart on this device,
+   without saving it (print-live-tropical.js); a reopened saved chart opens its own saved record. A reading that isn't
+   finished yet shows as unavailable. */
+function renderLiveReadings(){
+  var av = CozPrintLive.available();
+  var sec = el("section","report-section saved-readings");
+  sec.setAttribute("aria-labelledby","live-readings-heading");
+  sec.appendChild(sectionHeading("Quick access to other views for this chart","Your Readings","live-readings-heading","",false));
+  var grid = el("div","saved-readings-links");
+  [["Your Tropical Reading","reading",av.reading,"Not finished when saved"],
+   ["Your Ascendant","ascendant",av.ascendant,"Not saved with this chart"],
+   ["Your Current Transits","transits",av.transits,"Chart not saved"]].forEach(function(row){
+    var a = el("a", row[2] ? null : "unavailable");
+    a.appendChild(el("span",null,row[0])); a.firstChild.style.color = "";
+    if (row[2]){ a.href = CozPrintLive.target(row[1]); a.appendChild(el("span",null,"\u203A")); }
+    else { a.setAttribute("aria-disabled","true"); a.appendChild(el("small",null,av.saved ? row[3] : "Not finished yet")); }
+    grid.appendChild(a);
+  });
+  sec.appendChild(grid);
+  return sec;
+}
+
 /* TBC1.5: the Saved Readings links, appended in saved mode only.
    TBC1.7 (Sep 24): Your Current Transits opens the cream document
    (saved-tropical-document.html?view=transits), which recalculates the transits for this
@@ -909,9 +945,10 @@ function renderSavedReadings(lib){
 
   /* TBC1.5 saved mode: data from the selected saved record, never from the live keys */
   var savedLib = null;
+  /* TBC1.8, PL1: inside a comparison document (in=compare) the chart is shown alone, saved or (Print Your Chart) live */
+  if (qp.get("in") === "compare"){ document.body.classList.add("embed-compare"); document.documentElement.classList.add("embed-compare"); }
   if (qp.get("saved") === "1"){
     document.body.classList.add("saved-mode");
-    if (qp.get("in") === "compare"){ document.body.classList.add("embed-compare"); document.documentElement.classList.add("embed-compare"); }   /* TBC1.8 */
     document.getElementById("backBtn").lastChild.textContent = " Saved Charts";
     savedLib = window.CozSavedTropical ? window.CozSavedTropical.load() : null;
     if (!savedLib || !savedLib.chart){
@@ -943,7 +980,17 @@ function renderSavedReadings(lib){
   if (isSample) banner.hidden = false;
   var report = renderReport(chart);
   if (savedLib && qp.get("in") !== "compare"){ var innerEl = report.querySelector(".report-inner"); innerEl.insertBefore(renderSavedReadings(savedLib), innerEl.querySelector(".report-footer")); }
+  /* PL1: the live chart lists Your Readings (not a sample, not a saved chart, not inside Compare) */
+  var inCompare = /[?&](from|in)=compare\b/.test(location.search);
+  if (!savedLib && !isSample && !inCompare && window.CozPrintLive){ var liveInner = report.querySelector(".report-inner"); liveInner.insertBefore(renderLiveReadings(), liveInner.querySelector(".report-footer")); }
   mount.appendChild(report);
+  /* PL1: Print Your Chart opens the reading as a document: a saved chart's own record, else the chart on this device */
+  var printPill = document.getElementById("cozPrintChart");
+  if (printPill && !isSample){
+    printPill.href = savedLib ? "saved-tropical-document.html?view=reading&id=" + encodeURIComponent(savedLib.id)
+                              : (window.CozPrintLive ? CozPrintLive.target("reading") : "saved-tropical-document.html?view=reading&id=live");
+    printPill.hidden = false;
+  }
   /* GD1 r2: the person's own birth chart is on screen: its dashboard door counts, for the run this chart belongs to
      (Compare's Your Birth Charts when shown inside Compare, otherwise the Tropical door). Never a sample or saved chart. */
   if (!isSample && !savedLib) { try { (window.CozDoors ? CozDoors.mark : function (s, d, r) { (window.__cozDoorsQ = window.__cozDoorsQ || []).push([s, d, r]); })(qp.get("from") === "compare" ? "compare" : "tropical", "chart", chart.run); } catch (e) {} }

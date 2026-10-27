@@ -6,6 +6,11 @@
 <title>Saved Comparison · CozAlyze</title>
 <!--
   COZALYZE · SAVED COMPARE DOCUMENT · SCD1.3 (Oct 6 2026, P1 r2 + closing footer kept whole in print, local build for review)
+  PL1 (Oct 27 2026, Print Your Chart, staging only): ?view=...&id=live opens the comparison now on this device
+  without saving it, from Your Birth Charts' Print Your Chart. print-live-compare.js builds that unsaved record in
+  memory (nothing is written to Saved Charts, no slot is used); Current Timing is calculated the way a save
+  calculates it, kept for this tab; the two charts are the live chart pages shown alone (in=compare, read-only).
+  Only the wording for an unsaved comparison, the links and the Back button differ. A saved record opens as before.
   SCD1.2: the two charts print from copies of their rendered content (no fixed frame height, so no blank
   pages and no cut-off at any print width), capitalized Ascendant signs, chart titles
   printed in the document ink, birth line as "August 20, 1977 · 9:30 PM".
@@ -65,6 +70,7 @@
 </style>
 <script src="coz-saved.js?v=5"></script>
 <script src="saved-compare-library.js?v=1"></script>
+<script src="print-live-compare.js?v=1"></script>
 <style id="coz-rd1">/* RD1 (Oct 22 2026): every tappable label at least 15px on a phone */html body #cozFoot a{font-size:15px}html body .doc-button{font-size:max(15px,0.88rem)}/* RD3: Vedic/Tropical/Life Cycle Back/Next and the bottom bar labels larger */html body #cozFoot a{font-size:17px}</style>
 <style id="coz-dv1">/* DV1 (Oct 22 2026): version stamps and the diagnostic launcher show only on a device with developer view on (localStorage cozDevView = "1") */html:not(.coz-dev) .stamp,html:not(.coz-dev) .stamp2,html:not(.coz-dev) .vedic-stamp,html:not(.coz-dev) .build-stamp,html:not(.coz-dev) .lc-stamp,html:not(.coz-dev) .cs-stamp,html:not(.coz-dev) .ktw-stamp,html:not(.coz-dev) .wcn-stamp,html:not(.coz-dev) #stamp,html:not(.coz-dev) #cozDiagLaunch{display:none!important}</style><script>try{if(localStorage.getItem("cozDevView")==="1")document.documentElement.classList.add("coz-dev")}catch(e){}</script>
 </head>
@@ -105,6 +111,10 @@
     unverified: "This part couldn't be matched to this comparison, so it isn't shown.",
     failed: "Current Timing couldn't be captured when this comparison was saved."
   };
+  /* PL1: id=live is the comparison on this device, not saved (print-live-compare.js) */
+  var LIVE = new URLSearchParams(location.search).get("id") === "live", timingPending = false;
+  if (LIVE) { MISSING.missing = "This part isn\u2019t finished yet. Open it from your Compare dashboard first.";
+              MISSING.failed = "Current Timing couldn\u2019t be calculated right now."; }
 
   function el(tag,cls,text){ var n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; }
   function paras(host, list){ (list || []).forEach(function(t){ t = t == null ? "" : String(t); if (!t.trim()) return; host.appendChild(t.indexOf("## ") === 0 ? el("h3",null,t.slice(3)) : el("p",null,t)); }); return host; }
@@ -120,8 +130,8 @@
   function note(text){ return el("p","doc-when",text); }
   function empty(msg, heading){
     var c = el("div","doc-empty");
-    c.appendChild(el("h2",null,heading || "This saved comparison could not be opened"));
-    var p = el("p",null,msg + " "); var a = el("a",null,"Open Saved Charts"); a.href = "saved-charts.html"; p.appendChild(a); c.appendChild(p);
+    c.appendChild(el("h2",null,heading || (LIVE ? "This reading isn\u2019t ready to print" : "This saved comparison could not be opened")));
+    var p = el("p",null,msg + " "); var a = el("a",null,LIVE ? "Back to Your Birth Charts" : "Open Saved Charts"); a.href = LIVE ? "compare-birth-charts.html" : "saved-charts.html"; p.appendChild(a); c.appendChild(p);
     return c;
   }
   function cozPrint(){
@@ -147,8 +157,9 @@
   window.addEventListener("beforeprint", function(){ document.querySelectorAll("details.doc-section").forEach(function(d){ d.dataset.wasOpen = d.open ? "1" : "0"; d.open = true; }); });
   window.addEventListener("afterprint", function(){ document.querySelectorAll("details.doc-section").forEach(function(d){ if (d.dataset.wasOpen === "0") d.open = false; }); });
 
+  if (LIVE) { var bb = document.getElementById("backBtn"); bb.href = "compare-birth-charts.html"; bb.lastChild.textContent = " Your Birth Charts"; }   /* PL1 */
   var S = window.CozSavedCompare ? window.CozSavedCompare.load() : null;
-  if (!S){ mount.appendChild(empty("It may have been removed from this device.")); return; }
+  if (!S){ mount.appendChild(empty(LIVE ? "There\u2019s no chart on this device to print yet." : "It may have been removed from this device.")); return; }
   document.title = TITLES[view] + " \u00B7 CozAlyze";
 
   /* P1 (Oct 6 2026): birth details shown as "August 20, 1977 · 9:30 PM" (Jason's ruling). Display only;
@@ -164,7 +175,7 @@
   }
   function links(host){
     var box = el("div","doc-links");
-    box.appendChild(el("p","doc-label","Your Saved Comparison"));
+    box.appendChild(el("p","doc-label",LIVE ? "Your Readings" : "Your Saved Comparison"));
     VIEWS.forEach(function(v){
       var p = el("p");
       if (v[0] === view) p.appendChild(el("span","here",v[1]));
@@ -221,7 +232,8 @@
       var d = section(null, c[1], i === 0); wrap.appendChild(d);
       if (S.charts[c[0]].state !== "ok"){ d.appendChild(note(MISSING[S.charts[c[0]].state] || MISSING.missing)); return; }
       var fr = el("iframe","doc-frame"); fr.title = c[1]; fr.setAttribute("scrolling","no");
-      fr.src = c[2] + "?saved=1&id=" + encodeURIComponent(S.id) + "&in=compare";
+      fr.src = LIVE ? c[2] + "?from=compare&in=compare"                    /* PL1: the live chart page, shown alone */
+                    : c[2] + "?saved=1&id=" + encodeURIComponent(S.id) + "&in=compare";
       d.appendChild(fr);
       function size(){ if (fr.classList.contains("has-print-copy")) return; try {   /* SCD1.2: no screen re-sizing while the copy prints */ var b = fr.contentDocument && fr.contentDocument.body; if (b && b.scrollHeight) fr.style.height = Math.ceil(b.scrollHeight) + "px"; } catch (e) {} }
       fr.addEventListener("load", function(){
@@ -272,7 +284,12 @@
   }
   else if (view === "timing"){
     var inner3 = paper(); header(inner3);
-    if (S.timing.state !== "ok"){
+    if (LIVE && S.timing.state === "missing"){                                 /* PL1: calculated now, the way a save calculates it */
+      var calc = note("Calculating your current timing\u2026"); inner3.appendChild(calc);
+      timingPending = true;
+      (window.CozPrintLive && window.CozPrintLive.makeTiming ? window.CozPrintLive.makeTiming() : Promise.resolve(false))
+        .then(function(ok){ if (ok) location.reload(); else { calc.textContent = MISSING.failed; cozAutoPrint(); } });
+    } else if (S.timing.state !== "ok"){
       inner3.appendChild(note(MISSING[S.timing.state]));
       if (S.timing.state === "failed" && S.timing.reason && /[?&]debug=1\b/.test(location.search)) inner3.appendChild(note("Reason: " + S.timing.reason));
     } else {
@@ -293,7 +310,8 @@
           mb.appendChild(p);
         });
       });
-      mb.appendChild(el("p",null,"This is a saved snapshot. It shows the timing as of the date above and does not update."));
+      mb.appendChild(el("p",null,LIVE ? "Calculated for the chart on this device, as of the date above."
+                                      : "This is a saved snapshot. It shows the timing as of the date above and does not update."));
       m.appendChild(mb); inner3.appendChild(m);
       inner3.appendChild(note("These are themes that may be present, not predictions of what will happen."));
     }
@@ -301,8 +319,9 @@
   }
 
   var savedAt = S.rec.updatedAt || S.rec.savedAt;
-  document.getElementById("savedNote").textContent = "These are your saved results. No animation. No rewrite." + (savedAt ? " \u00B7 Saved " + longDate(savedAt) : "");
-  cozAutoPrint();
+  document.getElementById("savedNote").textContent = LIVE ? "From the chart on this device. To keep it, use Save Chart."
+    : "These are your saved results. No animation. No rewrite." + (savedAt ? " \u00B7 Saved " + longDate(savedAt) : "");
+  if (!timingPending) cozAutoPrint();                                   /* PL1: a print waits for Current Timing */
 })();
 </script>
 <div id="cozFoot">

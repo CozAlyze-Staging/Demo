@@ -10,6 +10,10 @@
 <link rel="preload" as="image" href="compare-timing-reading-top.jpg?v=1">
 <style>
 /* COZALYZE · COMPARE · YOUR BIRTH CHARTS · BCH2.0 · two entrances (local preview)
+   PL1 (Oct 27 2026, Print Your Chart, staging only): the bottom row reads Save Chart · Print Your Chart · Add-ons.
+   Print Your Chart opens Your Combined Reading as a document with Expand All and Print / Save PDF at the top
+   (saved-compare-document.html), without saving: the comparison on this device opens as id=live
+   (print-live-compare.js); a reopened saved comparison opens its own saved record.
    BCH2.1 (Oct 2, Chat Option A): doors renamed YOUR VEDIC BIRTH CHART and YOUR TROPICAL BIRTH CHART,
    matching what Compare includes; same links (compare-system.html opens on BIRTH CHART).
    BCH2.0: two doors, YOUR VEDIC READING and YOUR TROPICAL READING, each opening
@@ -89,9 +93,13 @@ h1{font-family:var(--head);font-weight:500;font-size:max(24px,calc(66 * var(--k)
   border:1.5px solid #D6B98C;border-radius:999px;height:max(40px,calc(78 * var(--k)));padding:0 calc(48 * var(--k));display:inline-flex;align-items:center;
   text-decoration:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .chart-end .pl:focus-visible{outline:1px solid var(--gold);outline-offset:3px}
+.chart-end{flex-wrap:wrap;row-gap:12px}   /* PL1: three pills; a very narrow screen wraps them rather than run off it */
+@media (max-width:519px){ .chart-end{gap:8px} .chart-end .pl{padding:0 12px} }   /* PL1: one phone row, the same labels */
+@media (max-width:374px){ .chart-end{gap:6px} .chart-end .pl{padding:0 10px} }   /* PL1: still one row on a 360px phone */
 </style>
 <!-- Oct 2: ?v=5 so this page loads coz-saved.js CS1.6, not a cached copy -->
 <script src="coz-saved.js?v=5"></script>
+<script src="print-live-compare.js?v=1"></script>
 <style id="coz-rd1">/* RD1 (Oct 22 2026): every tappable label at least 15px on a phone */html body .chart-end .pl{font-size:max(15px,calc(30 * var(--k)))}/* RD2: Compare Back/Next */html body .pager a{font-size:clamp(17px,4.6vw,20px);letter-spacing:.1em}</style>
 <style id="coz-dv1">/* DV1 (Oct 22 2026): version stamps and the diagnostic launcher show only on a device with developer view on (localStorage cozDevView = "1") */html:not(.coz-dev) .stamp,html:not(.coz-dev) .stamp2,html:not(.coz-dev) .vedic-stamp,html:not(.coz-dev) .build-stamp,html:not(.coz-dev) .lc-stamp,html:not(.coz-dev) .cs-stamp,html:not(.coz-dev) .ktw-stamp,html:not(.coz-dev) .wcn-stamp,html:not(.coz-dev) #stamp,html:not(.coz-dev) #cozDiagLaunch{display:none!important}</style><script>try{if(localStorage.getItem("cozDevView")==="1")document.documentElement.classList.add("coz-dev")}catch(e){}</script>
 </head>
@@ -106,7 +114,8 @@ h1{font-family:var(--head);font-weight:500;font-size:max(24px,calc(66 * var(--k)
   <a class="door" href="compare-system.html?sys=tropical">YOUR TROPICAL BIRTH CHART</a>
   <div class="div" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0 13.6 10.4 24 12 13.6 13.6 12 24 10.4 13.6 0 12 10.4 10.4Z"/></svg></div>
   <!-- ADD-ONS D1.2: Save Chart runs the Demo's Compare save (coz-saved.js, data-foot="saved"); Add-ons opens the preview -->
-  <div class="chart-end"><button type="button" class="pl" data-foot="saved" aria-label="Save Chart">Save Chart</button><a class="pl" href="addons.html#/?from=c&amp;own=c">Add-ons</a></div>
+  <div class="chart-end"><button type="button" class="pl" data-foot="saved" aria-label="Save Chart">Save Chart</button><a class="pl" id="cozPrintChart" href="saved-compare-document.html?view=combined&amp;id=live">Print Your Chart</a><a class="pl" href="addons.html#/?from=c&amp;own=c">Add-ons</a></div>
+  <script>/* PL1: a reopened saved comparison opens its own saved record */ (function(){ var p = document.getElementById("cozPrintChart"); if (p && window.CozPrintLive) p.href = CozPrintLive.target("combined"); })();</script>
   <nav class="pager" aria-label="Page navigation">
     <a href="compare-reading.html">&lsaquo;&nbsp;COMPARE</a>
   </nav>
@@ -119,7 +128,7 @@ h1{font-family:var(--head);font-weight:500;font-size:max(24px,calc(66 * var(--k)
   </nav>
  </div>
 </main>
-<div class="stamp">BIRTH CHARTS · BCH2.1 · two charts · ADD-ONS D1.2</div>
+<div class="stamp">BIRTH CHARTS · BCH2.1 · two charts · ADD-ONS D1.2 · PRINT PL1</div>
 <script src="coz-nav.js?v=2"></script>
 </body>
 </html>

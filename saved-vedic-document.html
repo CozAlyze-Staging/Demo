@@ -6,6 +6,11 @@
 <title>Saved Reading · CozAlyze</title>
 <!--
   COZALYZE · SAVED VEDIC DOCUMENT · SD1.5 (Oct 2 2026) · top-level print
+  PL1 (Oct 27 2026, Print Your Chart, staging only): ?view=...&id=live opens the Vedic chart now on this device
+  without saving it, from the birth chart page's Print Your Chart and Your Readings. print-live-vedic.js builds that
+  unsaved record in memory (nothing is written to Saved Charts) and makes the full Life Cycle text the way a save
+  makes it, for this tab. Only the wording for an unsaved chart, the links and the Back button differ. A saved
+  record opens exactly as before.
   SD1.5 (Jason): from Compare the Back button reads "Back to Your Vedic Birth Chart", matching the
   Compare page title (CSY1.5+). From Saved, unchanged.
   SD1.4: opened from Compare (from=compare), Back returns to that Compare page
@@ -61,6 +66,7 @@
 </style>
 <script src="coz-saved.js?v=3"></script>
 <script src="saved-vedic-library.js?v=3"></script>
+<script src="print-live-vedic.js?v=1"></script>
 <style id="coz-rd1">/* RD1 (Oct 22 2026): every tappable label at least 15px on a phone */html body #cozFoot a{font-size:15px}html body .doc-button{font-size:max(15px,0.88rem)}/* RD3: Vedic/Tropical/Life Cycle Back/Next and the bottom bar labels larger */html body #cozFoot a{font-size:17px}</style>
 <style id="coz-dv1">/* DV1 (Oct 22 2026): version stamps and the diagnostic launcher show only on a device with developer view on (localStorage cozDevView = "1") */html:not(.coz-dev) .stamp,html:not(.coz-dev) .stamp2,html:not(.coz-dev) .vedic-stamp,html:not(.coz-dev) .build-stamp,html:not(.coz-dev) .lc-stamp,html:not(.coz-dev) .cs-stamp,html:not(.coz-dev) .ktw-stamp,html:not(.coz-dev) .wcn-stamp,html:not(.coz-dev) #stamp,html:not(.coz-dev) #cozDiagLaunch{display:none!important}</style><script>try{if(localStorage.getItem("cozDevView")==="1")document.documentElement.classList.add("coz-dev")}catch(e){}</script>
 </head>
@@ -89,6 +95,9 @@
   var MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
   var DISCLOSURE = "This AI-generated astrological content is provided for reflection and entertainment only. It is not scientific, medical, legal, financial, or professional advice.";
   var TITLES = { "reading": "Your Vedic Reading", "lagna": "Your Ascendant \u2013 Lagna", "life-cycle": "Your Current Life Cycle" };
+  /* PL1: id=live is the chart on this device, not saved (print-live-vedic.js) */
+  var LIVE = new URLSearchParams(location.search).get("id") === "live", lcPreparing = false;
+  var LC_NOT_READY = "The full Life Cycle reading couldn\u2019t be prepared right now.";
 
   function el(tag,cls,text){ var n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; }
   /* strings beginning with "## " are subheads (Section 5 Rahu / Ketu), as in vedic-reading.html */
@@ -105,8 +114,8 @@
   }
   function empty(msg){
     var c = el("div","doc-empty");
-    c.appendChild(el("h2",null,"This saved reading could not be opened"));
-    var p = el("p",null,msg + " "); var a = el("a",null,"Open Saved Charts"); a.href = "saved-charts.html"; p.appendChild(a); c.appendChild(p);
+    c.appendChild(el("h2",null,LIVE ? "This reading isn\u2019t ready to print" : "This saved reading could not be opened"));
+    var p = el("p",null,msg + " "); var a = el("a",null,LIVE ? "Back to Birth Chart" : "Open Saved Charts"); a.href = LIVE ? "vedic-birth-chart.html" : "saved-charts.html"; p.appendChild(a); c.appendChild(p);
     return c;
   }
 
@@ -134,9 +143,10 @@
   });
   window.addEventListener("afterprint", function(){ document.querySelectorAll("details.doc-section").forEach(function(d){ if (d.dataset.wasOpen === "0") d.open = false; }); });
 
+  if (LIVE) document.getElementById("backBtn").href = "vedic-birth-chart.html";                 /* PL1 */
   var lib = window.CozSavedVedic ? window.CozSavedVedic.load() : null;
-  if (!lib){ mount.appendChild(empty("It may have been removed from this device.")); return; }
-  document.getElementById("backBtn").href = "vedic-birth-chart.html?saved=1&id=" + encodeURIComponent(lib.id);
+  if (!lib){ mount.appendChild(empty(LIVE ? "There\u2019s no chart on this device to print yet." : "It may have been removed from this device.")); return; }
+  if (!LIVE) document.getElementById("backBtn").href = "vedic-birth-chart.html?saved=1&id=" + encodeURIComponent(lib.id);
   if (qp.get("from") === "compare") {                                  /* opened from Compare: go back there */
     var bb = document.getElementById("backBtn");
     bb.href = "compare-system.html?sys=vedic#reading";
@@ -167,7 +177,7 @@
 
   if (view === "reading"){
     var R = L.reading;
-    if (!R || !R.sections){ ok = false; mount.appendChild(empty("The Vedic Reading hadn't finished when this chart was saved.")); }
+    if (!R || !R.sections){ ok = false; mount.appendChild(empty(LIVE ? "Your Vedic Reading isn\u2019t finished yet. Open it from your dashboard first." : "The Vedic Reading hadn't finished when this chart was saved.")); }
     else (R.order || []).forEach(function(s, i){
       var d = section(s.number, s.title, i === 0);
       d.appendChild(paras(el("div","doc-copy"), R.sections[s.id]));
@@ -176,7 +186,7 @@
   }
   else if (view === "lagna"){
     var G = L.lagna;
-    if (!G || !G.sign){ ok = false; mount.appendChild(empty("The Ascendant reading wasn't saved with this chart.")); }
+    if (!G || !G.sign){ ok = false; mount.appendChild(empty(LIVE ? "Your Ascendant reading isn\u2019t ready yet. Open it from your dashboard first." : "The Ascendant reading wasn't saved with this chart.")); }
     else {
       var asc = lib.chart && Array.isArray(lib.chart.planets) ? lib.chart.planets.filter(function(p){ return p && p.name === "Ascendant"; })[0] : null;
       var head = el("div");
@@ -190,7 +200,7 @@
   }
   else if (view === "life-cycle"){
     var C = L.lifeCycle && L.lifeCycle.data;
-    if (!C || !C.mahadasha){ ok = false; mount.appendChild(empty("The Current Life Cycle wasn't saved with this chart.")); }
+    if (!C || !C.mahadasha){ ok = false; mount.appendChild(empty(LIVE ? "Your Current Life Cycle isn\u2019t ready for this chart." : "The Current Life Cycle wasn't saved with this chart.")); }
     else {
       var md = C.mahadasha, ad = C.antardasha;
       var s1 = section(null,"The Larger Chapter",true);
@@ -246,13 +256,22 @@
         var waiting = T && T.status === "pending" && T.runId === rec.runId && T.fingerprint === rec.fingerprint &&
                       window.CozSavedVedic && window.CozSavedVedic.lcLive && window.CozSavedVedic.lcLive(rec);
         var note = section(null, "Your Current Season, Key Time Windows and What Comes Next", true);
-        note.appendChild(el("p", null, waiting
+        var noteP = el("p", null, LIVE
+          ? (waiting ? "The full Life Cycle reading is being prepared." : LC_NOT_READY)
+          : waiting
           ? "The full Life Cycle reading is being added to this saved chart."
-          : "The full Life Cycle reading wasn't included when this chart was saved."));
+          : "The full Life Cycle reading wasn't included when this chart was saved.");
+        note.appendChild(noteP);
         inner.appendChild(note);
         if (waiting) window.addEventListener("COZ_SAVED_VEDIC_LC_FILLED", function(ev){
           if (ev.detail && ev.detail.ids && ev.detail.ids.indexOf(rec.id) >= 0) location.reload();
         });
+        /* PL1: for the chart on this device the full text is made now, the way a save makes it (hidden frames, kept for this tab) */
+        if (LIVE && waiting) {
+          lcPreparing = true;
+          (window.CozPrintLive && window.CozPrintLive.makeLifeCycleText ? window.CozPrintLive.makeLifeCycleText() : Promise.resolve(false))
+            .then(function(kept){ if (kept) location.reload(); else { noteP.textContent = LC_NOT_READY; cozAutoPrint(); } });
+        }
       }
     }
   }
@@ -261,13 +280,13 @@
   /* SVD1.1: chaining links at the end of every saved Vedic page, like the saved comparison */
   function links(host){
     var box = el("div","doc-links"), from = qp.get("from") === "compare" ? "&from=compare" : "";
-    box.appendChild(el("p","doc-label","Your Saved Chart"));
+    box.appendChild(el("p","doc-label",LIVE ? "Your Readings" : "Your Saved Chart"));
     [["chart","Your Birth Chart"],["reading","Your Vedic Reading"],["lagna","Your Ascendant \u2013 Lagna"],["life-cycle","Your Current Life Cycle"]].forEach(function(v){
       var p = el("p");
       if (v[0] === view) p.appendChild(el("span","here",v[1]));
       else {
         var a = el("a",null,v[1] + " \u203A");
-        a.href = v[0] === "chart" ? "vedic-birth-chart.html?saved=1&id=" + encodeURIComponent(lib.id)
+        a.href = v[0] === "chart" ? (LIVE ? "vedic-birth-chart.html" : "vedic-birth-chart.html?saved=1&id=" + encodeURIComponent(lib.id))
                                   : "saved-vedic-document.html?view=" + v[0] + "&id=" + encodeURIComponent(lib.id) + from;
         p.appendChild(a);
       }
@@ -283,8 +302,9 @@
   inner.appendChild(foot);
   mount.appendChild(paper);
   var savedAt = lib.rec.updatedAt || lib.rec.savedAt;
-  document.getElementById("savedNote").textContent = "These are your saved results. No animation. No rewrite." + (savedAt ? " \u00B7 Saved " + longDate(savedAt) : "");
-  cozAutoPrint();
+  document.getElementById("savedNote").textContent = LIVE ? "From the chart on this device. To keep it, use Save Chart."
+    : "These are your saved results. No animation. No rewrite." + (savedAt ? " \u00B7 Saved " + longDate(savedAt) : "");
+  if (!lcPreparing) cozAutoPrint();                                     /* PL1: a print waits for the Life Cycle text */
 })();
 </script>
 <div id="cozFoot">
