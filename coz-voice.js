@@ -15,7 +15,9 @@
    VO1.1 (Oct 27 2026, after his first listen, "a bit of a delay"): no silent gaps. The first lines of a page are asked
    for together; the next section's first lines are made while the current section ends; the first long paragraph of
    each page starts with its first sentences as a short piece; the welcome comes in three pieces (VS2.2), so it starts
-   about 2 seconds after the tap; and opening a page checks the tester password in advance. Same text, same cost. */
+   about 2 seconds after the tap; and opening a page checks the tester password in advance. Same text, same cost.
+   VO1.2 (Oct 27 2026, his ruling): the background music stays on but goes well down while the voice reads, on every
+   reading, and comes back up when the voice pauses, stops, finishes or waits for text still being written. */
 (function () {
   if (window.CozVoice) return;
   var SERVER = "https://cozalyze-voice-server.netlify.app";
@@ -34,6 +36,9 @@
   var MAXCHUNK = 1800;     /* the voice server takes up to 2,500 characters at a time */
   var HEAD = 240;          /* VO1.1: the first long paragraph of a page starts with a short piece (its first sentences) */
   var FIRST = 4, AHEAD = 3, KEEP = 30;   /* VO1.1: asked for at the start; asked for ahead while playing; kept on the page */
+  /* VO1.2: the app's background music (the living page's ambient bed) under the voice. 1.0 is the level index.html gives
+     the bed for every reading (its handoff to the reading page); DUCK is about 14 dB lower. */
+  var BED = 1.0, DUCK = 0.2, DOWN_S = 1.0, UP_S = 2.5;
   var TURN_MS = 900;       /* the pause before the next section opens */
   var WAIT_MS = 2500;      /* how often text still being written is looked for */
 
@@ -182,9 +187,22 @@
     return player;
   }
   function unlock() { var a = audio(); try { a.src = SILENT; var p = a.play(); if (p && p.catch) p.catch(function () {}); } catch (e) {} }
+  /* VO1.2: the music goes down while the voice is reading (or about to), back up when it isn't */
+  var ducked = false;
+  function engine() {
+    try { if (window.parent !== window && window.parent.EMERGE_SOUND) return window.parent.EMERGE_SOUND; } catch (e) {}
+    return window.EMERGE_SOUND || null;
+  }
+  function duck(on) {
+    if (on === ducked) return;
+    var snd = engine(); if (!snd || !snd.swell) return;   /* no music on this page: nothing to lower */
+    ducked = on;
+    try { snd.swell("ambient", on ? DUCK : BED, on ? DOWN_S : UP_S); } catch (e) {}
+  }
   /* loading, playing, paused, waiting (text still being written), turning (to the next section), done, error */
   function phase(s, ph) {
     s.phase = ph;
+    if (s === S) duck(ph === "loading" || ph === "playing" || ph === "turning");
     if (s !== S || !s.el) return;
     var b = s.el.querySelector(".cv-pause");
     if (b) b.textContent = ph === "paused" ? "Resume" : ph === "done" ? "Play again" : ph === "error" ? "Try again" : "Pause";
@@ -267,7 +285,7 @@
     phase(s, "done");
   }
   function start(el, o, voice, auto) {
-    stop();
+    stop(true);                                          /* VO1.2: the music stays down from one reading to the next */
     if (!auto) unlock();                                 /* inside the tap */
     if (o.kind === "first" || o.kind === "next" || o.remember) set("cozVoice-" + sysOf(o), voice);   /* the pages after this one use it */
     var chunks = chunksFrom(texts(o));
@@ -280,9 +298,10 @@
     playChunk(s, 0);
     for (var k = 1; k < FIRST && k < s.chunks.length; k++) fetchChunk(s, k).catch(function () {});   /* VO1.1: the first lines together */
   }
-  function stop() {
+  function stop(keepDown) {
     var s = S; S = null; pending = null;
     if (player) { try { player.pause(); } catch (e) {} }
+    if (keepDown !== true) duck(false);                  /* VO1.2: the music comes back up */
     if (!s) return;
     clearTimeout(s.wait); clearTimeout(s.turn);
     if (s.el && s.el.isConnected) { s.el.innerHTML = inner(s.o, false); hook(s.el, s.o); }
@@ -351,8 +370,9 @@
   window.addEventListener("hashchange", function () {
     if (S && S.hash === location.hash) return;          /* the reading that just started on this section (the page drew it first) */
     var keep = pending && pending.hash === location.hash ? pending : null;
-    stop(); pending = keep;                             /* a hand-made change of section stops the voice */
+    stop(!!keep); pending = keep;                       /* a hand-made change of section stops the voice (the turn keeps the music down) */
+    if (keep) setTimeout(function () { if (!S) duck(false); }, 1500);   /* VO1.2: the next section is still being written: music back up while it waits */
   });
-  window.addEventListener("pagehide", stop);
+  window.addEventListener("pagehide", function () { stop(); });
   window.CozVoice = { attach: attach, collect: collect, stop: stop, speech: speech };
 })();
