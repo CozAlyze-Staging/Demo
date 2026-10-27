@@ -328,7 +328,9 @@ body {
      First page of the reading: "Have Your Chart Read By" with the two avatar pictures; tapping one reads the page in
      that voice and remembers the choice. Following pages of the reading: one "Have This Page Read" button in the
      remembered voice. Pages of their own (Your Ascendant, Your Current Life Cycle, Your Current Transits): the two
-     voices as buttons. Every page here reads the same four sample paragraphs, the only text the voice server reads. */
+     voices as buttons. Every page here reads the same four sample paragraphs, the only text the voice server reads.
+     VP2: on the first page the voice opens with a spoken welcome that says the reader's name (preview: Jason),
+     then reads the page. The welcome is heard, not shown. */
   var VOICE_SERVER = "https://cozalyze-voice-server.netlify.app";
   var ART = "?v=3";
 
@@ -372,22 +374,24 @@ body {
   var player = new Audio();
   player.preload = "auto";
   player.setAttribute("playsinline", "");
-  var part = 0;
+  /* what the voice says on this page, in order: the welcome first on the first page only */
+  var SEQ = page === "1" ? ["intro", 1, 2, 3, 4] : [1, 2, 3, 4];
+  var step = -1;
 
   function partUrl(n) { return VOICE_SERVER + "/api/sample-audio?avatar=" + sys + "-" + who + "&part=" + n; }
   function label(t) { var b = document.getElementById("vpPause"); if (b) b.textContent = t; }
-  function playPart(n) {
-    part = n;
-    player.src = partUrl(n);
+  function playStep(i) {
+    step = i;
+    player.src = partUrl(SEQ[i]);
     label("Pause");
     var p = player.play();
     if (p && p.catch) p.catch(function () { label("Try again"); });
   }
   player.addEventListener("ended", function () {
-    if (part < SAMPLE.length) playPart(part + 1);
-    else { part = 0; label("Play again"); }
+    if (step < SEQ.length - 1) playStep(step + 1);
+    else { step = -1; label("Play again"); }
   });
-  player.addEventListener("error", function () { if (reading && part) label("Try again"); });
+  player.addEventListener("error", function () { if (reading && step >= 0) label("Try again"); });
 
   function controlsHtml(rule) {   /* the star rule only under the picture; elsewhere the title's divider is right above */
     return '<nav class="vedic-nav avatar-controls" aria-label="Reading aloud">' +
@@ -465,7 +469,7 @@ body {
         if (page === "1") remember(who);
         reading = true;
         render();
-        playPart(1);                       /* inside the tap, so iPhone allows the sound */
+        playStep(0);                       /* inside the tap, so iPhone allows the sound */
       });
     });
 
@@ -474,13 +478,13 @@ body {
       var t = pause.textContent;
       if (t === "Pause") { player.pause(); label("Resume"); }
       else if (t === "Resume") { var p = player.play(); label("Pause"); if (p && p.catch) p.catch(function () { label("Try again"); }); }
-      else playPart(t === "Try again" && part ? part : 1);   /* Play again, Try again */
+      else playStep(t === "Try again" && step >= 0 ? step : 0);   /* Play again, Try again */
     });
 
     var stop = document.getElementById("vpStop");
     if (stop) stop.addEventListener("click", function () {
       player.pause();
-      part = 0;
+      step = -1;
       reading = false;
       render();
     });
