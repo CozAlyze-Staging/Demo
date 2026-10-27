@@ -1,4 +1,5 @@
-/* ACCOUNT AREA · AC1 (Oct 27 2026, staging only) · shared by the five account pages
+/* ACCOUNT AREA · AC1 r2 (Oct 27 2026, staging only): text fields show focus with their own brighter border only (no second ring).
+   ACCOUNT AREA · AC1 (Oct 27 2026, staging only) · shared by the five account pages
    (account-profile, account-birth, account-purchases, account-settings, account-privacy).
    Built from Jason's five approved mockups (Oct 27). Art is his, cut from those mockups with no text in it:
    acct-sky-top.jpg (stars, moon and the CozAlyze logo above the Edit Profile title) and the two lower cloud
@@ -146,7 +147,8 @@ html[data-coz-text="larger"] .seg.wide label+label{border-left:0;border-top:1px 
 .status:empty{display:none}
 .status.ok{color:var(--gold)}
 .status.bad{color:var(--rose)}
-a:focus-visible,button:focus-visible,.input:focus-visible,.select:focus-visible,.switch:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+a:focus-visible,button:focus-visible,.switch:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+.input:focus-visible,.select:focus-visible{outline:none}   /* fields show focus with their own brighter border */
 .input:focus,.select:focus{border-color:#F3D6AA;box-shadow:0 0 0 1px #F3D6AA}
 
 /* ---------- page pieces ---------- */
