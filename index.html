@@ -2407,7 +2407,7 @@ function cozSegField(cfg){
 /* MONTH · DAY · YEAR · TIME on the number pad (approved test DW2.0), each box moving on by itself.
    Month 2-9 at once, 1 waits 1.2 s for 10, 11 or 12. Day: a digit that can start a two-digit day for
    that month waits, any other is entered at once. Year in four digits (two work too: 77 = 1977,
-   04 = 2004). Hour 2-9 at once, 1 waits. Minute shows 0_: 0 and 6-9 finish it, 1-5 wait for 10-59.
+   04 = 2004). TIME (DT4, below) is typed as it reads on a clock, with no waiting.
    Then AM or PM (v21.0: AM comes chosen and lit gold), then ENTER. A digit that cannot belong to the box starts the next one (1 then 5 =
    January, day 5); a real day the month does not have (April 31, February 29 in 1977) is refused
    with a short message instead, so a date is never guessed, and the box stays empty with ENTER off
@@ -2437,13 +2437,53 @@ function cozSegField(cfg){
   });
 
   let S = { month:null, day:null, year:null, hour:null, minute:null, ampm:null };
-  let active = 'month', pend = '', timer = null, zeroAt = 0, message = '';
+  let active = 'month', pend = '', timer = null, message = '';
 
   const pad2 = n => (n < 10 ? '0' : '') + n;
+
+  /* DT4 (Oct 27 2026, his ruling, replaces "1 waits for 10, 11 or 12" and the minute's 0_): the time is typed as it reads
+     on a clock, with no waiting. One or two numbers on their own are the hour (9 = 9:00, 11 = 11:00). With three or four,
+     the last two are the minutes: 1 1 2 = 1:12, 1 1 2 5 = 11:25, 9 0 5 = 9:05 (0 9 0 5 works too). A number that cannot
+     make a time is not taken. The time goes in when AM or PM is tapped, or by itself once no number can follow (9:05,
+     11:25); 1:12 can still become 11:2_, so it waits for AM, PM or a fourth number, with AM and PM lit for the choice.
+     The time box is still active 'hour' while it is typed; 'minute' is never active now. */
+  const TIMES = new Map();   /* every way a time can be typed: numbers -> [hour, minute] */
+  for (let h = 1; h <= 12; h++) {
+    TIMES.set(String(h), [h, 0]);
+    if (h < 10) TIMES.set('0' + h, [h, 0]);
+    for (let m = 0; m < 60; m++) {
+      TIMES.set(h + pad2(m), [h, m]);
+      if (h < 10) TIMES.set('0' + h + pad2(m), [h, m]);
+    }
+  }
+  const STARTS = new Set(['']);   /* every start of one of them */
+  TIMES.forEach((v, k) => { for (let i = 1; i <= k.length; i++) STARTS.add(k.slice(0, i)); });
+  const canFollow = s => { for (let d = 0; d <= 9; d++) if (STARTS.has(s + d)) return true; return false; };
+  let tdig = '';   /* the numbers typed in the time box on this visit to it */
+  /* the numbers as a clock shows them so far: 1, 11, 1:12, 11:25, 1:3 (13 cannot be an hour), 09:0 */
+  function clockOf(s){
+    if (s.charAt(0) === '0') return s.length <= 2 ? s : s.slice(0, 2) + ':' + s.slice(2);
+    if (s.length === 1) return s;
+    if (s.length === 2) return TIMES.has(s) ? s : s.charAt(0) + ':' + s.charAt(1);
+    return s.slice(0, -2) + ':' + s.slice(-2);
+  }
+  /* the time as it reads now: the numbers being typed, or the time already in */
+  function timeIn(){
+    if (active === 'hour' && tdig !== '') return TIMES.get(tdig) || null;
+    return (S.hour !== null && S.minute !== null) ? [S.hour, S.minute] : null;
+  }
+  /* leaving the time box part way: numbers that make a time are kept as the time; numbers that do not yet make one
+     empty the time, so a half-typed time is never mistaken for the one before it */
+  function leaveTime(){
+    if (active !== 'hour' || tdig === '') return;
+    const r = TIMES.get(tdig);
+    S.hour = r ? r[0] : null; S.minute = r ? r[1] : null;
+    tdig = '';
+  }
   const isLeap = y => (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
   const daysIn = (m, y) => m === null ? 31 : (m === 2 ? (y === null ? 29 : (isLeap(y) ? 29 : 28)) : [31,28,31,30,31,30,31,31,30,31,30,31][m - 1]);
   const to24 = (h, ap) => ap === 'AM' ? (h === 12 ? 0 : h) : (h === 12 ? 12 : h + 12);
-  const allIn = () => PARTS.every(p => S[p] !== null);
+  const allIn = () => S.month !== null && S.day !== null && S.year !== null && S.ampm !== null && !!timeIn();   /* DT4: the time as it reads */
   const live = () => bar.classList.contains('show') && !bar.classList.contains('done');
   const pulse = () => { try { EMERGE_SOUND.play('pulse'); } catch(_){} };
 
@@ -2517,33 +2557,41 @@ function cozSegField(cfg){
       if (p.length === 1 && p !== '1' && p !== '2') { const two = Number(p) * 10 + d; settleYear(p === '0' ? 2000 + two : 1900 + two); return; }
       pend = p + String(d);
       if (pend.length === 4) { settleYear(Number(pend)); return; }
-    } else if (part === 'hour') {
-      if (p === '') { if (d === 0) pend = '0'; else if (d === 1) { pend = '1'; arm(); } else settle('hour', d); }
-      else if (p === '0') { if (d !== 0) settle('hour', d); }
-      else if (d <= 2) settle('hour', 10 + d);
-      else { settle('hour', 1); spill(d); }
-    } else if (part === 'minute') {
-      if (p === '') { if (d === 0) { settle('minute', 0); zeroAt = Date.now(); } else if (d >= 6) settle('minute', d); else { pend = String(d); arm(); } }
-      else settle('minute', Number(p) * 10 + d);
+    } else if (part === 'hour') {   /* DT4: the time, typed as it reads on a clock */
+      const s = tdig + d;
+      if (STARTS.has(s)) {
+        tdig = s;
+        if (TIMES.has(s) && !canFollow(s)) {   /* 9:05, 11:25: nothing more can follow, so the time is in */
+          const r = TIMES.get(s);
+          S.hour = r[0]; S.minute = r[1]; tdig = '';
+          active = 'ampm';
+        }
+      }   /* otherwise the number cannot make a time and is not taken */
     }
     render();
   }
   function digit(d){
     if (active === 'done') return;
     pulse();
-    if (active === 'ampm' || active === 'ready') {
-      /* 0 then 5 still means :05 */
-      if (zeroAt && Date.now() - zeroAt < PAUSE && S.minute === 0) { S.minute = d; zeroAt = 0; render(); }
-      return;
-    }
-    zeroAt = 0;
-    if (active === 'hour' || active === 'minute') { try { uncleJohnIn(); } catch(_){} }   /* v19.90 cue: first digit of the birth TIME */
+    if (active === 'ampm' || active === 'ready') return;
+    if (active === 'hour') { try { uncleJohnIn(); } catch(_){} }   /* v19.90 cue: first digit of the birth TIME */
     feed(d);
   }
   function deleteKey(){
     clearTimer(); message = '';
     if (active === 'done') return;
     if (pend !== '') { pend = pend.slice(0, -1); render(); return; }
+    if (active === 'hour') {   /* DT4: the last number typed goes; with none typed, the time there before goes */
+      if (tdig !== '') tdig = tdig.slice(0, -1);
+      else if (S.hour !== null || S.minute !== null) S.hour = S.minute = null;
+      else { active = 'year'; S.year = null; }
+      render(); return;
+    }
+    if (active === 'ampm' && S.ampm === null) {   /* DT4: back into the time, its last number deleted (11:25 -> 1:12) */
+      tdig = S.hour !== null && S.minute !== null ? (String(S.hour) + pad2(S.minute)).slice(0, -1) : '';
+      S.hour = S.minute = null; active = 'hour';
+      render(); return;
+    }
     if (active !== 'ready' && S[active] !== null) { S[active] = null; render(); return; }
     const i = active === 'ready' ? PARTS.length : PARTS.indexOf(active);
     if (i > 0) { active = PARTS[i - 1]; S[active] = null; }
@@ -2551,13 +2599,20 @@ function cozSegField(cfg){
   }
   function pickAmPm(v){
     if (active === 'done') return;
-    if (pend !== '' && (active === 'hour' || active === 'minute')) settlePending();
-    S.ampm = v; message = '';
+    message = '';
+    if (active === 'hour' && tdig !== '') {   /* DT4: AM or PM puts in the time typed (9 = 9:00, 1 1 2 = 1:12) */
+      const r = TIMES.get(tdig);
+      if (!r) { S.ampm = v; render(); return; }   /* not a time yet (9:0): the choice is kept and the box stays open */
+      S.hour = r[0]; S.minute = r[1]; tdig = '';
+    }
+    S.ampm = v;
     active = nextAfter('ampm');
+    if (active === 'minute') active = 'hour';
     render();
   }
   function finish(){
     if (!allIn() || pend !== '' || active === 'done') return;
+    const t = timeIn(); S.hour = t[0]; S.minute = t[1]; tdig = '';   /* DT4: the time as it reads */
     const bad = problem();   /* DT1 r3: never hand on a date the calendar does not have */
     if (bad) { S[bad.part] = null; active = bad.part; message = bad.text; render(); return; }
     const now = new Date();
@@ -2592,10 +2647,9 @@ function cozSegField(cfg){
     if (a === 'year') show('year', pend !== '' ? pend + caret() : (S.year !== null ? old(S.year) : '') + caret(), 4);
     else show('year', S.year !== null ? String(S.year) : empty(), 4);
     let t, n;
-    if (a === 'hour') { t = pend !== '' ? pend + caret() : (S.hour !== null ? old(S.hour) : '') + caret(); n = 2; }
-    else if (a === 'minute') {
-      t = (S.hour === null ? DASH : String(S.hour)) + ':' + (pend !== '' ? '0' + pend : (S.minute !== null ? old(pad2(S.minute)) : '0')) + caret();
-      n = 5;
+    if (a === 'hour') {   /* DT4: the numbers as a clock shows them; before any are typed, the time there before, faint */
+      if (tdig !== '') { t = clockOf(tdig); n = t.length; t += caret(); }
+      else { t = (S.hour !== null ? old(S.hour + ':' + (S.minute === null ? DASH + DASH : pad2(S.minute))) : '') + caret(); n = 5; }
     } else if (S.hour === null && S.minute === null && S.ampm === null) { t = empty(); n = 1; }
     else { t = (S.hour === null ? DASH : String(S.hour)) + ':' + (S.minute === null ? DASH + DASH : pad2(S.minute)) + (S.ampm ? ' ' + S.ampm : ''); n = t.length; }
     show('time', t, n);
@@ -2608,12 +2662,14 @@ function cozSegField(cfg){
     const timeOn = onBox === 'time' || a === 'ready';
     if (a !== 'done') prompt.textContent = timeOn ? Q_TIME : Q_DATE;
     ampmEl.classList.toggle('away', !timeOn && S.ampm === null);
-    ampmEl.classList.toggle('muted', a !== 'ampm' && a !== 'ready');
+    /* DT4: a time with its minutes typed (1:12) can take AM or PM now, so they light as when the time is in */
+    const choose = a === 'ampm' || (a === 'hour' && tdig.length >= 3 && TIMES.has(tdig));
+    ampmEl.classList.toggle('muted', !choose && a !== 'ready');
     ampmEl.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x.getAttribute('data-ampm') === S.ampm)));
     /* DT2: in the time box, BACK loses its gold until AM or PM is tapped, like ENTER (it still works if tapped) */
     const dtBack = bar.querySelector('.entry-actions .entry-back');
     if (dtBack) dtBack.classList.toggle('dim', timeOn && S.ampm === null && a !== 'done');
-    ampmEl.classList.toggle('cue', a === 'ampm' && S.ampm === null);   /* DT2.1: AM in gold while the choice is waited for */
+    ampmEl.classList.toggle('cue', choose && S.ampm === null);   /* DT2.1: AM in gold while the choice is waited for */
     msgEl.textContent = message;
     enterEl.classList.toggle('ready', allIn() && pend === '' && a !== 'done' && !problem());
   }
@@ -2643,6 +2699,7 @@ function cozSegField(cfg){
       ev.stopPropagation();
       if (active === 'done') return;
       if (pend !== '') { if (pend === '0' || active === 'year') { pend = ''; clearTimer(); } else settlePending(); }
+      if (b !== 'time') leaveTime();   /* DT4; a tap on the time box itself keeps the numbers typed */
       active = b === 'time' ? 'hour' : b;
       message = '';
       render();
@@ -2664,8 +2721,9 @@ function cozSegField(cfg){
     clearTimer(); message = '';
     if (active === 'done') return false;
     if (pend !== '') { pend = ''; render(); focusKeys(); return true; }
+    if (active === 'hour' && tdig !== '') { tdig = ''; render(); focusKeys(); return true; }   /* DT4: the numbers typed go, the time before stays */
     const i = active === 'ready' ? PARTS.length : PARTS.indexOf(active);
-    if (i > 0) { active = PARTS[i - 1]; render(); focusKeys(); return true; }
+    if (i > 0) { active = PARTS[i - 1]; if (active === 'minute') active = 'hour'; render(); focusKeys(); return true; }
     render();
     return false;
   };
@@ -2763,8 +2821,8 @@ function cozSegField(cfg){
 
   /* back from the name step: the boxes return with TIME open and every value kept */
   window.__dtOpen = function(part){
-    clearTimer(); pend = ''; message = '';
-    active = part || 'month';
+    clearTimer(); pend = ''; message = ''; tdig = '';
+    active = part === 'minute' ? 'hour' : (part || 'month');
     render();
   };
   render();
