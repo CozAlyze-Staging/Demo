@@ -64,6 +64,7 @@ h3{font-family:var(--head);font-weight:500;font-size:clamp(16px,4.5cqw,19.5px);l
 .acc.open{grid-template-rows:1fr}
 .acc-in{overflow:hidden;visibility:hidden;transition:visibility 0s .4s}
 .acc.open .acc-in{visibility:visible;transition:visibility 0s 0s}
+.acc.snap,.acc.snap .acc-in{transition:none}   /* TT1.2: another drop-down closes at once, so the screen does not slide away */
 .drop dl{padding:2px 2px 20px}
 .drop dt{font-family:var(--head);font-weight:500;font-size:13px;letter-spacing:.08em;color:var(--gold-soft);margin-top:14px}
 .drop dd{font-size:17px;line-height:1.5;color:var(--cream);overflow-wrap:anywhere;margin-top:2px}
@@ -106,7 +107,7 @@ h3{font-family:var(--head);font-weight:500;font-size:clamp(16px,4.5cqw,19.5px);l
       <a href="tropical-reading.html">&lsaquo; Back to Your Tropical Reading</a>
       <a href="tropical-birth-chart.html">Next: Your Birth Chart &rsaquo;</a>
     </nav>
-    <div class="stamp" aria-hidden="true">CURRENT TRANSITS · TT1.1 · VO1.2 read aloud</div>
+    <div class="stamp" aria-hidden="true">CURRENT TRANSITS · TT1.2 opens at the top · VO1.2 read aloud</div>
   </div>
  </div>
 </main>
@@ -200,11 +201,39 @@ h3{font-family:var(--head);font-weight:500;font-size:clamp(16px,4.5cqw,19.5px);l
     /* all closed when the page opens; one open at a time (the Compare reading's accordion behaviour) */
     var buttons = [].slice.call(document.querySelectorAll('.drop .acc-btn'));
     function setOpen(b, open){ b.setAttribute('aria-expanded', open ? 'true' : 'false'); $(b.getAttribute('aria-controls')).classList.toggle('open', open); }
+    /* TT1.2 (Oct 27 2026, his ruling "always start at top", staging only; the same as combined-reading.html CR3.4):
+       a drop-down never opens with the screen at its bottom. The one open before closes at once (closing it slowly
+       above the screen is what slid the screen to the end of the one just opened), the one tapped is kept where it was,
+       and then it glides to the top of the screen, so its reading starts there. A touch stops the glide. */
+    var REST = 16, glide = null;                                        /* px left above the drop-down's line */
+    function stopGlide(){ if (glide) { cancelAnimationFrame(glide); glide = null; } }
+    window.addEventListener('touchstart', stopGlide, { passive: true });
+    window.addEventListener('wheel', stopGlide, { passive: true });
+    function closeAtOnce(o){
+      var acc = $(o.getAttribute('aria-controls'));
+      if (!acc.classList.contains('open')) return;
+      acc.classList.add('snap'); setOpen(o, false); void acc.offsetHeight; acc.classList.remove('snap');
+    }
+    function toTop(sec){
+      stopGlide();
+      var from = window.scrollY, t0 = performance.now();
+      var MS = (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) ? 0 : 650;
+      (function step(now){
+        var to = Math.max(0, sec.getBoundingClientRect().top + window.scrollY - REST);   /* the room below grows as it opens */
+        var p = MS ? Math.min(1, (now - t0) / MS) : 1, e = p < .5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
+        window.scrollTo(0, from + (to - from) * e);
+        glide = (p < 1 || Math.abs(window.scrollY - to) > 1 && now - t0 < 1200) ? requestAnimationFrame(step) : null;
+      })(t0);
+    }
     buttons.forEach(function(b){
       b.addEventListener('click', function(){
         var opening = b.getAttribute('aria-expanded') !== 'true';
-        buttons.forEach(function(o){ if (o !== b) setOpen(o, false); });
+        var sec = b.closest('.drop'), was = sec.getBoundingClientRect().top;
+        buttons.forEach(function(o){ if (o !== b) closeAtOnce(o); });
+        var moved = sec.getBoundingClientRect().top - was;
+        if (moved) { stopGlide(); window.scrollBy(0, moved); }            /* the one tapped stays where it was */
         setOpen(b, opening);
+        if (opening) toTop(sec);
       });
     });
     /* VO1 (Oct 27 2026, his ruling, staging only): "Have This Page Read By" with the two voices, at the top of the

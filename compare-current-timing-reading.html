@@ -56,6 +56,7 @@ h1{font-family:var(--head);font-weight:500;font-size:max(24px,calc(66 * var(--k)
 .acc.open{grid-template-rows:1fr}
 .acc-in{overflow:hidden;visibility:hidden;transition:visibility 0s .45s}
 .acc.open .acc-in{visibility:visible;transition:visibility 0s 0s}
+.acc.snap,.acc.snap .acc-in{transition:none}   /* CT3.3: another section closes at once, so the screen does not slide away */
 .body{text-align:left;padding:calc(30 * var(--k)) calc(34 * var(--k)) calc(34 * var(--k));margin:calc(18 * var(--k)) 0 calc(6 * var(--k));background:rgba(3,7,18,.72);border-radius:10px}
 .body p{font-family:var(--sans);font-weight:300;font-size:max(19px,calc(30 * var(--k)));line-height:1.6;color:var(--cream);overflow-wrap:anywhere}
 .body p+p{margin-top:.95em}
@@ -133,7 +134,7 @@ dialog.mdl::backdrop{background:rgba(0,2,8,.78)}
     <div id="mdlBody"></div>
   </div>
 </dialog>
-<div class="stamp">CURRENT TIMING · CT3.2 · larger text · VO1.2 read aloud</div>
+<div class="stamp">CURRENT TIMING · CT3.3 opens at the top · larger text · VO1.2 read aloud</div>
 
 <script src="https://cdn.jsdelivr.net/npm/astronomy-engine@2.1.19/astronomy.browser.min.js"></script>
 <script src="coz-graha.js"></script>
@@ -174,11 +175,39 @@ dialog.mdl::backdrop{background:rgba(0,2,8,.78)}
       btn.setAttribute('aria-expanded', open ? 'true' : 'false');
       $(btn.getAttribute('aria-controls')).classList.toggle('open', open);
     }
+    /* CT3.3 (Oct 27 2026, his ruling "always start at top", staging only; the same as combined-reading.html CR3.4):
+       a section never opens with the screen at its bottom. The section open before closes at once (closing it slowly
+       above the screen is what slid the screen to the end of the one just opened), the section tapped is kept where it
+       was, and then it glides to the top of the screen, so its reading starts there. A touch stops the glide. */
+    var REST = 16, glide = null;                                        /* px left above the section's title */
+    function stopGlide(){ if (glide) { cancelAnimationFrame(glide); glide = null; } }
+    window.addEventListener('touchstart', stopGlide, { passive: true });
+    window.addEventListener('wheel', stopGlide, { passive: true });
+    function closeAtOnce(b){
+      var acc = $(b.getAttribute('aria-controls'));
+      if (!acc.classList.contains('open')) return;
+      acc.classList.add('snap'); setOpen(b, false); void acc.offsetHeight; acc.classList.remove('snap');
+    }
+    function toTop(sec){
+      stopGlide();
+      var from = window.scrollY, t0 = performance.now();
+      var MS = (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) ? 0 : 650;
+      (function step(now){
+        var to = Math.max(0, sec.getBoundingClientRect().top + window.scrollY - REST);   /* the room below grows as it opens */
+        var p = MS ? Math.min(1, (now - t0) / MS) : 1, e = p < .5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
+        window.scrollTo(0, from + (to - from) * e);
+        glide = (p < 1 || Math.abs(window.scrollY - to) > 1 && now - t0 < 1200) ? requestAnimationFrame(step) : null;
+      })(t0);
+    }
     buttons.forEach(function(btn){
       btn.addEventListener('click', function(){
         var opening = btn.getAttribute('aria-expanded') !== 'true';
-        buttons.forEach(function(b){ if (b !== btn) setOpen(b, false); });
+        var sec = btn.closest('.sec'), was = sec.getBoundingClientRect().top;
+        buttons.forEach(function(b){ if (b !== btn) closeAtOnce(b); });
+        var moved = sec.getBoundingClientRect().top - was;
+        if (moved) { stopGlide(); window.scrollBy(0, moved); }            /* the section tapped stays where it was */
         setOpen(btn, opening);
+        if (opening) toTop(sec);
       });
     });
     if (buttons[0]) setOpen(buttons[0], true);
