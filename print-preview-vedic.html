@@ -1,0 +1,308 @@
+<!doctype html>
+<!-- PRINT YOUR CHART PREVIEW PP1 (Oct 27 2026, staging only, linked from no real page): a copy of saved-vedic-document.html that shows the chart on this device without saving it (print-preview.js builds the unsaved record, id=live). Only the wording for an unsaved chart, the links and the back button differ from the saved document. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Saved Reading · CozAlyze</title>
+<!--
+  COZALYZE · SAVED VEDIC DOCUMENT · SD1.5 (Oct 2 2026) · top-level print
+  SD1.5 (Jason): from Compare the Back button reads "Back to Your Vedic Birth Chart", matching the
+  Compare page title (CSY1.5+). From Saved, unchanged.
+  SD1.4: opened from Compare (from=compare), Back returns to that Compare page
+  (compare-system.html?sys=vedic#reading). Saved Library behavior unchanged.
+  One renderer for the three clean Vedic saved-document views:
+    saved-vedic-document.html?view=reading&id=<record>      Your Vedic Reading (six sections)
+    saved-vedic-document.html?view=lagna&id=<record>        Your Ascendant – Lagna
+    saved-vedic-document.html?view=life-cycle&id=<record>   Your Current Life Cycle
+  SVD1.1 r2: the footer prints whole; the birth line adds the country from the record's own birth data
+  (same run ID and fingerprint).
+  SVD1.1 r1: the saved text shows only when all three pages are present, in order; a disclaimer that
+  repeats across the pages shows once, after the readings.
+  SVD1.1 (Oct 6 2026): the Current Life Cycle view adds the full reading (Current Season, Key Time Windows,
+  What Comes Next) captured at save; every view ends with the chaining links, like the saved comparison.
+  Data: the selected cozSavedCharts record's library (rec.library.vedic), captured at save
+  time by saved-vedic-library.js. Document renderer only: no animation, no model request,
+  no regeneration, no reinterpretation. Print / Save PDF expands every section.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="saved-document.css?v=2">
+<style>
+/* SVD1.1: the chaining links, same rules as the saved comparison (saved-compare-document.html SCD1.0) */
+.doc-links p{margin:0 0 .5rem}
+.doc-links a{color:var(--coz-gold); text-decoration:none}
+.doc-links .here{color:var(--coz-ink-soft)}
+@media print{ .doc-links{display:none} .doc-footer{break-inside:avoid; page-break-inside:avoid} }   /* r2: the footer prints whole */
+
+/* v20.6 (Jason, Oct 15): the Home / Saved / Account bar stays on screen the whole time, so a saved
+   reading can always be left. Same bar as the Vedic birth chart (v20.1 shared reading footer). */
+#cozFoot{
+  position:fixed; left:0; right:0; bottom:0; z-index:40;
+  padding-bottom:env(safe-area-inset-bottom);
+  background:rgb(8 11 17 / .86);
+  backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+  border-top:1px solid rgb(201 161 94 / .18);
+}
+#cozFoot .coz-foot-tag{
+  text-align:center; font-style:italic; font-size:13px; letter-spacing:.04em;
+  color:#8b8272; padding:11px 20px 3px;
+}
+#cozFoot .coz-foot-links{display:flex; height:64px}
+#cozFoot a{
+  flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:4px; text-decoration:none; color:#8b8272; font-size:10.5px; letter-spacing:.06em;
+  -webkit-tap-highlight-color:transparent;
+}
+#cozFoot a svg{width:21px; height:21px; stroke:currentColor; fill:none; stroke-width:1.4; stroke-linecap:round; stroke-linejoin:round}
+#cozFoot a:active{color:var(--coz-gold,#b88a55)}
+@media print{ #cozFoot{display:none !important} }
+.doc-shell{padding-bottom:calc(env(safe-area-inset-bottom) + 124px)}   /* the bar owns the bottom of the screen */
+</style>
+<script src="coz-saved.js?v=3"></script>
+<script src="saved-vedic-library.js?v=3"></script>
+<script src="print-preview.js?v=1"></script>
+<style id="coz-rd1">/* RD1 (Oct 22 2026): every tappable label at least 15px on a phone */html body #cozFoot a{font-size:15px}html body .doc-button{font-size:max(15px,0.88rem)}/* RD3: Vedic/Tropical/Life Cycle Back/Next and the bottom bar labels larger */html body #cozFoot a{font-size:17px}</style>
+<style id="coz-dv1">/* DV1 (Oct 22 2026): version stamps and the diagnostic launcher show only on a device with developer view on (localStorage cozDevView = "1") */html:not(.coz-dev) .stamp,html:not(.coz-dev) .stamp2,html:not(.coz-dev) .vedic-stamp,html:not(.coz-dev) .build-stamp,html:not(.coz-dev) .lc-stamp,html:not(.coz-dev) .cs-stamp,html:not(.coz-dev) .ktw-stamp,html:not(.coz-dev) .wcn-stamp,html:not(.coz-dev) #stamp,html:not(.coz-dev) #cozDiagLaunch{display:none!important}</style><script>try{if(localStorage.getItem("cozDevView")==="1")document.documentElement.classList.add("coz-dev")}catch(e){}</script>
+</head>
+<body>
+<div class="doc-shell">
+  <div class="doc-toolbar">
+    <a class="doc-button" id="backBtn" href="saved-charts.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+      Back to Birth Chart
+    </a>
+    <div class="doc-actions">
+    <button type="button" class="doc-button" id="expandBtn">Expand All</button>
+    <button type="button" class="doc-button" id="printBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M7 8V3h10v5M7 17H4a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-3M7 14h10v7H7z"/></svg>
+      Print / Save PDF
+    </button>
+    </div>
+  </div>
+  <div id="mount"></div>
+  <p class="doc-savednote" id="savedNote"></p>
+</div>
+<script>
+"use strict";
+(function(){
+  var SIGN_NAMES = ["Aries","Taurus","Gemini","Cancer","Leo","Virgo","Libra","Scorpio","Sagittarius","Capricorn","Aquarius","Pisces"];
+  var MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  var DISCLOSURE = "This AI-generated astrological content is provided for reflection and entertainment only. It is not scientific, medical, legal, financial, or professional advice.";
+  var TITLES = { "reading": "Your Vedic Reading", "lagna": "Your Ascendant \u2013 Lagna", "life-cycle": "Your Current Life Cycle" };
+
+  function el(tag,cls,text){ var n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; }
+  /* strings beginning with "## " are subheads (Section 5 Rahu / Ketu), as in vedic-reading.html */
+  function paras(host, list){ (list || []).forEach(function(t){ t = t == null ? "" : String(t); if (!t.trim()) return; host.appendChild(t.indexOf("## ") === 0 ? el("h3",null,t.slice(3)) : el("p",null,t)); }); return host; }
+  function pad2(n){ return (n<10?"0":"")+n; }
+  function longDate(iso){ if (!iso) return ""; var d = new Date(iso); if (isNaN(d)) return String(iso); return MONTHS[d.getUTCMonth()] + " " + d.getUTCDate() + ", " + d.getUTCFullYear(); }
+  function section(number, title, open){
+    var d = el("details","doc-section"); if (open) d.open = true;
+    var sm = el("summary"); var h2 = el("h2");
+    if (number != null){ var num = el("span","num",number + "."); h2.appendChild(num); }
+    h2.appendChild(document.createTextNode(title));
+    sm.appendChild(h2); sm.appendChild(el("span","chev","\u203A")); d.appendChild(sm);
+    return d;
+  }
+  function empty(msg){
+    var c = el("div","doc-empty");
+    c.appendChild(el("h2",null,"This reading isn\u2019t ready to print"));
+    var p = el("p",null,msg + " "); var a = el("a",null,"Back to Birth Chart"); a.href = "print-preview.html?sys=vedic"; p.appendChild(a); c.appendChild(p);
+    return c;
+  }
+
+  var qp = new URLSearchParams(location.search);
+  var view = qp.get("view") || "reading";
+  var mount = document.getElementById("mount");
+/* Print / Save PDF: iOS Safari ignores window.print() from inside the app frame, so a
+     framed page opens itself at top level with ?print=1 and prints there. */
+  function cozPrint(){
+    var framed = false; try { framed = window.top !== window; } catch (e) { framed = true; }
+    if (framed) { var u = new URL(location.href); u.searchParams.set("print", "1"); window.open(u.href, "_blank"); return; }
+    window.print();
+  }
+  function cozAutoPrint(){
+    if (!/[?&]print=1\b/.test(location.search)) return;
+    var go = function(){ setTimeout(function(){ window.print(); }, 250); };
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(go); else go();
+  }
+  document.getElementById("printBtn").addEventListener("click", cozPrint);
+  window.addEventListener("beforeprint", function(){ document.querySelectorAll("details.doc-section").forEach(function(d){ d.dataset.wasOpen = d.open ? "1" : "0"; d.open = true; }); });
+  document.getElementById("expandBtn").addEventListener("click", function(){
+    var all = document.querySelectorAll("details.doc-section"), open = Array.prototype.every.call(all, function(d){ return d.open; });
+    all.forEach(function(d){ d.open = !open; });
+    this.textContent = open ? "Expand All" : "Collapse All";
+  });
+  window.addEventListener("afterprint", function(){ document.querySelectorAll("details.doc-section").forEach(function(d){ if (d.dataset.wasOpen === "0") d.open = false; }); });
+
+  var lib = window.CozSavedVedic ? window.CozSavedVedic.load() : null;
+  if (!lib){ mount.appendChild(empty("There\u2019s no chart on this device to print yet.")); return; }
+  document.getElementById("backBtn").href = "print-preview.html?sys=vedic";
+  if (qp.get("from") === "compare") {                                  /* opened from Compare: go back there */
+    var bb = document.getElementById("backBtn");
+    bb.href = "compare-system.html?sys=vedic#reading";
+    bb.lastChild.textContent = " Back to Your Vedic Birth Chart";
+  }
+  document.title = (TITLES[view] || "Saved Reading") + " \u00B7 CozAlyze";
+  /* r2: "Paris" becomes "Paris, France" only from this saved record's own birth data (its snapshot), when that
+     data has the record's run ID AND fingerprint and names the same place and a country. Otherwise unchanged. */
+  function placeOf(loc){
+    loc = loc || "";
+    try {
+      var raw = lib.rec && lib.rec.snapshot ? lib.rec.snapshot.emergeBirthData : null;
+      var bd = typeof raw === "string" ? JSON.parse(raw) : raw;
+      if (bd && bd.runId && bd.runId === lib.rec.runId && bd.fingerprint && bd.fingerprint === lib.rec.fingerprint &&
+          bd.location && bd.location.name === loc && bd.location.country && loc.indexOf(",") < 0) return loc + ", " + bd.location.country;
+    } catch (e) {}
+    return loc;
+  }
+
+  var paper = el("article","doc-paper"), inner = el("div","doc-inner");
+  paper.appendChild(inner);
+  inner.appendChild(el("p","doc-kicker", TITLES[view] || "Saved Reading"));
+  inner.appendChild(el("h1",null, lib.name || "Your Chart"));
+  var b = lib.birth || {}, bits = [b.date, b.time, placeOf(b.location)].filter(Boolean);
+  if (bits.length) inner.appendChild(el("p","doc-birthline", bits.join("  \u2022  ")));
+
+  var L = lib.library || {}, ok = true;
+
+  if (view === "reading"){
+    var R = L.reading;
+    if (!R || !R.sections){ ok = false; mount.appendChild(empty("Your Vedic Reading isn\u2019t finished yet. Open it from your dashboard first.")); }
+    else (R.order || []).forEach(function(s, i){
+      var d = section(s.number, s.title, i === 0);
+      d.appendChild(paras(el("div","doc-copy"), R.sections[s.id]));
+      inner.appendChild(d);
+    });
+  }
+  else if (view === "lagna"){
+    var G = L.lagna;
+    if (!G || !G.sign){ ok = false; mount.appendChild(empty("Your Ascendant reading isn\u2019t ready yet. Open it from your dashboard first.")); }
+    else {
+      var asc = lib.chart && Array.isArray(lib.chart.planets) ? lib.chart.planets.filter(function(p){ return p && p.name === "Ascendant"; })[0] : null;
+      var head = el("div");
+      head.appendChild(el("p","doc-label","Vedic Ascendant"));
+      head.appendChild(el("p","doc-big", G.sign + (asc ? " " + pad2(asc.degrees) + "\u00B0" + pad2(asc.minutes) + "\u2032" : "")));
+      inner.appendChild(head);
+      var s1 = section(null,"Sidereal Perspective",true); s1.appendChild(paras(el("div","doc-copy"), G.shared)); inner.appendChild(s1);
+      var s2 = section(null,"The Essence of You",false); s2.appendChild(paras(el("div","doc-copy"), G.essence)); inner.appendChild(s2);
+      var s3 = section(null,"Your Dharmic Path",false); s3.appendChild(paras(el("div","doc-copy"), G.dharma)); inner.appendChild(s3);
+    }
+  }
+  else if (view === "life-cycle"){
+    var C = L.lifeCycle && L.lifeCycle.data;
+    if (!C || !C.mahadasha){ ok = false; mount.appendChild(empty("Your Current Life Cycle isn\u2019t ready for this chart.")); }
+    else {
+      var md = C.mahadasha, ad = C.antardasha;
+      var s1 = section(null,"The Larger Chapter",true);
+      s1.appendChild(el("p","doc-big", md.lord + " Mahadasha"));
+      s1.appendChild(el("p","doc-when", longDate(md.startTimestamp) + " \u2013 " + longDate(md.endTimestamp)));
+      inner.appendChild(s1);
+      if (ad){
+        var s2 = section(null,"Current Antardasha",false);
+        s2.appendChild(el("p","doc-big", md.lord + " \u2013 " + ad.lord));
+        s2.appendChild(el("p","doc-when", longDate(ad.startTimestamp) + " \u2013 " + longDate(ad.endTimestamp)));
+        inner.appendChild(s2);
+      }
+      var seq = Array.isArray(C.antardashaSequence) ? C.antardashaSequence : [];
+      if (seq.length){
+        var s3 = section(null,"Periods Within This Chapter",false);
+        var t = el("table","doc-table"), th = el("thead"), tr = el("tr");
+        ["Period","Begins","Ends"].forEach(function(x){ tr.appendChild(el("th",null,x)); }); th.appendChild(tr); t.appendChild(th);
+        var tb = el("tbody");
+        seq.forEach(function(seg){
+          var r = el("tr", ad && seg.startTimestamp === ad.startTimestamp ? "now" : null);
+          r.appendChild(el("td",null, md.lord + " \u2013 " + seg.lord));
+          r.appendChild(el("td",null, longDate(seg.startTimestamp)));
+          r.appendChild(el("td",null, longDate(seg.endTimestamp)));
+          tb.appendChild(r);
+        });
+        t.appendChild(tb); s3.appendChild(t); inner.appendChild(s3);
+      }
+      /* SVD1.1: the full Life Cycle reading, as the live pages showed it when the chart was saved */
+      var T = L.lifeCycle.text, rec = lib.rec;
+      var ORDER = ["current-season", "key-time-windows", "what-comes-next"];
+      var full = T && T.status === "complete" && T.runId === rec.runId && T.fingerprint === rec.fingerprint && Array.isArray(T.pages) &&
+                 T.pages.length === ORDER.length &&
+                 ORDER.every(function(id, i){ var x = T.pages[i]; return x && x.id === id && Array.isArray(x.blocks) && x.blocks.length > 0; });   /* r1: all three, in order */
+      if (full) {
+        inner.appendChild(el("p","doc-when","As of " + longDate(T.capturedAt)));
+        var notes = [];                                                         /* r1: each distinct page disclaimer, shown once */
+        T.pages.forEach(function(pg){
+          var d = section(null, pg.title, false), copy = el("div","doc-copy");
+          (pg.blocks || []).forEach(function(bk){
+            var k = String(bk.k || "");
+            if (/-eyebrow$/.test(k)) return;                                   /* the page label: already the section title */
+            if (/-h1$/.test(k) && bk.t === pg.title) return;                   /* the page heading: already the section title */
+            if (/-disclaimer$/.test(k)) { if (notes.indexOf(bk.t) < 0) notes.push(bk.t); return; }   /* r1: shown once, after the readings */
+            if (/-h1$/.test(k)) copy.appendChild(el("p","doc-label", bk.t));
+            else if (/-(pair|lord)$/.test(k)) copy.appendChild(el("p","doc-big", bk.t));
+            else if (/-(dates|when|span)$/.test(k)) copy.appendChild(el("p","doc-when", bk.t));
+            else copy.appendChild(el("p", null, bk.t));
+          });
+          d.appendChild(copy); inner.appendChild(d);
+        });
+        notes.forEach(function(n){ inner.appendChild(el("p", null, n)); });
+      } else {
+        var waiting = T && T.status === "pending" && T.runId === rec.runId && T.fingerprint === rec.fingerprint &&
+                      window.CozSavedVedic && window.CozSavedVedic.lcLive && window.CozSavedVedic.lcLive(rec);
+        var note = section(null, "Your Current Season, Key Time Windows and What Comes Next", true);
+        note.appendChild(el("p", null, waiting
+          ? "The full Life Cycle reading is being prepared."
+          : "The full Life Cycle reading couldn\u2019t be prepared right now."));
+        if (waiting && window.CozPrintPreview) window.CozPrintPreview.makeLifeCycleText();   /* PP1: made as a save makes it */
+        inner.appendChild(note);
+        if (waiting) window.addEventListener("COZ_SAVED_VEDIC_LC_FILLED", function(ev){
+          if (ev.detail && ev.detail.ids && ev.detail.ids.indexOf(rec.id) >= 0) location.reload();
+        });
+      }
+    }
+  }
+  else { ok = false; mount.appendChild(empty("Unknown view.")); }
+
+  /* SVD1.1: chaining links at the end of every saved Vedic page, like the saved comparison */
+  function links(host){
+    var box = el("div","doc-links"), from = qp.get("from") === "compare" ? "&from=compare" : "";
+    box.appendChild(el("p","doc-label","Your Readings"));
+    [["chart","Your Birth Chart"],["reading","Your Vedic Reading"],["lagna","Your Ascendant \u2013 Lagna"],["life-cycle","Your Current Life Cycle"]].forEach(function(v){
+      var p = el("p");
+      if (v[0] === view) p.appendChild(el("span","here",v[1]));
+      else {
+        var a = el("a",null,v[1] + " \u203A");
+        a.href = v[0] === "chart" ? "print-preview.html?sys=vedic"
+                                  : "print-preview-vedic.html?view=" + v[0] + "&id=" + encodeURIComponent(lib.id) + from;
+        p.appendChild(a);
+      }
+      box.appendChild(p);
+    });
+    host.appendChild(box);
+  }
+  if (!ok) { links(mount); return; }
+  links(inner);
+  var foot = el("footer","doc-footer");
+  foot.appendChild(el("p",null,DISCLOSURE));
+  if (lib.chart && lib.chart.reportId) foot.appendChild(el("p",null,"Generated by CozAlyze \u00B7 " + lib.chart.reportId));
+  inner.appendChild(foot);
+  mount.appendChild(paper);
+  var savedAt = lib.rec.updatedAt || lib.rec.savedAt;
+  document.getElementById("savedNote").textContent = "From the chart on this device. To keep it, use Save Chart.";
+  cozAutoPrint();
+})();
+</script>
+<div id="cozFoot">
+  <div class="coz-foot-tag">CozAlyze helps you see it all</div>
+  <div class="coz-foot-links">
+    <a href="vedic-reading.html#/dashboard"><svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9h13v-9"/></svg>Home</a>
+    <a href="saved-charts.html" aria-label="Saved Charts"><svg viewBox="0 0 24 24"><path d="M7 4h10v16l-5-4-5 4z"/></svg>Saved</a>
+    <a href="#" data-foot="account"><svg viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 19.5c1.2-3.4 3.9-5 7-5s5.8 1.6 7 5"/></svg>Account</a>
+  </div>
+</div>
+<script>
+/* v20.6: Account mirrors the other Demo pages (decorative until the Account page comes into the Demo) */
+document.querySelectorAll('#cozFoot a[data-foot="account"]').forEach(function(a){ a.addEventListener("click", function(ev){ ev.preventDefault();
+  try { window.dispatchEvent(new CustomEvent("COZ_DASH_ACCOUNT")); } catch (e) {} }); });
+</script>
+<script src="coz-nav.js?v=2"></script>
+</body>
+</html>

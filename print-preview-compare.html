@@ -1,0 +1,330 @@
+<!doctype html>
+<!-- PRINT YOUR CHART PREVIEW PP1 (Oct 27 2026, staging only, linked from no real page): a copy of saved-compare-document.html that shows the chart on this device without saving it (print-preview.js builds the unsaved record, id=live). Only the wording for an unsaved chart, the links and the back button differ from the saved document. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Saved Comparison · CozAlyze</title>
+<!--
+  COZALYZE · SAVED COMPARE DOCUMENT · SCD1.3 (Oct 6 2026, P1 r2 + closing footer kept whole in print, local build for review)
+  SCD1.2: the two charts print from copies of their rendered content (no fixed frame height, so no blank
+  pages and no cut-off at any print width), capitalized Ascendant signs, chart titles
+  printed in the document ink, birth line as "August 20, 1977 · 9:30 PM".
+  One renderer for the saved comparison (the Compare Saved Library), same format as the Vedic and
+  Tropical saved libraries (saved-document.css, expandable sections, Expand All, Print / Save PDF):
+    saved-compare-document.html?view=charts&id=<compare record>       Your Birth Charts (landing)
+    saved-compare-document.html?view=combined&id=<compare record>     Your Combined Reading
+    saved-compare-document.html?view=ascendants&id=<compare record>   Your Ascendants
+    saved-compare-document.html?view=timing&id=<compare record>       Your Current Timing (As of ...)
+  Data: ONLY the selected Compare record (saved-compare-library.js load(), run ID + fingerprint
+  checked). Birth charts use the existing renderers (vedic-birth-chart.html / tropical-birth-chart.html
+  ?saved=1&id=<this record>&in=compare, read-only). No animation, no model request, no recalculation:
+  Current Timing is the snapshot taken when the comparison was saved. Loads no Vedic or Tropical
+  library module itself.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="saved-document.css?v=2">
+<style>
+/* SCD1.0: framed birth charts, and the chaining links (gold, like the chart pages' Saved Readings) */
+.doc-frame{display:block; width:100%; border:0; min-height:30rem; background:transparent; margin-top:.6rem}
+.doc-links p{margin:0 0 .5rem}
+.doc-links a{color:var(--coz-gold); text-decoration:none}
+.doc-links .here{color:var(--coz-ink-soft)}
+.doc-charts > .doc-section{width:min(100%,56rem); margin:1rem auto 0}
+.doc-frame-print{display:none}
+@media print{ .doc-links{display:none} .doc-frame{min-height:0}
+  .doc-frame-print{display:block} .doc-frame.has-print-copy{display:none !important}
+  .doc-charts > .doc-section{break-inside:auto}   /* a chart is always taller than a page: avoid only produced an empty page in Chrome */
+  .doc-footer{break-inside:avoid; page-break-inside:avoid}   /* SCD1.3: the closing footer prints whole, never split across pages */
+  .doc-charts > .doc-section summary h2{color:#000} }   /* SCD1.2: print the chart copy, not its frame; titles in the printed document ink */
+
+/* v20.6 (Jason, Oct 15): the Home / Saved / Account bar stays on screen the whole time, so a saved
+   reading can always be left. Same bar as the Vedic birth chart (v20.1 shared reading footer). */
+#cozFoot{
+  position:fixed; left:0; right:0; bottom:0; z-index:40;
+  padding-bottom:env(safe-area-inset-bottom);
+  background:rgb(8 11 17 / .86);
+  backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+  border-top:1px solid rgb(201 161 94 / .18);
+}
+#cozFoot .coz-foot-tag{
+  text-align:center; font-style:italic; font-size:13px; letter-spacing:.04em;
+  color:#8b8272; padding:11px 20px 3px;
+}
+#cozFoot .coz-foot-links{display:flex; height:64px}
+#cozFoot a{
+  flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:4px; text-decoration:none; color:#8b8272; font-size:10.5px; letter-spacing:.06em;
+  -webkit-tap-highlight-color:transparent;
+}
+#cozFoot a svg{width:21px; height:21px; stroke:currentColor; fill:none; stroke-width:1.4; stroke-linecap:round; stroke-linejoin:round}
+#cozFoot a:active{color:var(--coz-gold,#b88a55)}
+@media print{ #cozFoot{display:none !important} }
+.doc-shell{padding-bottom:calc(env(safe-area-inset-bottom) + 124px)}   /* the bar owns the bottom of the screen */
+</style>
+<script src="coz-saved.js?v=5"></script>
+<script src="saved-compare-library.js?v=1"></script>
+<script src="print-preview.js?v=1"></script>
+<style id="coz-rd1">/* RD1 (Oct 22 2026): every tappable label at least 15px on a phone */html body #cozFoot a{font-size:15px}html body .doc-button{font-size:max(15px,0.88rem)}/* RD3: Vedic/Tropical/Life Cycle Back/Next and the bottom bar labels larger */html body #cozFoot a{font-size:17px}</style>
+<style id="coz-dv1">/* DV1 (Oct 22 2026): version stamps and the diagnostic launcher show only on a device with developer view on (localStorage cozDevView = "1") */html:not(.coz-dev) .stamp,html:not(.coz-dev) .stamp2,html:not(.coz-dev) .vedic-stamp,html:not(.coz-dev) .build-stamp,html:not(.coz-dev) .lc-stamp,html:not(.coz-dev) .cs-stamp,html:not(.coz-dev) .ktw-stamp,html:not(.coz-dev) .wcn-stamp,html:not(.coz-dev) #stamp,html:not(.coz-dev) #cozDiagLaunch{display:none!important}</style><script>try{if(localStorage.getItem("cozDevView")==="1")document.documentElement.classList.add("coz-dev")}catch(e){}</script>
+</head>
+<body>
+<div class="doc-shell">
+  <div class="doc-toolbar">
+    <a class="doc-button" id="backBtn" href="print-preview.html?sys=compare">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+      Your Birth Charts
+    </a>
+    <div class="doc-actions">
+    <button type="button" class="doc-button" id="expandBtn">Expand All</button>
+    <button type="button" class="doc-button" id="printBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M7 8V3h10v5M7 17H4a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-3M7 14h10v7H7z"/></svg>
+      Print / Save PDF
+    </button>
+    </div>
+  </div>
+  <div id="mount"></div>
+  <p class="doc-savednote" id="savedNote"></p>
+</div>
+<script>
+"use strict";
+(function(){
+  var MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  var DISCLOSURE = "This AI-generated astrological content is provided for reflection and entertainment only. It is not scientific, medical, legal, financial, or professional advice.";
+  var VIEWS = [["charts","Your Birth Charts"],["combined","Your Combined Reading"],["ascendants","Your Ascendants"],["timing","Your Current Timing"]];
+  var TITLES = {}; VIEWS.forEach(function(v){ TITLES[v[0]] = v[1]; });
+  /* the fixed section previews, exactly as combined-reading.html shows them */
+  var COMBINED = [
+    ["sharedThemes","I","Shared Themes","The patterns that repeat across both charts\u2014showing where your outward expression and inner blueprint reinforce similar qualities, needs, and recurring life themes."],
+    ["differentEmphases","II","Different Emphases","Where the two systems place their attention differently\u2014revealing distinct perspectives on your personality, relationships, and direction, and how those perspectives may complement one another."],
+    ["integratedView","III","Your Integrated View","A unified interpretation that brings both perspectives together\u2014showing how your outward expression and inner blueprint may operate as parts of one more complete picture."]
+  ];
+  var ASC = [["tropical","Tropical Ascendant"],["vedic","Vedic Ascendant"],["combined","How They Work Together"]];
+  var MISSING = {
+    missing: "This part isn\u2019t finished yet. Open it from your Compare dashboard first.",
+    unverified: "This part couldn't be matched to this comparison, so it isn't shown.",
+    failed: "Current Timing couldn\u2019t be calculated right now."
+  };
+
+  function el(tag,cls,text){ var n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; }
+  function paras(host, list){ (list || []).forEach(function(t){ t = t == null ? "" : String(t); if (!t.trim()) return; host.appendChild(t.indexOf("## ") === 0 ? el("h3",null,t.slice(3)) : el("p",null,t)); }); return host; }
+  function longDate(iso){ if (!iso) return ""; var d = new Date(iso); if (isNaN(d)) return String(iso); return MONTHS[d.getUTCMonth()] + " " + d.getUTCDate() + ", " + d.getUTCFullYear(); }
+  function section(number, title, open){
+    var d = el("details","doc-section"); if (open) d.open = true;
+    var sm = el("summary"); var h2 = el("h2");
+    if (number != null){ h2.appendChild(el("span","num",number + ".")); }
+    h2.appendChild(document.createTextNode(title));
+    sm.appendChild(h2); sm.appendChild(el("span","chev","\u203A")); d.appendChild(sm);
+    return d;
+  }
+  function note(text){ return el("p","doc-when",text); }
+  function empty(msg, heading){
+    var c = el("div","doc-empty");
+    c.appendChild(el("h2",null,heading || "This reading isn\u2019t ready to print"));
+    var p = el("p",null,msg + " "); var a = el("a",null,"Back to Your Birth Charts"); a.href = "print-preview.html?sys=compare"; p.appendChild(a); c.appendChild(p);
+    return c;
+  }
+  function cozPrint(){
+    var framed = false; try { framed = window.top !== window; } catch (e) { framed = true; }
+    if (framed) { var u = new URL(location.href); u.searchParams.set("print", "1"); window.open(u.href, "_blank"); return; }
+    window.print();
+  }
+  function cozAutoPrint(){
+    if (!/[?&]print=1\b/.test(location.search)) return;
+    var go = function(){ setTimeout(function(){ window.print(); }, view === "charts" ? 1500 : 250); };
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(go); else go();
+  }
+
+  var qp = new URLSearchParams(location.search);
+  var view = TITLES[qp.get("view")] ? qp.get("view") : "charts";
+  var mount = document.getElementById("mount");
+  document.getElementById("printBtn").addEventListener("click", cozPrint);
+  document.getElementById("expandBtn").addEventListener("click", function(){
+    var all = document.querySelectorAll("details.doc-section"), open = Array.prototype.every.call(all, function(d){ return d.open; });
+    all.forEach(function(d){ d.open = !open; });
+    this.textContent = open ? "Expand All" : "Collapse All";
+  });
+  window.addEventListener("beforeprint", function(){ document.querySelectorAll("details.doc-section").forEach(function(d){ d.dataset.wasOpen = d.open ? "1" : "0"; d.open = true; }); });
+  window.addEventListener("afterprint", function(){ document.querySelectorAll("details.doc-section").forEach(function(d){ if (d.dataset.wasOpen === "0") d.open = false; }); });
+
+  var S = window.CozSavedCompare ? window.CozSavedCompare.load() : null;
+  if (!S){ mount.appendChild(empty("There\u2019s no chart on this device to print yet.")); return; }
+  document.title = TITLES[view] + " \u00B7 CozAlyze";
+
+  /* P1 (Oct 6 2026): birth details shown as "August 20, 1977 · 9:30 PM" (Jason's ruling). Display only;
+     stored values are unchanged, and anything not in the stored form is shown as it is. */
+  var P1_MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  function p1Date(s){ var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s || "")); return m && +m[2] >= 1 && +m[2] <= 12 ? P1_MONTHS[+m[2] - 1] + " " + (+m[3]) + ", " + m[1] : s; }
+  function p1Time(s){ return String(s || "").replace(/^0(\d:\d\d)/, "$1"); }
+  function header(host){
+    host.appendChild(el("p","doc-kicker", TITLES[view]));
+    host.appendChild(el("h1",null, S.name || "Your Comparison"));
+    var b = S.birth || {}, bits = [p1Date(b.date), p1Time(b.time), b.location].filter(Boolean);   /* SCD1.1 */
+    host.appendChild(el("p","doc-birthline", (bits.length ? bits.join("  \u2022  ") + "  \u2022  " : "") + "Tropical + Vedic"));
+  }
+  function links(host){
+    var box = el("div","doc-links");
+    box.appendChild(el("p","doc-label","Your Readings"));
+    VIEWS.forEach(function(v){
+      var p = el("p");
+      if (v[0] === view) p.appendChild(el("span","here",v[1]));
+      else { var a = el("a",null,v[1] + " \u203A"); a.href = "print-preview-compare.html?view=" + v[0] + "&id=" + encodeURIComponent(S.id); p.appendChild(a); }
+      box.appendChild(p);
+    });
+    host.appendChild(box);
+  }
+  function footer(host){
+    var foot = el("footer","doc-footer");
+    foot.appendChild(el("p",null,DISCLOSURE));
+    if (S.documentId) foot.appendChild(el("p",null,"Generated by CozAlyze \u00B7 " + S.documentId));
+    host.appendChild(foot);
+  }
+  function paper(){ var p = el("article","doc-paper"), i = el("div","doc-inner"); p.appendChild(i); mount.appendChild(p); return i; }
+
+  /* SCD1.2 print: the iPhone prints at its own layout width (about 571 px on Letter, not the 688 px a desktop
+     uses), so no frame height chosen before printing can fit every device. Instead, just before printing, each
+     open chart's rendered content is copied out of its frame into the document (inside a shadow root, styled by
+     the chart page's own stylesheets), and the frame itself is hidden for print. The copy flows at whatever
+     width the printer lays out, so it can neither be cut off nor leave blank space. Screen view is unchanged. */
+  var SCOPE_HTML = /(^|[\s,>+~(])html(?=$|[\s.#:\[,>+~)])/g, SCOPE_BODY = /(^|[\s,>+~(])body(?=$|[\s.#:\[,>+~)])/g;
+  function scopeSelector(sel){
+    return sel.split(",").map(function(part){
+      return part.replace(/:root\b/g, ":host").replace(SCOPE_HTML, "$1:host").replace(SCOPE_BODY, "$1.coz-body");
+    }).join(",");
+  }
+  function scopedCss(rules){
+    var out = [];
+    Array.prototype.forEach.call(rules || [], function(r){
+      if (r.type === 1) out.push(scopeSelector(r.selectorText) + "{" + r.style.cssText + "}");                       /* style rule */
+      else if (r.type === 4) out.push("@media " + r.media.mediaText + "{" + scopedCss(r.cssRules) + "}");              /* media rule */
+      else if (r.type === 12) out.push("@supports " + r.conditionText + "{" + scopedCss(r.cssRules) + "}");             /* supports */
+      else if (r.type !== 6) out.push(r.cssText);                                                                     /* not @page */
+    });
+    return out.join("\n");
+  }
+  function printCopy(fr){
+    var doc = fr.contentDocument; if (!doc || !doc.body) return null;
+    var host = el("div","doc-frame-print"), root = host.attachShadow({ mode: "open" });
+    var css = [];
+    Array.prototype.forEach.call(doc.styleSheets, function(ss){ var rules; try { rules = ss.cssRules; } catch (e) { return; } css.push(scopedCss(rules)); });
+    var st = document.createElement("style"); st.textContent = ":host{display:block}\n" + css.join("\n"); root.appendChild(st);
+    var bodyCopy = document.createElement("div"); bodyCopy.className = "coz-body " + doc.body.className;
+    var htmlCls = doc.documentElement.className; if (htmlCls) host.className += " " + htmlCls;
+    Array.prototype.forEach.call(doc.body.childNodes, function(n){ if (n.nodeName !== "SCRIPT") bodyCopy.appendChild(n.cloneNode(true)); });
+    root.appendChild(bodyCopy);
+    return host;
+  }
+  if (view === "charts"){
+    var top = paper(); header(top);
+    var wrap = el("div","doc-charts"); mount.appendChild(wrap);
+    [["tropical","Tropical Birth Chart","tropical-birth-chart.html"],["vedic","Vedic Birth Chart","vedic-birth-chart.html"]].forEach(function(c, i){
+      var d = section(null, c[1], i === 0); wrap.appendChild(d);
+      if (S.charts[c[0]].state !== "ok"){ d.appendChild(note(MISSING[S.charts[c[0]].state] || MISSING.missing)); return; }
+      var fr = el("iframe","doc-frame"); fr.title = c[1]; fr.setAttribute("scrolling","no");
+      fr.src = c[2] + "?from=compare&in=compare";
+      d.appendChild(fr);
+      function size(){ if (fr.classList.contains("has-print-copy")) return; try {   /* SCD1.2: no screen re-sizing while the copy prints */ var b = fr.contentDocument && fr.contentDocument.body; if (b && b.scrollHeight) fr.style.height = Math.ceil(b.scrollHeight) + "px"; } catch (e) {} }
+      fr.addEventListener("load", function(){
+        try { var fd = fr.contentDocument; fd.body.classList.add("embed-compare"); fd.documentElement.classList.add("embed-compare"); } catch (e) {}   /* PP1: the saved embed look */
+        size();
+        try { var ro = new ResizeObserver(size); ro.observe(fr.contentDocument.body); } catch (e) {}
+        try { fr.contentDocument.addEventListener("click", function(){ setTimeout(size, 60); setTimeout(size, 300); }, true); } catch (e) {}
+      });
+      d.addEventListener("toggle", function(){ if (d.open) { size(); setTimeout(size, 120); } });
+      /* SCD1.2: before printing, an open chart prints from a copy of its rendered content (see printCopy) */
+      var copy = null;
+      window.addEventListener("beforeprint", function(){
+        try {
+          if (copy) { copy.remove(); copy = null; } fr.classList.remove("has-print-copy");
+          if (!d.open) return;
+          copy = printCopy(fr);
+          if (copy) { fr.parentNode.insertBefore(copy, fr.nextSibling); fr.classList.add("has-print-copy"); }
+        } catch (e) { if (copy) { copy.remove(); copy = null; } fr.classList.remove("has-print-copy"); }    /* on any error the frame prints as before */
+      });
+      window.addEventListener("afterprint", function(){ if (copy) { copy.remove(); copy = null; } fr.classList.remove("has-print-copy"); size(); });
+    });
+    var bottom = paper(); links(bottom); footer(bottom);
+  }
+  else if (view === "combined"){
+    var inner = paper(); header(inner);
+    if (S.combined.state !== "ok") inner.appendChild(note(MISSING[S.combined.state]));
+    else COMBINED.forEach(function(c, i){
+      var d = section(c[1], c[2], i === 0), body = el("div","doc-copy");
+      body.appendChild(el("p","doc-when",c[3]));
+      paras(body, S.combined.data[c[0]]);
+      d.appendChild(body); inner.appendChild(d);
+    });
+    inner.appendChild(note("These themes describe possible patterns\u2014not fixed outcomes."));
+    links(inner); footer(inner);
+  }
+  else if (view === "ascendants"){
+    var inner2 = paper(); header(inner2);
+    ASC.forEach(function(a, i){
+      var r = S.ascendants[a[0]], d = section(null, a[1], i === 0), body = el("div","doc-copy");
+      if (r.state !== "ok") body.appendChild(note(MISSING[r.state]));
+      else {
+        if (r.sign) body.appendChild(el("p","doc-big", r.sign.split("+").map(function(x){ return x.charAt(0).toUpperCase() + x.slice(1); }).join(" + ")));   /* SCD1.1 */
+        if (r.data.preview) body.appendChild(el("p","doc-when", r.data.preview));
+        paras(body, r.data.paragraphs);
+      }
+      d.appendChild(body); inner2.appendChild(d);
+    });
+    links(inner2); footer(inner2);
+  }
+  else if (view === "timing"){
+    var inner3 = paper(); header(inner3);
+    if (S.timing.state === "missing" && window.CozPrintPreview && !window.__ppTimingTried){
+      window.__ppTimingTried = true;
+      var calc = note("Calculating your current timing\u2026"); inner3.appendChild(calc);
+      window.CozPrintPreview.makeCompareTiming().then(function(ok){ if (ok) location.reload(); else { calc.textContent = MISSING.failed; } });
+    } else if (S.timing.state !== "ok"){
+      inner3.appendChild(note(MISSING[S.timing.state]));
+      if (S.timing.state === "failed" && S.timing.reason && /[?&]debug=1\b/.test(location.search)) inner3.appendChild(note("Reason: " + S.timing.reason));
+    } else {
+      var T = S.timing.data, asOf = new Date(T.asOf);
+      inner3.appendChild(el("p","doc-label","As of " + asOf.toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"}) + ", " + asOf.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})));
+      if (T.tag && T.tag.length) inner3.appendChild(el("p","doc-when", T.tag.join("  \u2022  ")));
+      (T.sections || []).forEach(function(s, i){
+        var d = section(null, s.title, i === 0), body = el("div","doc-copy");
+        if (s.subtitle) body.appendChild(el("p","doc-when", s.subtitle));
+        paras(body, s.paras); d.appendChild(body); inner3.appendChild(d);
+      });
+      var m = section(null, "How This Was Calculated", false), mb = el("div","doc-copy");
+      (T.methodology || []).forEach(function(g){
+        mb.appendChild(el("h3",null,g.heading));
+        (g.rows || []).forEach(function(r){
+          var p = el("p"); p.appendChild(el("strong",null,r[0] + ". "));
+          String(r[1]).split("\n").forEach(function(line, k){ if (k) p.appendChild(el("br")); p.appendChild(document.createTextNode(line)); });
+          mb.appendChild(p);
+        });
+      });
+      mb.appendChild(el("p",null,"Calculated for the chart on this device when this page opened, as of the date above."));
+      m.appendChild(mb); inner3.appendChild(m);
+      inner3.appendChild(note("These are themes that may be present, not predictions of what will happen."));
+    }
+    links(inner3); footer(inner3);
+  }
+
+  var savedAt = S.rec.updatedAt || S.rec.savedAt;
+  document.getElementById("savedNote").textContent = "From the chart on this device. To keep it, use Save Chart.";
+  cozAutoPrint();
+})();
+</script>
+<div id="cozFoot">
+  <div class="coz-foot-tag">CozAlyze helps you see it all</div>
+  <div class="coz-foot-links">
+    <a href="compare-reading.html"><svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9h13v-9"/></svg>Home</a>
+    <a href="saved-charts.html" aria-label="Saved Charts"><svg viewBox="0 0 24 24"><path d="M7 4h10v16l-5-4-5 4z"/></svg>Saved</a>
+    <a href="#" data-foot="account"><svg viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 19.5c1.2-3.4 3.9-5 7-5s5.8 1.6 7 5"/></svg>Account</a>
+  </div>
+</div>
+<script>
+/* v20.6: Account mirrors the other Demo pages (decorative until the Account page comes into the Demo) */
+document.querySelectorAll('#cozFoot a[data-foot="account"]').forEach(function(a){ a.addEventListener("click", function(ev){ ev.preventDefault();
+  try { window.dispatchEvent(new CustomEvent("COZ_DASH_ACCOUNT")); } catch (e) {} }); });
+</script>
+<script src="coz-nav.js?v=2"></script>
+</body>
+</html>
