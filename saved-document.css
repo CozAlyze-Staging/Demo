@@ -75,6 +75,12 @@ button{font:inherit}
   .doc-paper{width:100%; border:none; box-shadow:none; background:#fff; color:#000}
   .doc-paper::before{display:none}
   .doc-inner{padding:0}
-  .doc-section{break-inside:avoid}
+  /* PG1 (Oct 27 2026): sections flow from page to page instead of each moving whole to a new page, which left the title
+     alone on page 1, half-empty pages, and the closing note alone on the last page. A paragraph is never split, a heading
+     stays with the text under it, and the closing note stays with what comes before it when it fits. */
+  .doc-section{break-inside:auto; page-break-inside:auto}
+  .doc-section summary,.doc-section h3{break-after:avoid; page-break-after:avoid}
+  .doc-copy p{break-inside:avoid; page-break-inside:avoid; orphans:3; widows:3}
+  .doc-footer{break-before:avoid; page-break-before:avoid; break-inside:avoid; page-break-inside:avoid}
   .doc-section summary .chev{display:none}
 }

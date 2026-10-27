@@ -27,7 +27,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="saved-document.css?v=1">
+<link rel="stylesheet" href="saved-document.css?v=2">
 <style>
 /* TD1.4: the chaining links, same rules as the saved Vedic document (saved-vedic-document.html SVD1.1) */
 .doc-links p{margin:0 0 .5rem}
@@ -146,7 +146,12 @@
   paper.appendChild(inner);
   inner.appendChild(el("p","doc-kicker", TITLES[view] || "Saved Reading"));
   inner.appendChild(el("h1",null, lib.name || "Your Chart"));
-  var b = lib.birth || {}, bits = [b.date, b.time, b.location].filter(Boolean);
+  /* PG2 (Oct 27 2026): the Tropical record keeps the birth date as entered ("1922-09-09") and the time with a leading zero
+     ("03:25 AM"), so the printed line read differently from the Vedic document's. It now reads the same way
+     ("September 9, 1922 \u2022 3:25 AM"). A value in any other form is shown as stored. */
+  function niceDate(s){ var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s || "")); return m && +m[2] >= 1 && +m[2] <= 12 ? MONTHS[+m[2] - 1] + " " + (+m[3]) + ", " + m[1] : s; }
+  function niceTime(s){ return String(s || "").replace(/^0(\d:\d{2}\s*[AP]M)$/i, "$1"); }
+  var b = lib.birth || {}, bits = [niceDate(b.date), niceTime(b.time), b.location].filter(Boolean);
   if (bits.length) inner.appendChild(el("p","doc-birthline", bits.join("  \u2022  ")));
 
   var L = lib.library || {}, ok = true;
