@@ -3518,8 +3518,8 @@ document.querySelectorAll('.syscard').forEach(card => {
        page opens on time. The three reading pages carry no audio of their own. */
     var COZ_WARM = {
       GOTO_VEDIC:    ['vedic-dash.jpg?v=24', 'vedic-moon-bg.png', 'vedic-logo.png'],   /* DV1: the files the page actually requests; the old reveal clip is no longer used */
-      GOTO_TROPICAL: ['tropical-dash.jpg', 'tropical-reading-reveal-sound.mp4?v=1', 'vedic-moon-bg.png', 'vedic-logo.png'],   /* BK2 (Oct 28 2026, staging): the clip the page plays now (was an old file the page no longer used) */
-      GOTO_COMPARE:  ['compare-dash.jpg', 'compare-reading-reveal-sound.mp4?v=1', 'compare-moon-bg.png', 'vedic-logo.png']   /* BK2: likewise */
+      GOTO_TROPICAL: ['tropical-dash.jpg', 'reading-reveal-fullscreen.mp4?v=1', 'vedic-moon-bg.png', 'vedic-logo.png'],   /* BK2 (Oct 28 2026, staging): the clip the page plays now (was an old file the page no longer used) */
+      GOTO_COMPARE:  ['compare-dash.jpg', 'reading-reveal-fullscreen.mp4?v=1', 'compare-moon-bg.png', 'vedic-logo.png']   /* BK2: likewise. FS1 (Oct 28 2026): one full-screen clip for all three readings */
     };
     window.addEventListener('message', function(ev){
       var d = ev && ev.data;

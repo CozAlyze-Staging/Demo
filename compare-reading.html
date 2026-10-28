@@ -412,6 +412,11 @@ body[data-view="reading"] .vedic-reading-page { animation: none; }
 /* BK2 (Oct 28 2026, his ruling, staging only): the clip now opens in space (his approved F1.3), so the reveal no longer
    starts on a copy of the dashboard art: black until the clip's own first frame, no Ascendant overlay, no zoom move. */
 #revealStage .stage-art, #revealStage .asc-patch, #revealStage .asc-glyph, #revealStage .asc-label { visibility: hidden !important; }
+/* FS1 (Oct 28 2026, his ruling, staging only): the reading clip fills the whole screen. It is the approved picture at
+   full width with the space above and below it filled from the footage (1068 x 2320, the phone's shape), so the reveal
+   stage now covers the screen instead of fitting inside it: always full width; a shorter screen only loses some of
+   that filled space at the top and bottom. */
+#revealStage { aspect-ratio: 1068 / 2320; width: max(100vw, calc(100svh * 1068 / 2320)); }
 /* CRG2 (Oct 14, Jason's ruling): the waiting line, ONLY when Shared Themes is not ready yet.
    His existing "Calculating your sky" line from index.html, same style (.gn-title .t1) and the same
    pulse used by "Tap the Sky" (twinkle 3.2s). Nothing else is drawn. */
@@ -482,7 +487,7 @@ body[data-view="reading"] .vedic-reading-page { animation: none; }
 <div class="reveal" id="reveal" role="dialog" aria-label="Opening your Combined reading">
   <div class="stage" id="revealStage">
     <img class="stage-art" src="compare-dash.jpg?v=10" alt="" width="1084" height="1908">
-    <video id="revealVideo" src="compare-reading-reveal-sound.mp4?v=1" muted playsinline preload="auto" aria-hidden="true"></video>
+    <video id="revealVideo" src="reading-reveal-fullscreen.mp4?v=1" muted playsinline preload="auto" aria-hidden="true"></video>
     <div class="asc-patch asc-patch-glyph" aria-hidden="true"></div>
     <div class="asc-patch asc-patch-text" aria-hidden="true"></div>
     <div class="asc-glyph" aria-hidden="true"></div>
@@ -813,7 +818,7 @@ const revealVideo = document.getElementById("revealVideo");
    BK2 (Oct 28 2026, his ruling, staging only): the clip is his approved F1.3 at full size, opening in space (the flight
    from its first frame, then the book at 905/24 s, 51.7 s in all), with the approved soundscape (Chat's mix, unchanged)
    in the file. Same framing and name geometry as BK1; the book simply starts 116 frames earlier. */
-const BOOK_GEOM = { clipW: 1084, clipH: 1908, bookStart: 905 / 24, bookFrames: 442, place: { sx: 1084 / 1068, sy: 1966 / 1936, ox: 0, oy: -28 } };
+const BOOK_GEOM = { clipW: 1068, clipH: 2320, bookStart: 905 / 24, bookFrames: 442, place: { sx: 1, sy: 1, ox: 0, oy: 192 } };   /* FS1: one full-screen clip for all three readings, the book 192 px down */
 try { if (window.CozBookName) CozBookName.attach(Object.assign({ video: revealVideo, stage: document.getElementById("revealStage") }, BOOK_GEOM)); } catch (e) {}
 let revealActive = false, revealDone = false, revealTimers = [];
 /* BK2: while the clip plays, its own sound is the only sound. The app's music (every loop on the living page's engine:
