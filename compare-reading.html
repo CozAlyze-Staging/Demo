@@ -409,6 +409,9 @@ body[data-view="reading"] .vedic-reading-page { animation: none; }
   transform: translate(-50%, calc(-50% + var(--dash-pan, 0px))) scale(var(--reveal-zoom, var(--dash-zoom, 1)));
   transition: transform 1300ms cubic-bezier(0.33, 0, 0.2, 1);
 }
+/* BK2 (Oct 28 2026, his ruling, staging only): the clip now opens in space (his approved F1.3), so the reveal no longer
+   starts on a copy of the dashboard art: black until the clip's own first frame, no Ascendant overlay, no zoom move. */
+#revealStage .stage-art, #revealStage .asc-patch, #revealStage .asc-glyph, #revealStage .asc-label { visibility: hidden !important; }
 /* CRG2 (Oct 14, Jason's ruling): the waiting line, ONLY when Shared Themes is not ready yet.
    His existing "Calculating your sky" line from index.html, same style (.gn-title .t1) and the same
    pulse used by "Tap the Sky" (twinkle 3.2s). Nothing else is drawn. */
@@ -478,7 +481,7 @@ body[data-view="reading"] .vedic-reading-page { animation: none; }
 <div class="reveal" id="reveal" role="dialog" aria-label="Opening your Combined reading">
   <div class="stage" id="revealStage">
     <img class="stage-art" src="compare-dash.jpg?v=10" alt="" width="1084" height="1908">
-    <video id="revealVideo" src="compare-reading-reveal-book.mp4?v=1" muted playsinline preload="auto" aria-hidden="true"></video>
+    <video id="revealVideo" src="compare-reading-reveal-sound.mp4?v=1" muted playsinline preload="auto" aria-hidden="true"></video>
     <div class="asc-patch asc-patch-glyph" aria-hidden="true"></div>
     <div class="asc-patch asc-patch-text" aria-hidden="true"></div>
     <div class="asc-glyph" aria-hidden="true"></div>
@@ -501,7 +504,7 @@ body[data-view="reading"] .vedic-reading-page { animation: none; }
   <div class="vedic-reading-content" id="vedicContent"></div>
 </main>
 
-<div class="vedic-stamp" aria-hidden="true">COMBINED READING · C3.6 · early generation · WL1 r4 waiting line once · RS1 clip first time only · BK1 book + name</div>
+<div class="vedic-stamp" aria-hidden="true">COMBINED READING · C3.6 · early generation · WL1 r4 waiting line once · RS1 clip first time only · BK2 book with sound + name</div>
 
 <script>
 /* ============================================================
@@ -805,10 +808,28 @@ const revealEl = document.getElementById("reveal");
 const revealVideo = document.getElementById("revealVideo");
 /* BK1 (Oct 27 2026, Jason's ruling, staging only): the clip now ends with the book (his approved preview F1.2: the
    solar system at its original framing, Jupiter fully in view, then the book); the page writes the reader's first name
-   on the book's page (coz-book-name.js), locked to the clip's frames. */
+   on the book's page (coz-book-name.js), locked to the clip's frames.
+   BK2 (Oct 28 2026, his ruling, staging only): the clip is his approved F1.3 at full size, opening in space (the flight
+   from its first frame, then the book at 905/24 s, 51.7 s in all), with the approved soundscape (Chat's mix, unchanged)
+   in the file. Same framing and name geometry as BK1; the book simply starts 116 frames earlier. */
 try { if (window.CozBookName) CozBookName.attach({ video: revealVideo, stage: document.getElementById("revealStage"),
-  clipW: 1084, clipH: 1908, bookStart: 1021 / 24, bookFrames: 442, place: { sx: 1084 / 1068, sy: 1966 / 1936, ox: 0, oy: -28 } }); } catch (e) {}
+  clipW: 1084, clipH: 1908, bookStart: 905 / 24, bookFrames: 442, place: { sx: 1084 / 1068, sy: 1966 / 1936, ox: 0, oy: -28 } }); } catch (e) {}
 let revealActive = false, revealDone = false, revealTimers = [];
+/* BK2: while the clip plays, its own sound is the only sound. The app's music (every loop on the living page's engine:
+   the bed, the low hum, any other bed) stops at the tap and the harmony cue no longer plays; when the clip ends, stalls
+   or Back is tapped, the bed comes back as before (the read-aloud voice still stops it, VO1.4). */
+const CLIP_MUSIC = ["ambient", "hum", "voidatm", "choice", "orbit", "calc"];
+let clipHushed = false;
+function clipSound(on) {
+  let snd = null;
+  try { snd = window.parent !== window ? window.parent.EMERGE_SOUND : null; } catch (e) {}
+  if (!on) { try { revealVideo.muted = true; } catch (e) {} }
+  if (!snd) return;
+  try {
+    if (on) { CLIP_MUSIC.forEach(n => snd.stopLoop(n, 0.4)); clipHushed = true; }
+    else if (clipHushed) { clipHushed = false; snd.loop("ambient"); }
+  } catch (e) {}
+}
 /* warm the clip while the dashboard is up so the turn can start the moment it is tapped */
 try { revealVideo.load(); } catch (e) {}
 
@@ -845,6 +866,7 @@ function startReveal() {
   // the clip zooms from its letterboxed first frame to full frame over ~1s; ease the stage back to cover-fit in step
   document.documentElement.classList.add("reveal-zooming");
   setTimeout(() => document.documentElement.style.setProperty("--dash-zoom", getComputedStyle(document.documentElement).getPropertyValue("--reveal-zoom").trim() || "1.23"), 120);
+  try { if (window.__cozRevealFrame) window.__cozRevealFrame(); } catch (e) {}   /* BK2: the flight's framing from the first frame */
   document.getElementById("revealLive").textContent = "Opening your Combined reading";
 
   // if the clip cannot even start (no network, blocked), move on rather than trap anyone
@@ -852,8 +874,17 @@ function startReveal() {
 
   revealStarted = false;
   try { revealVideo.currentTime = 0; } catch (e) {}
+  /* BK2: the clip plays with its sound, started inside the tap (iPhone allows sound only there). If the phone refuses
+     the sound, the clip still plays, silently, with the music as before. */
+  try { revealVideo.muted = false; } catch (e) {}
+  clipSound(true);
   const p = revealVideo.play();
-  if (p && p.catch) p.catch(() => finishReveal(false, "noplay"));
+  if (p && p.catch) p.catch(() => {
+    if (!revealActive || revealDone) return;
+    clipSound(false);
+    const q = revealVideo.play();
+    if (q && q.catch) q.catch(() => finishReveal(false, "noplay"));
+  });
 }
 
 /* timers that depend on the clip actually running start only once it is playing */
@@ -861,17 +892,11 @@ let revealStarted = false;
 revealVideo.addEventListener("playing", () => {
   if (revealStarted || !revealActive) return;
   revealStarted = true;
-  // the live ascendant overlay stays while the buttons are still on screen, then lets go before the burst
-  revealTimers.push(setTimeout(() => revealEl.classList.add("asc-off"), 1900));
-  /* Sep 1 ruling: ONE motion. The drive into the sun begins while the burst is still
-     blooming, the light takes the screen while the stage is still growing, the page
-     lands under the light and the light clears. No hold anywhere. */
-  revealTimers.push(setTimeout(() => revealEl.classList.add("is-through"), 1500));
+  /* BK2: the clip opens in space, so the old opening's hand-offs (the Ascendant overlay letting go at 1.9 s, the drive
+     through the sun at 1.5 s) are gone. */
   revealTimers.push(setTimeout(waitFlash, 20000));   /* WL1 r4: the waiting line once, 20 s into every clip */
-  /* Sep 20: the reveal, the drive through the sun, the light and the space flight are now ONE clip
-     (compare-reading-reveal-full.mp4). The page just plays it and lands when it ends. */
-  // hard cap a little past the clip's 2.5s so a stalled clip never traps anyone
-  revealTimers.push(setTimeout(() => finishReveal(false, "stall"), 60000));   /* stall guard only: the clip runs 56.6s (BK1: flight + book) */
+  /* The page just plays the clip and lands when it ends. */
+  revealTimers.push(setTimeout(() => finishReveal(false, "stall"), 60000));   /* stall guard only: the clip runs 51.7 s (BK2: flight + book) */
 });
 
 /* CRG1 (staging, Oct 14 2026): a chart run written by the Compare server lands only once Shared Themes is
@@ -899,7 +924,7 @@ revealVideo.addEventListener("playing", () => {
    - Every attempt is recorded for the Compare Report (coz-compare-timing.js, phone clock only). A waiting screen or
      a held landing fails the run for good. */
 const CRG_VERSION = "CRG2 r5";
-const PULL_AT_S = 56.4, PULL_MS = 9000;   /* BK1: the clip now ends with the book, so the decision waits until the reader's name is written (was 40 s, planets in view) */
+const PULL_AT_S = 51.57, PULL_MS = 9000;   /* BK1: the clip now ends with the book, so the decision waits until the reader's name is written (was 40 s, planets in view). BK2: the clip is 51.7 s, the same 0.15 s before its end (was 56.4) */
 let crgHold = null, pullRaf = 0, pullOn = false, pullWatch = 0, landedDark = false;
 /* the timing record (never allowed to affect the reveal) */
 function tm(fn) { try { const T = window.COZ_CMP_TIMING; if (T && T[fn]) return T[fn].apply(T, [].slice.call(arguments, 1)); } catch (e) {} }
@@ -1039,6 +1064,7 @@ function whenFirstSection(go) {
 function finishReveal(immediate, how) {
   if (!revealActive || revealDone) return;   // ignore clip events while the reveal is not running
   revealDone = true;
+  clipSound(false);                          /* BK2: the clip is over, the bed comes back (also under a dark wait) */
   revealTimers.forEach(clearTimeout); revealTimers = [];
   tm("mark", "revealDone", { how: how || (immediate === true ? "ended" : "stall") });   /* r5: with the Shared Themes state now */
   const land0 = () => {
@@ -1071,6 +1097,7 @@ function finishReveal(immediate, how) {
 
 function cancelReveal(why) {
   if (!revealActive) return;
+  clipSound(false);                                   /* BK2: Back stops the clip, the bed comes back */
   /* r5: Back while the reading is opening from the black screen: stop that page load and stay on the dashboard */
   if (landedDark) { stopDarkLanding("back"); return; }
   const holding = cancelFirstWait("back");            /* r3: Back works during the Shared Themes wait */
@@ -1154,7 +1181,9 @@ showFromHash();
 document.getElementById("hotReading").addEventListener("click", function(){
   try {
     const snd = (window.parent !== window) ? window.parent.EMERGE_SOUND : null;
-    if (snd){ snd.loop("ambient"); if (!readNow) snd.play("harmony"); }   /* RS1: the harmony belongs to the clip */
+    /* BK2: when the clip plays, its own sound is the only sound (clipSound, no harmony); otherwise (the reading opens
+       straight away, RS1) the bed is re-asserted as before */
+    if (snd && !revealActive) snd.loop("ambient");
   } catch(_){}
 });
 
@@ -1235,6 +1264,15 @@ document.getElementById("hotReading").addEventListener("click", function(){
     st.style.setProperty("--reveal-zoom", cover.toFixed(4));
   }
   function reset() { clearTimeout(t); st.style.removeProperty("--reveal-zoom"); }
+  /* BK2: the clip opens in space, so the stage takes the flight's framing at the tap, without a zoom move (the 3.6 s
+     un-zoom below then finds it already there) */
+  window.__cozRevealFrame = function () {
+    var tr = st.style.transition;
+    st.style.transition = "none";
+    unzoom();
+    void st.offsetWidth;
+    st.style.transition = tr;
+  };
   vid.addEventListener("playing", function () { clearTimeout(t); t = setTimeout(unzoom, 3600); });
   vid.addEventListener("ended", function () { if (!pullOn) reset(); });   /* CRG2: no zoom jump during the pull-away */
   vid.addEventListener("error", reset);
