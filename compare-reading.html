@@ -431,7 +431,7 @@ body[data-view="reading"] .vedic-reading-page { animation: none; }
 <!-- Oct 2: ?v=5 so this page loads coz-saved.js CS1.6, not a cached copy -->
 <script src="coz-saved.js?v=5"></script>
 <script src="coz-book-name.js?v=1"></script>   <!-- BK1 (Oct 27 2026, staging only): the reader's name on the book -->
-<script src="coz-book-to-reading.js?v=3"></script>   <!-- BT2 (Oct 28 2026, staging only): the book gives way to the reading. BT2.1: never skipped on a phone -->
+<script src="coz-book-to-reading.js?v=4"></script>   <!-- BT2 (Oct 28 2026, staging only): the book gives way to the reading. BT2.1: never skipped on a phone. BT2.2: quiet through the dissolve -->
 <script src="coz-compare-server.js?v=4"></script>
 <style id="coz-dv1">/* DV1 (Oct 22 2026): version stamps and the diagnostic launcher show only on a device with developer view on (localStorage cozDevView = "1") */html:not(.coz-dev) .stamp,html:not(.coz-dev) .stamp2,html:not(.coz-dev) .vedic-stamp,html:not(.coz-dev) .build-stamp,html:not(.coz-dev) .lc-stamp,html:not(.coz-dev) .cs-stamp,html:not(.coz-dev) .ktw-stamp,html:not(.coz-dev) .wcn-stamp,html:not(.coz-dev) #stamp,html:not(.coz-dev) #cozDiagLaunch{display:none!important}</style><script>try{if(localStorage.getItem("cozDevView")==="1")document.documentElement.classList.add("coz-dev")}catch(e){}</script>
 <style id="coz-gd1">
@@ -827,14 +827,17 @@ let revealActive = false, revealDone = false, revealTimers = [];
    or Back is tapped, the bed comes back as before (the read-aloud voice still stops it, VO1.4). */
 const CLIP_MUSIC = ["ambient", "hum", "voidatm", "choice", "orbit", "calc"];
 let clipHushed = false;
-function clipSound(on) {
+function clipSound(on, slow) {   /* BT2.2: slow (after the book): the music comes back from barely there over 8 s */
   let snd = null;
   try { snd = window.parent !== window ? window.parent.EMERGE_SOUND : null; } catch (e) {}
   if (!on) { try { revealVideo.muted = true; } catch (e) {} }
   if (!snd) return;
   try {
     if (on) { CLIP_MUSIC.forEach(n => snd.stopLoop(n, 0.4)); clipHushed = true; }
-    else if (clipHushed) { clipHushed = false; snd.loop("ambient"); }
+    else if (clipHushed) {
+      clipHushed = false;
+      if (!(slow && window.CozBookToReading && CozBookToReading.musicBack && CozBookToReading.musicBack(snd))) snd.loop("ambient");
+    }
   } catch (e) {}
 }
 /* warm the clip while the dashboard is up so the turn can start the moment it is tapped */
@@ -932,6 +935,19 @@ function clipAtEnd() {
   return revealVideo.ended || (d > 0 && isFinite(d) && revealVideo.currentTime >= d - 0.25);
 }
 function btNote(why) { try { if (window.CozBookToReading && CozBookToReading.note) CozBookToReading.note({ reading: "compare", ok: false, why: why }); } catch (e) {} }
+/* BT2.2 (Oct 28 2026, his ruling, staging only): after the book, the quiet holds; the music comes back on Your Combined
+   Reading once its words and pictures are up, slowly (coz-book-to-reading.js arrive). If this page is still here 9 s
+   later (the reading did not open), it comes back here instead. */
+function leaveMusic() {
+  try { revealVideo.muted = true; } catch (e) {}
+  if (!clipHushed) return;
+  try { sessionStorage.setItem("cozBedBack", JSON.stringify({ at: Date.now() })); } catch (e) { clipSound(false, true); return; }
+  setTimeout(() => {
+    let still = false;
+    try { still = !!sessionStorage.getItem("cozBedBack"); if (still) sessionStorage.removeItem("cozBedBack"); } catch (e) {}
+    if (still) clipSound(false, true);
+  }, 9000);
+}
 
 /* CRG1 (staging, Oct 14 2026): a chart run written by the Compare server lands only once Shared Themes is
    released for its job (COZ_CMP_SERVER.firstSectionState). Until then the reveal stays exactly where it is
@@ -1126,7 +1142,7 @@ function finishReveal(immediate, how) {
       if (immediate === true && how === "ended" && revealStarted && !pullOn && firstState() !== "wait" && window.CozBookToReading &&
           CozBookToReading.run(Object.assign({ video: revealVideo, stage: document.getElementById("revealStage"),
             sky: { css: 'url("combined-top.jpg?v=1") center top / 100% auto no-repeat, url("combined-mid.png?v=1") center top / 100% 1px repeat-y, rgb(1,11,26)', maxWidth: 640 },
-            base: "rgb(1,11,26)", reading: "compare", handOff: true, done: () => { clipSound(false); land(); } }, BOOK_GEOM))) return;
+            base: "rgb(1,11,26)", reading: "compare", handOff: true, done: () => { leaveMusic(); land(); } }, BOOK_GEOM))) return;   /* BT2.2 */
     } catch (e) { btNote("error: " + String((e && e.message) || e).slice(0, 120)); }
     if (how === "reduced") btNote("reduced motion: no clip");
     else if (immediate === true && !revealStarted) btNote("the clip never started");

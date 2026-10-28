@@ -3497,8 +3497,8 @@ document.querySelectorAll('.syscard').forEach(card => {
     vc.classList.add('show');                       /* dark base while the reveal loads */
 
     const next = (sys === 'sidereal'
-      ? 'sidereal-reveal.html?v=1990'   /* BT2.1: its links to the readings changed */
-      : 'tropical-reveal.html?v=1886') + (window.__cozSkipReveal ? '&skip=1' : '');
+      ? 'sidereal-reveal.html?v=1991'   /* BT2.1, BT2.2: its links to the readings changed */
+      : 'tropical-reveal.html?v=1887') + (window.__cozSkipReveal ? '&skip=1' : '');
     console.log('[EMERGE FLOW] 10. living page — loading reveal in place:', next);
     const fr = document.createElement('iframe');
     fr.id = 'revealFrame';

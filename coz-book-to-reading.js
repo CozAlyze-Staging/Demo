@@ -10,8 +10,8 @@
    2.65 - 3.47 s   the gold words fade away, evenly, as in his clip; the dust thins out and has gone by 3.6 s
    3.05 - 4.4 s    the reading page comes up through the sky (its sky is the page's own, so only its words and pictures
                    appear)
-   His transition sound plays from the first moment; the reading's background music comes back when the page is up (the
-   page's done callback). The gold words are his own (book-words-gold.png, lifted from his clip's frames); the name is the
+   BT2.2: silent from the clip's end through the hold and the whole dissolve (no transition sound); the reading's music
+   comes back only once the page is up, starting barely there and rising slowly to its level (musicBack). The gold words are his own (book-words-gold.png, lifted from his clip's frames); the name is the
    page's own drawing of the reader's name, in his gold, drawn as crisply as his gold name.
    Vedic and Tropical: run(), on the same page. Combined: the dashboard runs it over a copy of Your Combined Reading's own
    sky until the gold has gone, then hands over, and combined-reading.html brings its words and pictures up over the same
@@ -26,15 +26,20 @@
      safety timer finishes it if the screen stops drawing.
    - Lighter: the gold layer covers only the words and the name (it was the whole screen).
    - Every transition leaves a one-line record on the device (the last 12, localStorage "cozBTLog"); bt-report.html shows
-     them. Nothing is sent anywhere. */
+     them. Nothing is sent anywhere.
+   BT2.2 (Oct 28 2026, his ruling, staging only): the quiet holds through the name and the dissolve. His transition sound
+   no longer plays. The reading's music (the living page's ambient bed) returns only once the reading page is visible: from
+   barely there (-40 dB) to its usual level over 8 s, on an even curve (musicBack). Vedic and Tropical: when the page has
+   come up (done). Combined: when Your Combined Reading's words and pictures have come up (arrive). The pictures are
+   unchanged. */
 (function () {
   "use strict";
   if (window.CozBookToReading) return;
   var VER = "?v=1";
   var READINGS = {
-    vedic:    { lead: 0,   sound: "book-to-reading-sound.m4a" + VER },
-    tropical: { lead: 250, sound: "book-to-reading-sound-tropical.m4a" + VER },
-    compare:  { lead: 208, sound: "book-to-reading-sound-compare.m4a" + VER }
+    vedic:    { lead: 0 },
+    tropical: { lead: 250 },
+    compare:  { lead: 208 }
   };
   /* his breakup: grey level 0..255 = the moment t0..t1 that spot of the page goes; the map covers his clip's frame, which is
      the book frame 2 px lower (book px) */
@@ -58,7 +63,8 @@
                 probes: [[150, 1250, 235, 217, 194], [350, 1300, 234, 216, 190], [600, 1220, 231, 210, 180],
                          [250, 1450, 232, 212, 185], [750, 1350, 225, 203, 172], [450, 1380, 232, 214, 185]], tol: 48 };
   var LOG = "cozBTLog", LOG_MAX = 12;
-  var SILENT = "data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAAA//NwwAAAAAAAAAAAAEluZm8AAAAPAAAABwAAA5EAUFBQUFBQUFBQUFBQUFBtbW1tbW1tbW1tbW1tbYqKioqKioqKioqKioqKqKioqKioqKioqKioqKioxcXFxcXFxcXFxcXFxcXi4uLi4uLi4uLi4uLi4v//////////////////AAAAAExhdmM2MC4zMQAAAAAAAAAAAAAAACQDKgAAAAAAAAORy3JmoQAAAAAAAAAAAAAAAAD/80DEAAAAA0gAAAAATEFNRTMuMTAwVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQsRbAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQMSkAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//NCxKMAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//NAxKQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVX/80LEowAAA0gAAAAAVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVX/80DEpAAAA0gAAAAAVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVQ==";
+  var MUSIC = { from: 0.01, secs: 8 };                            /* BT2.2: the bed comes back from -40 dB to its level in 8 s */
+  var BED = "cozBedBack";                                          /* BT2.2: Combined: the next page brings the music back */
 
   function now() { return window.__cozBTClock != null ? window.__cozBTClock : performance.now(); }   /* tests drive time */
   function clamp(x) { return x < 0 ? 0 : x > 1 ? 1 : x; }
@@ -77,29 +83,27 @@
   }
   function ready(img) { return !!(img && img.complete && img.naturalWidth); }
 
-  /* the sound: an audio element on the living page (so it carries on when Combined changes page), unlocked inside the
-     reading tap the way the read-aloud voice is (a moment of silence), the file fetched ahead */
-  var soundFor = null, soundUrl = null;
-  function prime(name) {
-    load();
-    var R = reading(name);
+  /* called in the reading tap: the lettering and the pattern are made ready (BT2.2: there is no transition sound) */
+  function prime() { load(); }
+
+  /* BT2.2: the reading's music back, gently: the living page's ambient bed starts from silence towards barely there
+     (-40 dB), then rises on an even curve to its usual level over 8 s. Only ever called once the reading page is up.
+     The engine's level is read back only once it is playing the bed (a level read at the start would be its default, a
+     moment at full volume). */
+  function musicBack(snd) {
     try {
-      var H = host(), a = H.__cozBTSound;
-      if (!a) { a = new H.Audio(); a.preload = "auto"; a.setAttribute("playsinline", ""); H.__cozBTSound = a; }
-      a.src = SILENT; var p = a.play(); if (p && p.catch) p.catch(function () {});
-      if (soundFor !== R.sound) {
-        soundFor = R.sound; soundUrl = null;
-        fetch(R.sound).then(function (r) { return r.ok ? r.blob() : null; })
-          .then(function (b) { if (b && soundFor === R.sound) soundUrl = H.URL.createObjectURL(b); }).catch(function () {});
+      if (!snd) { var H = host(); snd = H.EMERGE_SOUND; }
+      if (!snd || !snd.loop) return false;
+      snd.loop("ambient", MUSIC.from);
+      if (snd.swell && snd.fade) {
+        setTimeout(function () {
+          try { snd.swell("ambient", MUSIC.from, 0.15); } catch (e) {}
+          setTimeout(function () { try { snd.fade("ambient", 1.0, MUSIC.secs); } catch (e) {} }, 200);
+        }, 300);
+        setTimeout(function () { try { snd.swell("ambient", 1.0, 3); } catch (e) {} }, 300 + 200 + MUSIC.secs * 1000 + 1000);   /* at its level in any case */
       }
-    } catch (e) {}
-  }
-  function playSound(R) {
-    try {
-      var a = host().__cozBTSound; if (!a) return;
-      a.src = (soundFor === R.sound && soundUrl) || new URL(R.sound, location.href).href;
-      var p = a.play(); if (p && p.catch) p.catch(function () {});
-    } catch (e) {}
+      return true;
+    } catch (e) { return false; }
   }
 
   /* BT2.1: a one-line record of what happened, kept on this device only (bt-report.html shows it) */
@@ -351,8 +355,7 @@
     T.appendChild(sky); T.appendChild(dust); T.appendChild(gold); T.appendChild(par);   /* the page lies over the rest */
     T.addEventListener("touchmove", function (e) { e.preventDefault(); }, { passive: false });   /* the page under it stays still */
     document.body.appendChild(T);
-    if (!o.handOff) { try { if (o.under) o.under(); } catch (e) {} }
-    playSound(R);
+    if (!o.handOff) { try { if (o.under) o.under(); } catch (e) {} }   /* BT2.2: no sound: the quiet holds */
 
     /* the breakup: each mask pixel's moment from his pattern (around the book, his pattern carries on mirrored) */
     var md = null, px = null, tm = null, lut = new Uint32Array(256);
@@ -462,10 +465,26 @@
 
   /* Combined: combined-reading.html's words and pictures come up over its own sky, the sky the dashboard handed over
      on. Called at the very start of <body>, so they are never seen before. */
+  /* BT2.2: Combined: the dashboard leaves the music to this page (sessionStorage "cozBedBack"); it comes back once the
+     words and pictures are up */
+  function takeMusic() {
+    var m = null;
+    try { m = JSON.parse(sessionStorage.getItem(BED) || "null"); sessionStorage.removeItem(BED); } catch (e) {}
+    return !!(m && Date.now() - m.at < 20000);
+  }
   function arrive() {
+    var music = takeMusic(), back = false;
+    function bed() { if (music && !back) { back = true; musicBack(); } }
     var h = null;
     try { h = JSON.parse(sessionStorage.getItem(KEY) || "null"); sessionStorage.removeItem(KEY); } catch (e) {}
-    if (!h || !(Date.now() - h.at < 15000) || reduced()) return false;
+    if (!h || !(Date.now() - h.at < 15000) || reduced()) {
+      if (music) {   /* the page shows as it loads: the music once it is up */
+        var up = function () { setTimeout(bed, 600); };
+        if (document.readyState === "complete") up(); else window.addEventListener("load", up, { once: true });
+        setTimeout(bed, 4000);
+      }
+      return false;
+    }
     var de = document.documentElement, st = document.createElement("style");
     st.textContent = "html.coz-bt-arrive .content,html.coz-bt-arrive .art-bottom{opacity:0}";
     (document.head || de).appendChild(st); de.classList.add("coz-bt-arrive");
@@ -477,21 +496,23 @@
       (function frame() {
         var e = smooth((now() - t0) / ARRIVE);
         els.forEach(function (el) { el.style.opacity = e >= 1 ? "" : String(e); });
-        if (e < 1) requestAnimationFrame(frame);
+        if (e < 1) requestAnimationFrame(frame); else bed();       /* BT2.2: the words are up: the music comes back */
       })();
       els.forEach(function (el) { el.style.opacity = "0"; });
     }
     var ready = function () { try { (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(go, go); } catch (e) { go(); } };
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", ready, { once: true }); else ready();
     setTimeout(go, 1500);
+    if (music) setTimeout(bed, 1500 + ARRIVE + 2500);             /* if the screen is not drawing (a phone in the background) */
     return true;
   }
 
-  /* the read-aloud voice stops the transition sound too (VO1.4: all background sound stops at play) */
+  /* the read-aloud voice stops the transition sound too (VO1.4: all background sound stops at play). BT2.2: there is no
+     transition sound any more; kept so a page that calls it is unaffected */
   function quiet() { try { var a = host().__cozBTSound; if (a && !a.paused) a.pause(); } catch (e) {} }
 
   load();
-  window.CozBookToReading = { run: run, arrive: arrive, prime: prime, quiet: quiet, note: note,
+  window.CozBookToReading = { run: run, arrive: arrive, prime: prime, quiet: quiet, note: note, musicBack: musicBack,
     times: { map: [MAP.t0, MAP.t1], band: BAND, goldOut: GOLD_OUT, dustOut: DUST_OUT, emerge: EMERGE, hand: HAND, arrive: ARRIVE,
              leads: { vedic: READINGS.vedic.lead, tropical: READINGS.tropical.lead, compare: READINGS.compare.lead } } };
 })();

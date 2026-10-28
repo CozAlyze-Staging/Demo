@@ -626,7 +626,7 @@ body[data-view="reading"] .vedic-reading-page { animation: none; }
 </style>
 <script src="coz-saved.js?v=3"></script>
 <script src="coz-book-name.js?v=1"></script>   <!-- BK1 (Oct 27 2026, staging only): the reader's name on the book -->
-<script src="coz-book-to-reading.js?v=3"></script>   <!-- BT2 (Oct 28 2026, staging only): the book gives way to the reading. BT2.1: never skipped on a phone -->
+<script src="coz-book-to-reading.js?v=4"></script>   <!-- BT2 (Oct 28 2026, staging only): the book gives way to the reading. BT2.1: never skipped on a phone. BT2.2: quiet through the dissolve -->
 <script src="saved-vedic-library.js?v=1"></script>
 <style id="coz-rd1">/* RD1 (Oct 22 2026): every tappable label at least 15px on a phone */html body #cozFoot a{font-size:15px}html body .coz-skip{font-size:15px}/* RD3: Vedic/Tropical/Life Cycle Back/Next and the bottom bar labels larger */html body .vedic-nav a,html body .vedic-nav button{font-size:clamp(19px,5vw,22px);font-weight:500}html body #cozFoot a{font-size:17px}</style>
 <style id="coz-dv1">/* DV1 (Oct 22 2026): version stamps and the diagnostic launcher show only on a device with developer view on (localStorage cozDevView = "1") */html:not(.coz-dev) .stamp,html:not(.coz-dev) .stamp2,html:not(.coz-dev) .vedic-stamp,html:not(.coz-dev) .build-stamp,html:not(.coz-dev) .lc-stamp,html:not(.coz-dev) .cs-stamp,html:not(.coz-dev) .ktw-stamp,html:not(.coz-dev) .wcn-stamp,html:not(.coz-dev) #stamp,html:not(.coz-dev) #cozDiagLaunch{display:none!important}</style><script>try{if(localStorage.getItem("cozDevView")==="1")document.documentElement.classList.add("coz-dev")}catch(e){}</script>
@@ -1701,14 +1701,17 @@ let revealActive = false, revealDone = false, revealTimers = [];
    or Back is tapped, the bed comes back as before (the read-aloud voice still stops it, VO1.4). */
 const CLIP_MUSIC = ["ambient", "hum", "voidatm", "choice", "orbit", "calc"];
 let clipHushed = false;
-function clipSound(on) {
+function clipSound(on, slow) {   /* BT2.2: slow (after the book): the music comes back from barely there over 8 s */
   let snd = null;
   try { snd = window.parent !== window ? window.parent.EMERGE_SOUND : null; } catch (e) {}
   if (!on) { try { revealVideo.muted = true; } catch (e) {} }
   if (!snd) return;
   try {
     if (on) { CLIP_MUSIC.forEach(n => snd.stopLoop(n, 0.4)); clipHushed = true; }
-    else if (clipHushed) { clipHushed = false; snd.loop("ambient"); }
+    else if (clipHushed) {
+      clipHushed = false;
+      if (!(slow && window.CozBookToReading && CozBookToReading.musicBack && CozBookToReading.musicBack(snd))) snd.loop("ambient");
+    }
   } catch (e) {}
 }
 /* warm the clip while the dashboard is up so the turn can start the moment it is tapped */
@@ -1855,7 +1858,7 @@ function finishReveal(immediate, how) {
     try {
       if (revealStarted && window.CozBookToReading && CozBookToReading.run(Object.assign({ video: revealVideo,
           stage: document.getElementById("revealStage"), sky: { el: document.querySelector(".vedic-bg") }, base: "rgb(0,15,38)",
-          reading: "vedic", under: land, done: () => clipSound(false) }, BOOK_GEOM))) return;
+          reading: "vedic", under: land, done: () => clipSound(false, true) }, BOOK_GEOM))) return;   /* BT2.2: the music once the page is up, slowly */
     } catch (e) { btNote("error: " + String((e && e.message) || e).slice(0, 120)); }
     if (!revealStarted) btNote(window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "reduced motion: no clip" : "the clip never started");
     clipSound(false); land(); return;
