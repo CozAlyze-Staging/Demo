@@ -617,6 +617,7 @@ body[data-view="reading"] .vedic-reading-page { animation: none; }
 }
 </style>
 <script src="coz-saved.js?v=3"></script>
+<script src="coz-book-name.js?v=1"></script>   <!-- BK1 (Oct 27 2026, staging only): the reader's name on the book -->
 <script src="saved-vedic-library.js?v=1"></script>
 <style id="coz-rd1">/* RD1 (Oct 22 2026): every tappable label at least 15px on a phone */html body #cozFoot a{font-size:15px}html body .coz-skip{font-size:15px}/* RD3: Vedic/Tropical/Life Cycle Back/Next and the bottom bar labels larger */html body .vedic-nav a,html body .vedic-nav button{font-size:clamp(19px,5vw,22px);font-weight:500}html body #cozFoot a{font-size:17px}</style>
 <style id="coz-dv1">/* DV1 (Oct 22 2026): version stamps and the diagnostic launcher show only on a device with developer view on (localStorage cozDevView = "1") */html:not(.coz-dev) .stamp,html:not(.coz-dev) .stamp2,html:not(.coz-dev) .vedic-stamp,html:not(.coz-dev) .build-stamp,html:not(.coz-dev) .lc-stamp,html:not(.coz-dev) .cs-stamp,html:not(.coz-dev) .ktw-stamp,html:not(.coz-dev) .wcn-stamp,html:not(.coz-dev) #stamp,html:not(.coz-dev) #cozDiagLaunch{display:none!important}</style><script>try{if(localStorage.getItem("cozDevView")==="1")document.documentElement.classList.add("coz-dev")}catch(e){}</script>
@@ -648,7 +649,7 @@ body[data-view="reading"] .vedic-reading-page { animation: none; }
 <div class="reveal" id="reveal" role="dialog" aria-label="Opening your Vedic reading">
   <div class="stage" id="revealStage">
     <img class="stage-art" data-src="vedic-dash.jpg?v=24" alt="" width="1068" height="1940">
-    <video id="revealVideo" data-src="vedic-reading-reveal-full.mp4?v=1080" muted playsinline preload="auto" aria-hidden="true"></video>
+    <video id="revealVideo" data-src="vedic-reading-reveal-book.mp4?v=1" muted playsinline preload="auto" aria-hidden="true"></video>
     <script>
     if (!window.COZ_PREGEN) {
       /* DV1: the dashboard art loads first; the 10 MB reveal clip starts once the art has loaded,
@@ -714,7 +715,7 @@ body[data-view="reading"] .vedic-reading-page { animation: none; }
   </div>
 </div>
 
-<div class="vedic-stamp" aria-hidden="true">VEDIC READING · R5.2 · quiet pre-write · VD1.2 diagnostic · VW1 waiting · VSP1.2 server switch · DV1 load order · DV2 tap guard · S2C section 2 · SW1 r3 sections 1-2 · ELIG1 eligible records · SW2 claim text · WL1 r4 waiting line once · NA1 on to Ascendant · VO1.2 read aloud · RS1 clip first time only · SW3 rising sign · DX1 server records</div>
+<div class="vedic-stamp" aria-hidden="true">VEDIC READING · R5.2 · quiet pre-write · VD1.2 diagnostic · VW1 waiting · VSP1.2 server switch · DV1 load order · DV2 tap guard · S2C section 2 · SW1 r3 sections 1-2 · ELIG1 eligible records · SW2 claim text · WL1 r4 waiting line once · NA1 on to Ascendant · VO1.2 read aloud · RS1 clip first time only · SW3 rising sign · DX1 server records · BK1 book + name</div>
 
 <script src="ascendant-library.js"></script>
 <script src="dev-review-engine.js?v=13"></script>
@@ -1676,6 +1677,11 @@ document.querySelectorAll(".hot[data-dash]").forEach(btn => {
    ============================================================ */
 const revealEl = document.getElementById("reveal");
 const revealVideo = document.getElementById("revealVideo");
+/* BK1 (Oct 27 2026, Jason's ruling, staging only): the clip now ends with the book (his approved preview F1.2: the
+   solar system at its original framing, Jupiter fully in view, then the book); the page writes the reader's first name
+   on the book's page (coz-book-name.js), locked to the clip's frames. */
+try { if (window.CozBookName) CozBookName.attach({ video: revealVideo, stage: document.getElementById("revealStage"),
+  clipW: 1068, clipH: 1940, bookStart: 1021 / 24, bookFrames: 442, place: { sx: 1, sy: 1, ox: 0, oy: 2 } }); } catch (e) {}
 let revealActive = false, revealDone = false, revealTimers = [];
 /* warm the clip while the dashboard is up so the turn can start the moment it is tapped */
 try { revealVideo.load(); } catch (e) {}
@@ -1735,7 +1741,7 @@ revealVideo.addEventListener("playing", () => {
   /* Sep 20: the reveal, the drive through the sun, the light and the space flight are now ONE clip
      (vedic-reading-reveal-full.mp4). The page just plays it and lands when it ends. */
   // hard cap a little past the clip's 2.5s so a stalled clip never traps anyone
-  revealTimers.push(setTimeout(() => finishReveal(false), 47000));   /* stall guard only: the clip runs 44.5s */
+  revealTimers.push(setTimeout(() => finishReveal(false), 60000));   /* stall guard only: the clip runs 56.6s (BK1: flight + book) */
   /* stall watchdog (Sep 21): if the clip stops advancing for 4s (buffering on
      cellular), land on the reading instead of holding a black screen */
   let lastT = -1, stuckSince = Date.now();

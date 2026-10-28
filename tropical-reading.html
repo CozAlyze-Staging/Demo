@@ -534,6 +534,7 @@ body[data-view="reading"] .vedic-reading-page { animation: none; }
 </style>
 <script src="coz-saved.js?v=3"></script>
 <script src="saved-tropical-library.js?v=1"></script>
+<script src="coz-book-name.js?v=1"></script>   <!-- BK1 (Oct 27 2026, staging only): the reader's name on the book -->
 <script src="coz-tropical-server.js?v=5"></script>
 <style id="coz-rd1">/* RD1 (Oct 22 2026): every tappable label at least 15px on a phone */html body #cozFoot a{font-size:15px}html body .coz-skip{font-size:15px}/* RD3: Vedic/Tropical/Life Cycle Back/Next and the bottom bar labels larger */html body .vedic-nav a,html body .vedic-nav button{font-size:clamp(19px,5vw,22px);font-weight:500}html body #cozFoot a{font-size:17px}</style>
 <style id="coz-dv1">/* DV1 (Oct 22 2026): version stamps and the diagnostic launcher show only on a device with developer view on (localStorage cozDevView = "1") */html:not(.coz-dev) .stamp,html:not(.coz-dev) .stamp2,html:not(.coz-dev) .vedic-stamp,html:not(.coz-dev) .build-stamp,html:not(.coz-dev) .lc-stamp,html:not(.coz-dev) .cs-stamp,html:not(.coz-dev) .ktw-stamp,html:not(.coz-dev) .wcn-stamp,html:not(.coz-dev) #stamp,html:not(.coz-dev) #cozDiagLaunch{display:none!important}</style><script>try{if(localStorage.getItem("cozDevView")==="1")document.documentElement.classList.add("coz-dev")}catch(e){}</script>
@@ -565,7 +566,7 @@ body[data-view="reading"] .vedic-reading-page { animation: none; }
 <div class="reveal" id="reveal" role="dialog" aria-label="Opening your Tropical reading">
   <div class="stage" id="revealStage">
     <img class="stage-art" src="tropical-dash.jpg?v=10" alt="" width="972" height="2128">
-    <video id="revealVideo" src="tropical-reading-reveal-full.mp4?v=1081" muted playsinline preload="auto" aria-hidden="true"></video>
+    <video id="revealVideo" src="tropical-reading-reveal-book.mp4?v=1" muted playsinline preload="auto" aria-hidden="true"></video>
     <div class="asc-patch asc-patch-glyph" aria-hidden="true"></div>
     <div class="asc-patch asc-patch-text" aria-hidden="true"></div>
     <div class="asc-glyph" aria-hidden="true"></div>
@@ -611,7 +612,7 @@ body[data-view="reading"] .vedic-reading-page { animation: none; }
   </div>
 </div>
 
-<div class="vedic-stamp" aria-hidden="true">TROPICAL READING · T4.5 · server reading · WL1 r4 waiting line once · VT1 Tropical from Vedic · TC2 words raised · NA1 on to Ascendant · VO1.2 read aloud · RS1 clip first time only · DX1 server records</div>
+<div class="vedic-stamp" aria-hidden="true">TROPICAL READING · T4.5 · server reading · WL1 r4 waiting line once · VT1 Tropical from Vedic · TC2 words raised · NA1 on to Ascendant · VO1.2 read aloud · RS1 clip first time only · DX1 server records · BK1 book + name</div>
 
 <script src="ascendant-library.js"></script>
 <script src="coz-voice.js?v=4"></script>   <!-- VO1 (Oct 27 2026, staging only): the reading read aloud -->
@@ -854,7 +855,7 @@ const SAMPLE_LABEL = "Sample reading for demonstration only. This is not your ch
    left (about 9 s, the clip keeps playing underneath), then full black and "Calculating your sky" pulses, with Back
    available, until Section 1 is validated, then the reading opens. A terminal server result (Section 1 failed, access
    refused) lands with the existing handling. Two records: pullStart (the visual trigger at 40 s) and holdStart (the agreed deadline, the clip's end). Either fails the run for good. */
-const PULL_AT_S = 40.0, PULL_MS = 9000;
+const PULL_AT_S = 56.4, PULL_MS = 9000;   /* BK1: the clip now ends with the book, so the decision waits until the reader's name is written (was 40 s, planets in view) */
 const TM = () => (window.CozTropicalServer && CozTropicalServer.timing) || null;
 function s1State() {
   if (loadReading()) return "passed";
@@ -869,7 +870,7 @@ function s1Settled() {
 }
 let pullRaf = 0, pullOn = false, waitUp = null;
 /* the pictures that recede: the reveal's dashboard art and the clip, together; the Ascendant overlays go with them */
-function pullLayers() { return Array.from(document.querySelectorAll("#revealStage .stage-art, #revealVideo")); }
+function pullLayers() { return Array.from(document.querySelectorAll("#revealStage .stage-art, #revealVideo, #revealStage .coz-book-layer")); }   /* BK1: the name goes with the page */
 /* the timing record. Two separate things are recorded: pullStart (the visual trigger, 40 s into the clip) and
    holdStart (the agreed readiness deadline: the clip ended and Section 1 was still not ready). Either one fails the run
    for good. Every wait record is closed on every exit, and each duration is measured from its own recorded start. */
@@ -1219,6 +1220,11 @@ document.querySelectorAll(".hot[data-dash]").forEach(btn => {
    ============================================================ */
 const revealEl = document.getElementById("reveal");
 const revealVideo = document.getElementById("revealVideo");
+/* BK1 (Oct 27 2026, Jason's ruling, staging only): the clip now ends with the book (his approved preview F1.2: the
+   solar system at its original framing, Jupiter fully in view, then the book); the page writes the reader's first name
+   on the book's page (coz-book-name.js), locked to the clip's frames. */
+try { if (window.CozBookName) CozBookName.attach({ video: revealVideo, stage: document.getElementById("revealStage"),
+  clipW: 972, clipH: 2128, bookStart: 1021 / 24, bookFrames: 442, place: { sx: 972 / 1068, sy: 1762 / 1936, ox: 0, oy: 182 } }); } catch (e) {}
 let revealActive = false, revealDone = false, revealTimers = [];
 /* warm the clip while the dashboard is up so the turn can start the moment it is tapped */
 try { revealVideo.load(); } catch (e) {}
@@ -1280,7 +1286,7 @@ revealVideo.addEventListener("playing", () => {
   /* Sep 20: the reveal, the drive through the sun, the light and the space flight are now ONE clip
      (tropical-reading-reveal-full.mp4). The page just plays it and lands when it ends. */
   // hard cap a little past the clip's 2.5s so a stalled clip never traps anyone
-  revealTimers.push(setTimeout(() => finishReveal(false), 47000));   /* stall guard only: the clip runs 44.5s */
+  revealTimers.push(setTimeout(() => finishReveal(false), 60000));   /* stall guard only: the clip runs 56.6s (BK1: flight + book) */
   /* stall watchdog (Sep 21): if the clip stops advancing for 4s (buffering on
      cellular), land on the reading instead of holding a black screen */
   let lastT = -1, stuckSince = Date.now();
