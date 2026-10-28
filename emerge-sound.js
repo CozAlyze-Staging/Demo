@@ -1,11 +1,24 @@
 /* ==================================================================
-   EMERGE_SOUND — Final Sound System V4 engine (e28, continuous opening)
+   EMERGE_SOUND — Final Sound System V4 engine (e29, continuous opening)
    ------------------------------------------------------------------
    Sonic law (locked): low-register, physical, dark, restrained, dry,
    spatial. No pitch sweeps. Movement expressed via gain / density /
    stereo only. Relative WAV levels are preserved — every cue plays
    at gain 1.0; the master limiter exists strictly to guard against
    stacking, never to reshape a single cue.
+   e29 (Oct 28 2026, staging, SND1): first visit. The cue files only
+   started downloading at the first touch, and a cue whose file had not
+   arrived was dropped, so on a first visit (or after Safari clears its
+   cache) the opening played silent. Now the four opening cues (fold,
+   void, tap boom, earth growth) start downloading as the page opens,
+   two at a time, and are decoded at the first touch from those bytes;
+   a one-shot fired while its downloaded bytes are still decoding plays
+   as soon as they are ready, if that is within a quarter second.
+   Everything else loads at the first touch as before, but in the order
+   the opening needs it, three at a time, instead of all fifteen files
+   at once sharing the connection. No cue, level,
+   file or timeline changes; if anything here fails, the engine loads
+   as before.
    e28 (Oct 27 2026, staging, VO1.3): fade(name, level, secs) takes a
    running loop to a level along an even decibel curve (an exponential
    ramp), so a fade is heard steadily from start to finish instead of
@@ -79,9 +92,15 @@
   var DUCKS   = { harmony:1, impact:1, fold:1, ascension:1 };
 
   var AUDIO_VER = '18';
-  var ENGINE_VER = '28';   /* bump on ANY wav content change — defeats stale wav caching */
+  var ENGINE_VER = '29';   /* bump on ANY wav content change — defeats stale wav caching */
   var ctx = null, master = null, limiter = null;
   var buffers = {}, loading = {}, loops = {}, wantLoop = {};
+  var PREFETCH = ['fold', 'voidatm', 'tap', 'growth'];   /* e29: the opening cues, downloaded as the page opens */
+  /* e29: at the first touch the rest load in the order the opening needs them, three downloads at a time, instead of all
+     fifteen at once sharing the connection (which held the first cues back by seconds on a phone network) */
+  var ORDER = ['fold', 'voidatm', 'tap', 'growth', 'orbit', 'ambient', 'harmony', 'choice', 'calc', 'construction', 'sweep', 'tokens', 'impact', 'ascension', 'hum'];
+  var early = {}, fromEarly = {}, pending = {};         /* e29: early downloads (promises of bytes); cues loading from them; one-shots waiting */
+  var GRACE_MS = 250;                                   /* e29: how late a waiting one-shot may still play */
   var fired = {};                   /* timeline cues fired once per page */
   var voidGain = null;              /* remembered for ducking */
 
@@ -101,18 +120,71 @@
   }
 
   function load(name){
-    if (buffers[name] || loading[name]) return;
+    if (buffers[name] || loading[name]) return Promise.resolve();
     loading[name] = true;
-    fetch(FILES[name] + '?a=' + AUDIO_VER)
-      .then(function(r){ if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
+    var got = early[name]; delete early[name];                       /* e29: the download started at page open, if any */
+    if (got) fromEarly[name] = true;
+    return (got ? got.then(function(ab){ if (!ab) throw new Error('early download failed'); return ab; }) : fetchBytes(name))
+      .then(null, function(e){ if (!got) throw e; return fetchBytes(name); })   /* e29: an early download that failed is fetched again */
       .then(function(ab){ return ctx.decodeAudioData(ab); })
       .then(function(buf){
-        buffers[name] = buf; loading[name] = false;
+        buffers[name] = buf; loading[name] = false; fromEarly[name] = false;
         if (wantLoop[name]) { var lvl = wantLoop[name]; wantLoop[name] = false;
           startLoop(name, (typeof lvl === 'number') ? lvl : 1.0); }
+        flushPending(name);
       })
-      .catch(function(e){ loading[name] = false;
+      .catch(function(e){ loading[name] = false; fromEarly[name] = false; delete pending[name];
         try { console.log('[SOUND] load failed:', name, e && e.message); } catch(_){} });
+  }
+
+  function fetchBytes(name){
+    return fetch(FILES[name] + '?a=' + AUDIO_VER).then(function(r){ if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); });
+  }
+  /* e29: a one-shot that waited for its early download plays now, if it is still within the grace */
+  function flushPending(name){
+    var p = pending[name]; if (!p) return;
+    if (!ready() || !buffers[name]) return;                            /* the context is not running yet: keep waiting */
+    delete pending[name];
+    if (Date.now() - p.at <= GRACE_MS) play(name, p.opts);
+  }
+  /* e29: when the context starts running, start the loops and the waiting one-shots that are ready */
+  function flushAll(){
+    if (!ready()) return;
+    for (var n in wantLoop) if (wantLoop[n] && buffers[n]) { var lvl = wantLoop[n]; wantLoop[n] = false; startLoop(n, (typeof lvl === 'number') ? lvl : 1.0); }
+    for (var k in pending) flushPending(k);
+  }
+  /* e29: download the opening cues' bytes as the page opens, two at a time; nothing is decoded or played here. The
+     first touch decodes them (load), waiting for any download still on its way instead of starting a second one. */
+  function prefetch(){
+    try {
+      if (!window.fetch || !window.Promise) return;
+      var i = 0, active = 0;
+      var next = function(){
+        while (active < 2 && i < PREFETCH.length) {
+          var name = PREFETCH[i++];
+          if (!FILES[name] || buffers[name] || loading[name] || early[name]) continue;
+          active++;
+          early[name] = fetchBytes(name).then(null, function(){ return null; });   /* null: failed, load fetches again */
+          early[name].then(function(){ active--; next(); });
+        }
+      };
+      next();
+    } catch(_){}
+  }
+
+  /* e29: warm every cue: the early downloads first (no new download), then the rest in ORDER, three at a time */
+  function loadAll(){
+    var names = ORDER.filter(function(n){ return FILES[n]; });
+    for (var k in FILES) if (names.indexOf(k) < 0) names.push(k);
+    names.forEach(function(n){ if (early[n]) load(n); });
+    var rest = names.filter(function(n){ return !buffers[n] && !loading[n]; }), active = 0;
+    var next = function(){
+      while (active < 3 && rest.length) {
+        var n = rest.shift(); if (buffers[n] || loading[n]) continue;
+        active++; load(n).then(function(){ active--; next(); });
+      }
+    };
+    next();
   }
 
   function unlock(){
@@ -122,7 +194,8 @@
         if (!AC) return;
         ctx = new AC();
         buildGraph();
-        for (var k in FILES) load(k);            /* warm every cue */
+        try { ctx.onstatechange = flushAll; } catch(_){}                /* e29 */
+        if (window.Promise) loadAll(); else for (var k in FILES) load(k);   /* warm every cue (e29: in order) */
       }
       if (ctx.state === 'suspended') ctx.resume();
       if (!window.EMERGE_HOLD_AMBIENT) startLoop('ambient');   /* the field plays continuously; reveal pages hold it until REVEAL MY CHART */
@@ -190,6 +263,7 @@
 
   function play(name, opts){
     if (name === 'pulse') return beep();
+    if (ctx && !buffers[name] && fromEarly[name]) { pending[name] = { at: Date.now(), opts: opts }; return; }   /* e29: loading from its early download: play when ready, within the grace */
     if (!ready() || !buffers[name]) return;      /* locked or not decoded: drop */
     opts = opts || {};
     var n = makeSource(name, opts.pan);
@@ -320,6 +394,12 @@
   function status(){
     return 'snd e' + ENGINE_VER + ' ' + (ctx ? ctx.state : 'no-ctx');
   }
+
+  /* e29: start the opening cues' downloads once the page itself has loaded, so they never slow the page */
+  try {
+    if (document.readyState === 'complete') setTimeout(prefetch, 0);
+    else window.addEventListener('load', function(){ setTimeout(prefetch, 0); });
+  } catch(_){}
 
   window.EMERGE_SOUND = {
     unlock: unlock, play: play, grain: grain,
