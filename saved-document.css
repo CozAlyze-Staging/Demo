@@ -82,5 +82,15 @@ button{font:inherit}
   .doc-section summary,.doc-section h3{break-after:avoid; page-break-after:avoid}
   .doc-copy p{break-inside:avoid; page-break-inside:avoid; orphans:3; widows:3}
   .doc-footer{break-before:avoid; page-break-before:avoid; break-inside:avoid; page-break-inside:avoid}
+  /* PG3 (Oct 28 2026): saved-document-print.js puts the last paragraph and the closing note in one block just before
+     printing, because iOS Safari ignores break-before:avoid. The block is never split; the spacer draws the section's
+     rule where it was, and the note keeps its own small type. */
+  .doc-keep-end{break-inside:avoid; page-break-inside:avoid}
+  .doc-keep-host{border-bottom:none}
+  .doc-keep-rule{padding-bottom:1rem; border-bottom:1px solid var(--coz-rule)}
+  .doc-keep-end .doc-footer p{font-size:inherit; line-height:inherit; margin:0 0 .4rem}
+  /* PG3: the 124px the pages keep under the paper for the Home bar is for the screen only (the bar never prints); in print
+     it could spill onto an otherwise empty last page. html body outranks the pages' own .doc-shell rule. */
+  html body .doc-shell{padding-bottom:0}
   .doc-section summary .chev{display:none}
 }

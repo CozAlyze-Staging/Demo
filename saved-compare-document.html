@@ -29,7 +29,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="saved-document.css?v=2">
+<link rel="stylesheet" href="saved-document.css?v=3">
 <style>
 /* SCD1.0: framed birth charts, and the chaining links (gold, like the chart pages' Saved Readings) */
 .doc-frame{display:block; width:100%; border:0; min-height:30rem; background:transparent; margin-top:.6rem}
@@ -338,5 +338,6 @@ document.querySelectorAll('#cozFoot a[data-foot="account"]').forEach(function(a)
   try { window.dispatchEvent(new CustomEvent("COZ_DASH_ACCOUNT")); } catch (e) {} }); });
 </script>
 <script src="coz-nav.js?v=2"></script>
+<script src="saved-document-print.js?v=1"></script>   <!-- PG3: the closing note never prints alone on the last page -->
 </body>
 </html>
