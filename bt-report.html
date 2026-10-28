@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CozAlyze book-to-reading report</title>
+<!--
+  COZALYZE · BOOK-TO-READING REPORT · BT2.1 (Oct 28 2026) · DEVELOPMENT DIAGNOSTIC · READ-ONLY · STAGING
+  Shows the record coz-book-to-reading.js keeps on this device of the last 12 times a reading clip ended (localStorage
+  "cozBTLog"): whether the book-to-reading transition ran, and if not, why (the clip stalled, the reading was not ready,
+  the phone could not build it). It never writes, removes or clears anything, calls no network service and loads no
+  other script. No reading text, name or birth detail is in the record. Not linked from the application; open it by
+  typing its address.
+-->
+<style>
+  html,body{margin:0;background:#050a14;color:#e5d4c5}
+  body{padding:calc(env(safe-area-inset-top,0px) + 12px) 12px calc(env(safe-area-inset-bottom,0px) + 12px);font:14px/1.4 -apple-system,system-ui,sans-serif}
+  h1{font-size:17px;margin:0 0 4px}
+  p.note{margin:0 0 10px;color:#b9a58c;font-size:12px}
+  .row{display:flex;gap:8px;margin:0 0 10px}
+  button{flex:1;padding:12px;background:#1a2233;color:#e5d4c5;border:1px solid #6b5a3e;border-radius:8px;font:15px -apple-system,system-ui,sans-serif}
+  textarea{width:100%;box-sizing:border-box;height:calc(100vh - 170px);min-height:320px;background:#000;color:#e5d4c5;border:1px solid #333;border-radius:8px;padding:8px;font:11px/1.45 Menlo,monospace}
+</style>
+</head>
+<body>
+<h1>Book-to-reading report · BT2.1</h1>
+<p class="note">Read-only. The last 12 reading clips that ended on this device, newest first.</p>
+<div class="row">
+  <button type="button" id="copyBtn">Copy report</button>
+  <button type="button" id="refreshBtn">Refresh</button>
+</div>
+<textarea id="out" readonly></textarea>
+<script>
+(function(){
+  "use strict";
+  function text(){
+    var a = [];
+    try { a = JSON.parse(localStorage.getItem("cozBTLog") || "[]"); } catch (e) { return "Could not read the record (" + (e && e.name) + ")."; }
+    if (!Array.isArray(a) || !a.length) return "No reading clip has ended on this device since the transition record began (BT2.1).";
+    return a.slice().reverse().map(function (e, i) {
+      var head = (i + 1) + ". " + (e.at || "?") + " · " + (e.reading || "?") + " · " + (e.ok ? "TRANSITION RAN" : "NO TRANSITION") + " · " + (e.why || "");
+      var rest = [];
+      ["scale", "frame", "check", "mode", "frames", "ms", "page", "screen", "device"].forEach(function (k) { if (e[k] != null && e[k] !== "") rest.push(k + ": " + e[k]); });
+      return head + "\n   " + rest.join("\n   ");
+    }).join("\n\n");
+  }
+  var out = document.getElementById("out");
+  function show(){ out.value = "CozAlyze book-to-reading report · " + new Date().toISOString() + "\n\n" + text(); }
+  document.getElementById("refreshBtn").addEventListener("click", show);
+  document.getElementById("copyBtn").addEventListener("click", function () {
+    out.focus(); out.select();
+    try { if (navigator.clipboard) { navigator.clipboard.writeText(out.value); return; } } catch (e) {}
+    try { document.execCommand("copy"); } catch (e) {}
+  });
+  show();
+})();
+</script>
+</body>
+</html>

@@ -431,7 +431,7 @@ body[data-view="reading"] .vedic-reading-page { animation: none; }
 <!-- Oct 2: ?v=5 so this page loads coz-saved.js CS1.6, not a cached copy -->
 <script src="coz-saved.js?v=5"></script>
 <script src="coz-book-name.js?v=1"></script>   <!-- BK1 (Oct 27 2026, staging only): the reader's name on the book -->
-<script src="coz-book-to-reading.js?v=2"></script>   <!-- BT2 (Oct 28 2026, staging only): the book gives way to the reading -->
+<script src="coz-book-to-reading.js?v=3"></script>   <!-- BT2 (Oct 28 2026, staging only): the book gives way to the reading. BT2.1: never skipped on a phone -->
 <script src="coz-compare-server.js?v=4"></script>
 <style id="coz-dv1">/* DV1 (Oct 22 2026): version stamps and the diagnostic launcher show only on a device with developer view on (localStorage cozDevView = "1") */html:not(.coz-dev) .stamp,html:not(.coz-dev) .stamp2,html:not(.coz-dev) .vedic-stamp,html:not(.coz-dev) .build-stamp,html:not(.coz-dev) .lc-stamp,html:not(.coz-dev) .cs-stamp,html:not(.coz-dev) .ktw-stamp,html:not(.coz-dev) .wcn-stamp,html:not(.coz-dev) #stamp,html:not(.coz-dev) #cozDiagLaunch{display:none!important}</style><script>try{if(localStorage.getItem("cozDevView")==="1")document.documentElement.classList.add("coz-dev")}catch(e){}</script>
 <style id="coz-gd1">
@@ -819,7 +819,8 @@ const revealVideo = document.getElementById("revealVideo");
    from its first frame, then the book at 905/24 s, 51.7 s in all), with the approved soundscape (Chat's mix, unchanged)
    in the file. Same framing and name geometry as BK1; the book simply starts 116 frames earlier. */
 const BOOK_GEOM = { clipW: 1068, clipH: 2320, bookStart: 905 / 24, bookFrames: 442, place: { sx: 1, sy: 1, ox: 0, oy: 192 } };   /* FS1: one full-screen clip for all three readings, the book 192 px down */
-try { if (window.CozBookName) CozBookName.attach(Object.assign({ video: revealVideo, stage: document.getElementById("revealStage") }, BOOK_GEOM)); } catch (e) {}
+let bookName = null;   /* BT2.1: kept, so the name's last frame can be drawn before the book gives way */
+try { if (window.CozBookName) bookName = CozBookName.attach(Object.assign({ video: revealVideo, stage: document.getElementById("revealStage") }, BOOK_GEOM)); } catch (e) {}
 let revealActive = false, revealDone = false, revealTimers = [];
 /* BK2: while the clip plays, its own sound is the only sound. The app's music (every loop on the living page's engine:
    the bed, the low hum, any other bed) stops at the tap and the harmony cue no longer plays; when the clip ends, stalls
@@ -903,8 +904,34 @@ revealVideo.addEventListener("playing", () => {
      through the sun at 1.5 s) are gone. */
   revealTimers.push(setTimeout(waitFlash, 20000));   /* WL1 r4: the waiting line once, 20 s into every clip */
   /* The page just plays the clip and lands when it ends. */
-  revealTimers.push(setTimeout(() => finishReveal(false, "stall"), 60000));   /* stall guard only: the clip runs 51.7 s (BK2: flight + book) */
+  /* BT2.1 (Oct 28 2026, staging only): a clip standing still at its very end has ended (some phones stop on the last
+     frame without saying so): the book gives way to the reading then, never the plain curtain. */
+  let lastT = -1, movedAt = Date.now();
+  const playStart = Date.now();
+  const watch = () => {
+    if (!revealActive || revealDone) return;
+    const t = revealVideo.currentTime;
+    if (t !== lastT) { lastT = t; movedAt = Date.now(); }
+    else if (clipAtEnd() && Date.now() - movedAt > 600) { finishReveal(true, "ended"); return; }
+    revealTimers.push(setTimeout(watch, 500));
+  };
+  revealTimers.push(setTimeout(watch, 500));
+  /* stall guard: the clip runs 51.7 s (BK2: flight + book). BT2.1: at 60 s a clip that is still playing (it moved in the
+     last 2 s, slowed by the connection) is left to finish, up to 120 s; one that has stopped lands as before. */
+  const guard = () => {
+    if (!revealActive || revealDone) return;
+    if (clipAtEnd()) { finishReveal(true, "ended"); return; }
+    if (Date.now() - playStart < 120000 && Date.now() - movedAt < 2000) { revealTimers.push(setTimeout(guard, 2000)); return; }
+    finishReveal(false, "stall");
+  };
+  revealTimers.push(setTimeout(guard, 60000));
 });
+/* BT2.1: the clip is at its end (within its last quarter second), however the phone reports it */
+function clipAtEnd() {
+  const d = revealVideo.duration;
+  return revealVideo.ended || (d > 0 && isFinite(d) && revealVideo.currentTime >= d - 0.25);
+}
+function btNote(why) { try { if (window.CozBookToReading && CozBookToReading.note) CozBookToReading.note({ reading: "compare", ok: false, why: why }); } catch (e) {} }
 
 /* CRG1 (staging, Oct 14 2026): a chart run written by the Compare server lands only once Shared Themes is
    released for its job (COZ_CMP_SERVER.firstSectionState). Until then the reveal stays exactly where it is
@@ -1072,6 +1099,7 @@ function finishReveal(immediate, how) {
   if (!revealActive || revealDone) return;   // ignore clip events while the reveal is not running
   revealDone = true;
   revealTimers.forEach(clearTimeout); revealTimers = [];
+  if (immediate !== true && immediate !== "through" && revealStarted && clipAtEnd()) { immediate = true; how = "ended"; }   /* BT2.1: a clip at its end has ended */
   tm("mark", "revealDone", { how: how || (immediate === true ? "ended" : "stall") });   /* r5: with the Shared Themes state now */
   const land0 = () => {
     const dark = pullOn;                        /* r5: after the waiting screen, open the reading straight from black */
@@ -1093,14 +1121,21 @@ function finishReveal(immediate, how) {
        lands through the book: the name holds, the parchment gives way in his own pattern to Your Combined Reading's own
        sky, the words and the name turn gold and fade, then Your Combined Reading opens and its words and pictures come up
        over the same sky (coz-book-to-reading.js arrive), with his transition sound. Otherwise as before. */
+    try { if (bookName && immediate === true && how === "ended" && revealStarted && !pullOn) bookName.update(revealVideo.duration || revealVideo.currentTime); } catch (e) {}   /* BT2.1: the name's last frame */
     try {
       if (immediate === true && how === "ended" && revealStarted && !pullOn && firstState() !== "wait" && window.CozBookToReading &&
           CozBookToReading.run(Object.assign({ video: revealVideo, stage: document.getElementById("revealStage"),
             sky: { css: 'url("combined-top.jpg?v=1") center top / 100% auto no-repeat, url("combined-mid.png?v=1") center top / 100% 1px repeat-y, rgb(1,11,26)', maxWidth: 640 },
             base: "rgb(1,11,26)", reading: "compare", handOff: true, done: () => { clipSound(false); land(); } }, BOOK_GEOM))) return;
-    } catch (e) {}
+    } catch (e) { btNote("error: " + String((e && e.message) || e).slice(0, 120)); }
+    if (how === "reduced") btNote("reduced motion: no clip");
+    else if (immediate === true && !revealStarted) btNote("the clip never started");
+    else if (pullOn || firstState() === "wait") btNote("Shared Themes was not ready when the clip ended: the dark wait");
+    else if (immediate !== true) btNote("the clip stopped before its end (" + (how || "stall") + ", at " + (Math.round((revealVideo.currentTime || 0) * 10) / 10) + " s)");
     clipSound(false); land(); return;            /* BK2: the clip is over, the bed comes back (also under a dark wait) */
   }
+  btNote(how === "nostart" || how === "noplay" ? "the clip could not start (" + how + ")" :
+         "the clip stopped before its end (" + (how || "stall") + ", at " + (Math.round((revealVideo.currentTime || 0) * 10) / 10) + " s)");   /* BT2.1 */
   clipSound(false);
   /* Sep 1 ruling: through the sun. Hold on the burst, then the camera drives into it, the light
      fills the screen, the page lands underneath and the light clears to reveal the reading. */
@@ -1144,6 +1179,7 @@ document.querySelector('[data-dash="ascendant"]').addEventListener("click", func
 });
 document.getElementById("revealBack").addEventListener("click", cancelReveal);
 revealVideo.addEventListener("ended", () => finishReveal(true, "ended"));   /* the clip ends on open space, the reading is already underneath */
+revealVideo.addEventListener("pause", () => { if (revealStarted && clipAtEnd()) finishReveal(true, "ended"); });   /* BT2.1: stopped on its last frame */
 revealVideo.addEventListener("error", () => finishReveal(false, "error"));
 
 /* Section links are plain hash links: every section is its own history entry,

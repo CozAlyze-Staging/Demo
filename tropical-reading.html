@@ -543,7 +543,7 @@ body[data-view="reading"] .vedic-reading-page { animation: none; }
 <script src="coz-saved.js?v=3"></script>
 <script src="saved-tropical-library.js?v=1"></script>
 <script src="coz-book-name.js?v=1"></script>   <!-- BK1 (Oct 27 2026, staging only): the reader's name on the book -->
-<script src="coz-book-to-reading.js?v=2"></script>   <!-- BT2 (Oct 28 2026, staging only): the book gives way to the reading -->
+<script src="coz-book-to-reading.js?v=3"></script>   <!-- BT2 (Oct 28 2026, staging only): the book gives way to the reading. BT2.1: never skipped on a phone -->
 <script src="coz-tropical-server.js?v=5"></script>
 <style id="coz-rd1">/* RD1 (Oct 22 2026): every tappable label at least 15px on a phone */html body #cozFoot a{font-size:15px}html body .coz-skip{font-size:15px}/* RD3: Vedic/Tropical/Life Cycle Back/Next and the bottom bar labels larger */html body .vedic-nav a,html body .vedic-nav button{font-size:clamp(19px,5vw,22px);font-weight:500}html body #cozFoot a{font-size:17px}</style>
 <style id="coz-dv1">/* DV1 (Oct 22 2026): version stamps and the diagnostic launcher show only on a device with developer view on (localStorage cozDevView = "1") */html:not(.coz-dev) .stamp,html:not(.coz-dev) .stamp2,html:not(.coz-dev) .vedic-stamp,html:not(.coz-dev) .build-stamp,html:not(.coz-dev) .lc-stamp,html:not(.coz-dev) .cs-stamp,html:not(.coz-dev) .ktw-stamp,html:not(.coz-dev) .wcn-stamp,html:not(.coz-dev) #stamp,html:not(.coz-dev) #cozDiagLaunch{display:none!important}</style><script>try{if(localStorage.getItem("cozDevView")==="1")document.documentElement.classList.add("coz-dev")}catch(e){}</script>
@@ -1236,7 +1236,8 @@ const revealVideo = document.getElementById("revealVideo");
    from its first frame, then the book at 905/24 s, 51.7 s in all), with the approved soundscape (Chat's mix, unchanged)
    in the file. Same framing and name geometry as BK1; the book simply starts 116 frames earlier. */
 const BOOK_GEOM = { clipW: 1068, clipH: 2320, bookStart: 905 / 24, bookFrames: 442, place: { sx: 1, sy: 1, ox: 0, oy: 192 } };   /* FS1: one full-screen clip for all three readings, the book 192 px down */
-try { if (window.CozBookName) CozBookName.attach(Object.assign({ video: revealVideo, stage: document.getElementById("revealStage") }, BOOK_GEOM)); } catch (e) {}
+let bookName = null;   /* BT2.1: kept, so the name's last frame can be drawn before the book gives way */
+try { if (window.CozBookName) bookName = CozBookName.attach(Object.assign({ video: revealVideo, stage: document.getElementById("revealStage") }, BOOK_GEOM)); } catch (e) {}
 let revealActive = false, revealDone = false, revealTimers = [];
 /* BK2: while the clip plays, its own sound is the only sound. The app's music (every loop on the living page's engine:
    the bed, the low hum, any other bed) stops at the tap and the harmony cue no longer plays; when the clip ends, stalls
@@ -1291,7 +1292,7 @@ function startReveal() {
   document.getElementById("revealLive").textContent = "Opening your Tropical reading";
 
   // if the clip cannot even start (no network, blocked), move on rather than trap anyone
-  revealTimers.push(setTimeout(() => { if (!revealStarted) finishReveal(false); }, 7000));
+  revealTimers.push(setTimeout(() => { if (!revealStarted) finishReveal(false, "nostart"); }, 7000));
 
   revealStarted = false;
   try { revealVideo.currentTime = 0; } catch (e) {}
@@ -1305,7 +1306,7 @@ function startReveal() {
     if (!revealActive || revealDone) return;
     clipSound(false);
     const q = revealVideo.play();
-    if (q && q.catch) q.catch(() => finishReveal(false));
+    if (q && q.catch) q.catch(() => finishReveal(false, "noplay"));
   });
 }
 
@@ -1318,22 +1319,41 @@ revealVideo.addEventListener("playing", () => {
      through the sun at 1.5 s) are gone. */
   revealTimers.push(setTimeout(waitFlash, 20000));   /* WL1 r4: the waiting line once, 20 s into every clip */
   /* The page just plays the clip and lands when it ends. */
-  revealTimers.push(setTimeout(() => finishReveal(false), 60000));   /* stall guard only: the clip runs 51.7 s (BK2: flight + book) */
   /* stall watchdog (Sep 21): if the clip stops advancing for 4s (buffering on
      cellular), land on the reading instead of holding a black screen */
+  /* BT2.1 (Oct 28 2026, staging only): a clip standing still at its very end has ended (some phones stop on the last
+     frame without saying so): the book gives way to the reading then, never the plain curtain. */
   let lastT = -1, stuckSince = Date.now();
+  const playStart = Date.now();
   revealTimers.push(setInterval(() => {
     if (!revealActive || revealDone) return;
     const t = revealVideo.currentTime;
     if (t !== lastT) { lastT = t; stuckSince = Date.now(); return; }
-    if (Date.now() - stuckSince > 4000) finishReveal(false);
+    if (clipAtEnd() && Date.now() - stuckSince > 600) { finishReveal(true, "end"); return; }
+    if (Date.now() - stuckSince > 4000) finishReveal(false, "stall");
   }, 500));
+  /* stall guard: the clip runs 51.7 s (BK2: flight + book). BT2.1: at 60 s a clip that is still playing (it moved in the
+     last 2 s, slowed by the connection) is left to finish, up to 120 s; one that has stopped lands as before. */
+  const guard = () => {
+    if (!revealActive || revealDone) return;
+    if (clipAtEnd()) { finishReveal(true, "end"); return; }
+    if (Date.now() - playStart < 120000 && Date.now() - stuckSince < 2000) { revealTimers.push(setTimeout(guard, 2000)); return; }
+    finishReveal(false, "guard");
+  };
+  revealTimers.push(setTimeout(guard, 60000));
 });
+/* BT2.1: the clip is at its end (within its last quarter second), however the phone reports it */
+function clipAtEnd() {
+  const d = revealVideo.duration;
+  return revealVideo.ended || (d > 0 && isFinite(d) && revealVideo.currentTime >= d - 0.25);
+}
+function btNote(why) { try { if (window.CozBookToReading && CozBookToReading.note) CozBookToReading.note({ reading: "tropical", ok: false, why: why }); } catch (e) {} }
 
-function finishReveal(immediate) {
+function finishReveal(immediate, how) {
   if (!revealActive || revealDone) return;   // ignore clip events while the reveal is not running
   revealDone = true;
   revealTimers.forEach(clearTimeout); revealTimers.forEach(clearInterval); revealTimers = [];
+  if (immediate !== true && immediate !== "through" && revealStarted && clipAtEnd()) immediate = true;   /* BT2.1: a clip at its end has ended */
   const land = () => {
     stopPullAway();                            /* TSA1.4 */
     location.hash = "#/at-your-core";          // its own history entry; renders via hashchange
@@ -1349,13 +1369,18 @@ function finishReveal(immediate) {
        through the book: the name holds, the parchment gives way in his own pattern to the reading's sky, the words and
        the name turn gold and fade, and the reading (switched in underneath) comes up through it, with his transition
        sound. The background music comes back when the page is up. Not ready: the dark wait, exactly as before. */
+    try { if (bookName && revealStarted && !pullOn) bookName.update(revealVideo.duration || revealVideo.currentTime); } catch (e) {}   /* BT2.1: the name's last frame */
     try {
       if (revealStarted && !pullOn && s1Settled() && window.CozBookToReading && CozBookToReading.run(Object.assign({ video: revealVideo,
           stage: document.getElementById("revealStage"), sky: { el: document.querySelector(".vedic-bg") }, base: "rgb(0,15,38)",
           reading: "tropical", under: () => whenS1Ready(land), done: () => clipSound(false) }, BOOK_GEOM))) return;
-    } catch (e) {}
+    } catch (e) { btNote("error: " + String((e && e.message) || e).slice(0, 120)); }
+    if (!revealStarted) btNote(window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "reduced motion: no clip" : "the clip never started");
+    else if (pullOn || !s1Settled()) btNote("Section 1 was not ready when the clip ended: the dark wait");
     clipSound(false); whenS1Ready(land); return;   /* BK2: the clip is over, the bed comes back (also under a dark wait) */
   }
+  btNote(how === "nostart" || how === "noplay" ? "the clip could not start (" + how + ")" :
+         "the clip stopped before its end (" + (how || "stall") + ", at " + (Math.round((revealVideo.currentTime || 0) * 10) / 10) + " s)");   /* BT2.1 */
   clipSound(false);
   /* Sep 1 ruling: through the sun. Hold on the burst, then the camera drives into it, the light
      fills the screen, the page lands underneath and the light clears to reveal the reading. */
@@ -1390,12 +1415,13 @@ function cancelReveal() {
 document.getElementById("hotReading").addEventListener("click", startReveal);
 document.getElementById("revealBack").addEventListener("click", cancelReveal);
 revealVideo.addEventListener("ended", () => finishReveal(true));   /* the clip ends on open space, the reading is already underneath */
+revealVideo.addEventListener("pause", () => { if (revealStarted && clipAtEnd()) finishReveal(true, "end"); });   /* BT2.1: stopped on its last frame */
 /* the decision point: 40 s into the clip, only if Section 1 is not ready */
 revealVideo.addEventListener("timeupdate", () => {
   if (!revealActive || revealDone || pullOn || revealVideo.currentTime < PULL_AT_S) return;
   if (!s1Settled()) startPullAway();
 });
-revealVideo.addEventListener("error", () => finishReveal(false));
+revealVideo.addEventListener("error", () => finishReveal(false, "error"));
 
 /* Section links are plain hash links: every section is its own history entry,
    so the phone's back gesture steps through them, and back past Page 01 lands on the dashboard. */

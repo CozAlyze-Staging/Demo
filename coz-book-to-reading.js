@@ -16,7 +16,17 @@
    Vedic and Tropical: run(), on the same page. Combined: the dashboard runs it over a copy of Your Combined Reading's own
    sky until the gold has gone, then hands over, and combined-reading.html brings its words and pictures up over the same
    sky (arrive). A clip that stalls or fails, reduced motion, a wait for the reading and a reading opened straight away all
-   land as before. */
+   land as before.
+   BT2.1 (Oct 28 2026, after his test on staging, staging only): the same transition, made so a phone never skips it.
+   - A phone that cannot give it full-size canvases gets them a size smaller (down to 1x), instead of no transition.
+   - The clip's last frame is checked after it is captured (the page around the name must be parchment). A phone that
+     hands back an empty or wrong frame gets the clip's own last frame instead (book-last-frame.jpg, the same picture,
+     fetched only then), while the clip's last frame stays on screen.
+   - If anything fails once it has started, its layer fades away onto the reading instead of staying on screen, and a
+     safety timer finishes it if the screen stops drawing.
+   - Lighter: the gold layer covers only the words and the name (it was the whole screen).
+   - Every transition leaves a one-line record on the device (the last 12, localStorage "cozBTLog"); bt-report.html shows
+     them. Nothing is sent anywhere. */
 (function () {
   "use strict";
   if (window.CozBookToReading) return;
@@ -42,6 +52,12 @@
      about 110 px a second and twinkle; fewer towards the page's sides and few on its lower edge (book px, ms) */
   var SPECKS = { count: 6500, x: [60, 1010], y: [0, 1700], side: [180, 890], foot: 1500, after: 1800, early: [0.35, 600],
                  rise: [85, 140], drift: 50, life: [250, 600], size: [1.1, 3.0], glint: 0.15, glintLife: [120, 250], glintSize: [0.8, 1.3] };
+  /* BT2.1: the clip's own last frame (clip px), and six spots of plain parchment on it, away from the words and the name,
+     with their colour there (r, g, b): a captured frame must show parchment at most of them */
+  var STILL = { src: "book-last-frame.jpg" + VER, clip: /reading-reveal-fullscreen\.mp4/, w: 1068, h: 2320,   /* remake both if the clip changes */
+                probes: [[150, 1250, 235, 217, 194], [350, 1300, 234, 216, 190], [600, 1220, 231, 210, 180],
+                         [250, 1450, 232, 212, 185], [750, 1350, 225, 203, 172], [450, 1380, 232, 214, 185]], tol: 48 };
+  var LOG = "cozBTLog", LOG_MAX = 12;
   var SILENT = "data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAAA//NwwAAAAAAAAAAAAEluZm8AAAAPAAAABwAAA5EAUFBQUFBQUFBQUFBQUFBtbW1tbW1tbW1tbW1tbYqKioqKioqKioqKioqKqKioqKioqKioqKioqKioxcXFxcXFxcXFxcXFxcXi4uLi4uLi4uLi4uLi4v//////////////////AAAAAExhdmM2MC4zMQAAAAAAAAAAAAAAACQDKgAAAAAAAAORy3JmoQAAAAAAAAAAAAAAAAD/80DEAAAAA0gAAAAATEFNRTMuMTAwVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQsRbAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQMSkAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//NCxKMAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//NAxKQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVX/80LEowAAA0gAAAAAVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVX/80DEpAAAA0gAAAAAVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVQ==";
 
   function now() { return window.__cozBTClock != null ? window.__cozBTClock : performance.now(); }   /* tests drive time */
@@ -86,28 +102,87 @@
     } catch (e) {}
   }
 
-  /* the screen as it is at the clip's end: black, the clip's last frame where the clip is, the name on it */
-  function snapshot(o) {
-    var W = window.innerWidth, H = window.innerHeight, dpr = Math.min(window.devicePixelRatio || 1, 3);
-    var c = document.createElement("canvas"); c.width = Math.round(W * dpr); c.height = Math.round(H * dpr);
-    var x = c.getContext("2d");
-    x.fillStyle = "#000"; x.fillRect(0, 0, c.width, c.height);
-    var v = o.video, r = v.getBoundingClientRect();
-    var vw = v.videoWidth || o.clipW, vh = v.videoHeight || o.clipH, k = Math.min(r.width / vw, r.height / vh);
-    var f = { x: r.left + (r.width - vw * k) / 2, y: r.top + (r.height - vh * k) / 2, w: vw * k, h: vh * k };
-    x.drawImage(v, f.x * dpr, f.y * dpr, f.w * dpr, f.h * dpr);
-    var g = { canvas: c, dpr: dpr, W: W, H: H, P: o.place || { sx: 1, sy: 1, ox: 0, oy: 0 },
-              fx: f.x, fy: f.y, kx: f.w / (o.clipW || vw), ky: f.h / (o.clipH || vh), name: null, nameM: null };
-    var nc = o.stage && o.stage.querySelector(".coz-book-layer canvas"), layer = nc && nc.parentNode;
-    if (nc && nc.width && layer && getComputedStyle(layer).visibility !== "hidden") {   /* the name, where the page drew it */
-      var M = window.DOMMatrix || window.WebKitCSSMatrix, m = new M(getComputedStyle(nc).transform);
-      var sr = o.stage.getBoundingClientRect(), s = sr.width / (o.stage.offsetWidth || sr.width);
-      g.name = nc; g.nameM = [dpr * s * m.a, dpr * s * m.b, dpr * s * m.c, dpr * s * m.d, dpr * (sr.left + s * m.e), dpr * (sr.top + s * m.f)];
-      x.setTransform.apply(x, g.nameM); x.drawImage(nc, 0, 0); x.setTransform(1, 0, 0, 1, 0, 0);
+  /* BT2.1: a one-line record of what happened, kept on this device only (bt-report.html shows it) */
+  function note(e) {
+    try {
+      var a = JSON.parse(localStorage.getItem(LOG) || "[]"); if (!Array.isArray(a)) a = [];
+      e = e || {}; e.at = new Date().toISOString(); e.page = location.pathname.split("/").pop();
+      e.screen = window.innerWidth + "x" + window.innerHeight + " @" + (window.devicePixelRatio || 1) + "x";
+      e.device = String(navigator.userAgent || "").replace(/^Mozilla\/5\.0 /, "").slice(0, 140);
+      a.push(e); while (a.length > LOG_MAX) a.shift();
+      localStorage.setItem(LOG, JSON.stringify(a));
+    } catch (x) {}
+  }
+  function msg(e) { return String((e && e.message) || e || "error").slice(0, 160); }
+  /* a canvas that can really be drawn on (a phone short of canvas memory gives none, or one that draws nothing) */
+  function canvas2d(w, h, opts) {
+    var c = document.createElement("canvas"), cw = Math.max(1, Math.round(w)), ch = Math.max(1, Math.round(h));
+    c.width = cw; c.height = ch;
+    var x = c.getContext("2d", opts), ok = !!x;
+    if (ok) {
+      try { x.fillStyle = "#fff"; x.fillRect(0, 0, 1, 1); ok = x.getImageData(0, 0, 1, 1).data[3] === 255; x.clearRect(0, 0, 1, 1); }
+      catch (e) { ok = true; }
     }
-    /* book px to screen (css px) */
-    g.bx = g.fx + g.kx * g.P.ox; g.by = g.fy + g.ky * g.P.oy; g.bs = g.kx * g.P.sx; g.bt = g.ky * g.P.sy;
-    return g;
+    if (!ok) { c.width = c.height = 0; throw new Error("no canvas " + cw + "x" + ch); }
+    return { c: c, x: x };
+  }
+  function free(list) { for (var i = 0; i < list.length; i++) { try { if (list[i]) list[i].width = list[i].height = 0; } catch (e) {} } }
+
+  /* the clip's own last frame, fetched only if a phone could not capture it */
+  var stillImg = null;
+  function loadStill(cb) {
+    var settled = false;
+    function fin() { if (settled) return; settled = true; cb(ready(stillImg) ? stillImg : null); }
+    if (!stillImg) { stillImg = new Image(); stillImg.src = STILL.src; }
+    if (ready(stillImg)) { fin(); return; }
+    stillImg.addEventListener("load", fin); stillImg.addEventListener("error", fin);
+    setTimeout(fin, 2500);
+  }
+  /* the captured frame shows the parchment where the clip's last frame has it ("yes"), or not ("no"); spots off the
+     screen are skipped, and a phone that cannot read a canvas back is trusted ("unread") */
+  function looksRight(x, f, dpr) {
+    try {
+      var P = STILL.probes, kx = f.w / STILL.w, ky = f.h / STILL.h, n = 0, on = 0, cw = x.canvas.width, ch = x.canvas.height;
+      for (var i = 0; i < P.length; i++) {
+        var px = Math.round((f.x + P[i][0] * kx) * dpr), py = Math.round((f.y + P[i][1] * ky) * dpr);
+        if (px < 1 || py < 1 || px > cw - 2 || py > ch - 2) continue;
+        on++;
+        var d = x.getImageData(px - 1, py - 1, 3, 3).data, r = 0, gg = 0, b = 0;
+        for (var j = 0; j < 9; j++) { r += d[j * 4]; gg += d[j * 4 + 1]; b += d[j * 4 + 2]; }
+        if (Math.abs(r / 9 - P[i][2]) < STILL.tol && Math.abs(gg / 9 - P[i][3]) < STILL.tol && Math.abs(b / 9 - P[i][4]) < STILL.tol) n++;
+      }
+      if (on < 3) return "unread";
+      return n >= on - 1 ? "yes" : "no";
+    } catch (e) { return "unread"; }
+  }
+
+  /* the screen as it is at the clip's end, at this scale: black, the clip's last frame where the clip is (as the phone
+     hands it over, or the clip's own last frame), the name on it */
+  function snapshot(o, dpr, still) {
+    var W = window.innerWidth, H = window.innerHeight;
+    var C = canvas2d(W * dpr, H * dpr), c = C.c, x = C.x;
+    try {
+      var v = o.video, r = v.getBoundingClientRect();
+      var vw = v.videoWidth || o.clipW, vh = v.videoHeight || o.clipH, k = Math.min(r.width / vw, r.height / vh);
+      var f = { x: r.left + (r.width - vw * k) / 2, y: r.top + (r.height - vh * k) / 2, w: vw * k, h: vh * k };
+      var paint = function (src) { x.fillStyle = "#000"; x.fillRect(0, 0, c.width, c.height); x.drawImage(src, f.x * dpr, f.y * dpr, f.w * dpr, f.h * dpr); };
+      var checkable = STILL.clip.test(v.currentSrc || v.src || ""), how = still ? "last frame file" : "clip", seen;
+      paint(still || v);
+      seen = checkable ? looksRight(x, f, dpr) : "unchecked";
+      if (seen === "no" && !still) { paint(v); seen = looksRight(x, f, dpr); how = "clip, second try"; }   /* some phones hand it over on the second ask */
+      var g = { canvas: c, dpr: dpr, W: W, H: H, P: o.place || { sx: 1, sy: 1, ox: 0, oy: 0 }, snap: how, seen: seen,
+                fx: f.x, fy: f.y, kx: f.w / (o.clipW || vw), ky: f.h / (o.clipH || vh), name: null, nameM: null };
+      var nc = o.stage && o.stage.querySelector(".coz-book-layer canvas"), layer = nc && nc.parentNode;
+      if (nc && nc.width && layer && getComputedStyle(layer).visibility !== "hidden") {   /* the name, where the page drew it */
+        var M = window.DOMMatrix || window.WebKitCSSMatrix, tf = getComputedStyle(nc).transform, m = new M(tf && tf !== "none" ? tf : undefined);
+        var sr = o.stage.getBoundingClientRect(), s = sr.width / (o.stage.offsetWidth || sr.width);
+        g.name = nc; g.nameM = [dpr * s * m.a, dpr * s * m.b, dpr * s * m.c, dpr * s * m.d, dpr * (sr.left + s * m.e), dpr * (sr.top + s * m.f)];
+        x.setTransform.apply(x, g.nameM); x.drawImage(nc, 0, 0); x.setTransform(1, 0, 0, 1, 0, 0);
+      }
+      /* book px to screen (css px) */
+      g.bx = g.fx + g.kx * g.P.ox; g.by = g.fy + g.ky * g.P.oy; g.bs = g.kx * g.P.sx; g.bt = g.ky * g.P.sy;
+      return g;
+    } catch (e) { free([c]); throw e; }
   }
 
   /* the reading's own sky: a copy of the page's background (Vedic and Tropical: its fixed .vedic-bg layer;
@@ -127,28 +202,47 @@
     return d;
   }
 
+
   /* the words (his own gold lettering) and the reader's name in his gold, exactly where the ink is on the page; the name is
-     the page's own drawing of it, its soft ink edge drawn crisp the way his gold name is */
+     the page's own drawing of it, its soft ink edge drawn crisp the way his gold name is. BT2.1: the layer covers only the
+     words and the name (css px box), not the whole screen */
   function goldLayer(g) {
-    var c = document.createElement("canvas"); c.width = g.canvas.width; c.height = g.canvas.height;
-    var x = c.getContext("2d"), d = g.dpr;
+    var d = g.dpr, M = g.nameM;
+    var x0 = g.bx + g.bs * WORDS.x, y0 = g.by + g.bt * WORDS.y, x1 = x0 + g.bs * WORDS.w, y1 = y0 + g.bt * WORDS.h;
+    if (g.name) {
+      var nw = g.name.width, nh = g.name.height, cs = [[0, 0], [nw, 0], [0, nh], [nw, nh]];
+      for (var q = 0; q < 4; q++) {
+        var X = (M[0] * cs[q][0] + M[2] * cs[q][1] + M[4]) / d, Y = (M[1] * cs[q][0] + M[3] * cs[q][1] + M[5]) / d;
+        if (X < x0) x0 = X; if (X > x1) x1 = X; if (Y < y0) y0 = Y; if (Y > y1) y1 = Y;
+      }
+    }
+    x0 = Math.max(0, Math.floor(x0 - 4)); y0 = Math.max(0, Math.floor(y0 - 4));
+    x1 = Math.min(g.W, Math.ceil(x1 + 4)); y1 = Math.min(g.H, Math.ceil(y1 + 4));
+    var bw = Math.max(1, x1 - x0), bh = Math.max(1, y1 - y0);
+    var C = canvas2d(bw * d, bh * d), c = C.c, x = C.x;
+    c.style.cssText = "position:absolute;left:" + x0 + "px;top:" + y0 + "px;width:" + bw + "px;height:" + bh + "px";
+    var home = function () { x.setTransform(1, 0, 0, 1, -x0 * d, -y0 * d); };
+    home();
     if (ready(wordsImg)) x.drawImage(wordsImg, (g.bx + g.bs * WORDS.x) * d, (g.by + g.bt * WORDS.y) * d, g.bs * WORDS.w * d, g.bt * WORDS.h * d);
     if (g.name) {
       try {
-        var nw = g.name.width, nh = g.name.height, im = g.name.getContext("2d").getImageData(0, 0, nw, nh), p = im.data, i, a;
-        for (i = 0; i < nw * nh; i++) {
+        var nw2 = g.name.width, nh2 = g.name.height, im = g.name.getContext("2d").getImageData(0, 0, nw2, nh2), p = im.data, i, a;
+        for (i = 0; i < nw2 * nh2; i++) {
           a = clamp((p[i * 4 + 3] / 255 - NAME_EDGE[0]) / (NAME_EDGE[1] - NAME_EDGE[0]));
           p[i * 4] = GOLD[0]; p[i * 4 + 1] = GOLD[1]; p[i * 4 + 2] = GOLD[2]; p[i * 4 + 3] = Math.round(255 * a * a * (3 - 2 * a));
         }
-        var nc = document.createElement("canvas"); nc.width = nw; nc.height = nh; nc.getContext("2d").putImageData(im, 0, 0);
-        x.setTransform.apply(x, g.nameM); x.drawImage(nc, 0, 0); x.setTransform(1, 0, 0, 1, 0, 0);
+        var N = canvas2d(nw2, nh2); N.x.putImageData(im, 0, 0);
+        home(); x.transform.apply(x, M); x.drawImage(N.c, 0, 0); home();
+        free([N.c]);
       } catch (e) {   /* the name as the page drew it, in gold */
-        var k = document.createElement("canvas"); k.width = c.width; k.height = c.height; var kx = k.getContext("2d");
-        kx.setTransform.apply(kx, g.nameM); kx.drawImage(g.name, 0, 0); kx.setTransform(1, 0, 0, 1, 0, 0);
-        kx.globalCompositeOperation = "source-in"; kx.fillStyle = "rgb(" + GOLD.join(",") + ")"; kx.fillRect(0, 0, k.width, k.height);
-        x.drawImage(k, 0, 0);
+        var K = canvas2d(c.width, c.height), kx = K.x;
+        kx.setTransform(1, 0, 0, 1, -x0 * d, -y0 * d); kx.transform.apply(kx, M); kx.drawImage(g.name, 0, 0); kx.setTransform(1, 0, 0, 1, 0, 0);
+        kx.globalCompositeOperation = "source-in"; kx.fillStyle = "rgb(" + GOLD.join(",") + ")"; kx.fillRect(0, 0, K.c.width, K.c.height);
+        x.setTransform(1, 0, 0, 1, 0, 0); x.drawImage(K.c, 0, 0); home();
+        free([K.c]);
       }
     }
+    x.setTransform(1, 0, 0, 1, 0, 0);
     return c;
   }
 
@@ -181,24 +275,79 @@
     return list;
   }
 
+  /* BT2.1: every layer of the transition at one scale, made before anything is shown (or nothing is made) */
+  function build(o, scale, still) {
+    var made = [];
+    try {
+      var g = snapshot(o, scale, still); made.push(g.canvas);
+      var L = { g: g, made: made, scale: scale };
+      if (g.seen === "no") return L;                             /* not the clip's last frame: the caller decides */
+      L.gold = goldLayer(g); made.push(L.gold);
+      var P = canvas2d(g.canvas.width, g.canvas.height); made.push(P.c); L.par = P.c; L.pctx = P.x;
+      P.x.drawImage(g.canvas, 0, 0);
+      L.ds = scale;                                               /* the dust, at the same scale (his fine specks stay crisp) */
+      var D = canvas2d(g.W * L.ds, g.H * L.ds); made.push(D.c); L.dust = D.c; L.dctx = D.x;
+      L.ms = Math.min(2, scale);                                  /* the breakup mask */
+      var K = canvas2d(g.W * L.ms, g.H * L.ms); made.push(K.c); L.mc = K.c; L.mctx = K.x;
+      return L;
+    } catch (e) { free(made); throw e; }
+  }
+
+  /* land as before, with nothing added */
+  function plain(o) {
+    try { if (!o.handOff && o.under) o.under(); } catch (e) {}
+    try { if (o.done) o.done(); } catch (e) {}
+  }
+
   /* o: { video, stage, clipW, clipH, place (the clip's book geometry, as given to CozBookName), reading ("vedic",
           "tropical" or "compare": his clip it follows), sky (the reading's sky: { el } or { css, maxWidth }), base (its
           night blue), under() (switch the page to the reading underneath, unseen), done(), handOff (Combined) }
      Returns false (nothing done) when the transition cannot run: the caller lands as before. */
   function run(o) {
-    if (reduced() || !o || !o.video || !document.body) return false;
-    var g;
-    try { g = snapshot(o); } catch (e) { return false; }
-    var R = reading(o.reading), lead = R.lead, W = g.W, H = g.H, d = g.dpr, base = o.base || "rgb(1,14,34)";
+    if (!o || !o.video || !document.body) return false;
+    if (reduced()) { note({ reading: o.reading, ok: false, why: "reduced motion" }); return false; }
+    var R = reading(o.reading), top = Math.min(window.devicePixelRatio || 1, 3), scales = [top];
+    [2, 1.5, 1].forEach(function (s) { if (s < top) scales.push(s); });
+    function attempt(still) {   /* the largest size this phone can give, down to 1x */
+      var err = "";
+      for (var i = 0; i < scales.length; i++) {
+        try {
+          var L = build(o, scales[i], still);
+          if (L.g.seen !== "no") return L;
+          free(L.made);
+          if (!still) return null;                                /* the phone's frame was not the clip's last frame */
+          err = "the last frame file did not draw at " + scales[i] + "x";
+        } catch (e) { err = msg(e) + " (" + scales[i] + "x)"; }
+      }
+      throw new Error(err || "no canvas");
+    }
+    var L;
+    try { L = attempt(null); } catch (e) { note({ reading: o.reading, ok: false, why: "could not build: " + msg(e) }); return false; }
+    if (!L) {   /* the clip's own last frame instead; meanwhile the clip's last frame stays on screen */
+      loadStill(function (img) {
+        var M = null, why = "the last frame file did not load";
+        if (img) { try { M = attempt(img); } catch (e) { why = msg(e); } }
+        if (M) { try { start(o, R, M); return; } catch (e) { why = "start: " + msg(e); } }
+        note({ reading: o.reading, ok: false, why: "no usable frame: " + why });
+        plain(o);
+      });
+      return true;
+    }
+    try { start(o, R, L); } catch (e) { note({ reading: o.reading, ok: false, why: "start: " + msg(e) }); free(L.made); return false; }
+    return true;
+  }
+
+  function start(o, R, L) {
+    var g = L.g, lead = R.lead, W = g.W, H = g.H, d = g.dpr, base = o.base || "rgb(1,14,34)";
+    var par = L.par, pctx = L.pctx, gold = L.gold, dust = L.dust, dctx = L.dctx, ds = L.ds, mc = L.mc, mctx = L.mctx;
+    var ms = L.ms, MW = mc.width, MH = mc.height;
+    var sprites = null; try { sprites = dustSprites(); } catch (e) { sprites = null; }   /* made before anything is shown */
     var T = document.createElement("div");
     T.className = "coz-bt"; T.setAttribute("aria-hidden", "true");
     T.style.cssText = "position:fixed;left:0;top:0;width:100%;height:100%;z-index:2147483000;overflow:hidden;background:" + base + ";touch-action:none";
     var full = "position:absolute;left:0;top:0;width:100%;height:100%";
     var sky = skyLayer(o.sky);
-    var dust = document.createElement("canvas"); dust.width = g.canvas.width; dust.height = g.canvas.height; dust.style.cssText = full;
-    var gold = goldLayer(g); gold.style.cssText = full;
-    var par = document.createElement("canvas"); par.width = g.canvas.width; par.height = g.canvas.height; par.style.cssText = full;
-    var pctx = par.getContext("2d"); pctx.drawImage(g.canvas, 0, 0);
+    dust.style.cssText = full; par.style.cssText = full;          /* the gold layer has its own box */
     T.appendChild(sky); T.appendChild(dust); T.appendChild(gold); T.appendChild(par);   /* the page lies over the rest */
     T.addEventListener("touchmove", function (e) { e.preventDefault(); }, { passive: false });   /* the page under it stays still */
     document.body.appendChild(T);
@@ -206,15 +355,13 @@
     playSound(R);
 
     /* the breakup: each mask pixel's moment from his pattern (around the book, his pattern carries on mirrored) */
-    var ms = Math.min(2, d), MW = Math.max(1, Math.round(W * ms)), MH = Math.max(1, Math.round(H * ms));
-    var mc = document.createElement("canvas"); mc.width = MW; mc.height = MH;
-    var mctx = mc.getContext("2d"), md = null, px = null, tm = null, lut = new Uint32Array(256);
+    var md = null, px = null, tm = null, lut = new Uint32Array(256);
     var LE = new Uint8Array(new Uint32Array([1]).buffer)[0] === 1;
     function prepare() {
       if (tm || !ready(mapImg)) return;
+      var c = null;
       try {
-        var c = document.createElement("canvas"); c.width = MW; c.height = MH;
-        var x = c.getContext("2d", { willReadFrequently: true }), img = mapImg, iw = img.naturalWidth, ih = img.naturalHeight;
+        var C = canvas2d(MW, MH, { willReadFrequently: true }), x = C.x, img = mapImg; c = C.c;
         var bx = ms * (g.bx + g.bs * MAP.x), by = ms * (g.by + g.bt * MAP.y), bw = ms * g.bs * MAP.w, bh = ms * g.bt * MAP.h;
         x.imageSmoothingEnabled = true;
         for (var j = -1; j <= 1; j++) for (var k = -1; k <= 1; k++) {   /* the pattern and its mirror images all round */
@@ -227,6 +374,7 @@
         for (i = 0; i < n; i++) a[i] = src[i * 4];
         md = mctx.createImageData(MW, MH); px = new Uint32Array(md.data.buffer); tm = a;
       } catch (e) { tm = null; }
+      free([c]);                                                  /* BT2.1: its memory back at once */
     }
     function breakup(t) {   /* each spot's opacity: full until its moment, gone BAND later */
       var i, k = (MAP.t1 - MAP.t0) / 255;
@@ -242,7 +390,7 @@
     }
 
     /* the dust, released where the page breaks */
-    var sprites = dustSprites(), plan = null, lo = 0, dctx = dust.getContext("2d"), maxLife = Math.max(SPECKS.life[1], SPECKS.glintLife[1]);
+    var plan = null, lo = 0, maxLife = Math.max(SPECKS.life[1], SPECKS.glintLife[1]);
     function timeAt(bx, by, rnd) {   /* the moment the page goes at this book px */
       if (tm) {
         var mx = Math.round(ms * (g.bx + g.bs * bx)), my = Math.round(ms * (g.by + g.bt * by));
@@ -252,52 +400,64 @@
     }
     function drawDust(t) {
       dctx.clearRect(0, 0, dust.width, dust.height);
-      if (!plan) return;
+      if (!plan || !sprites) return;
       while (lo < plan.length && plan[lo].b + maxLife < t) lo++;
       for (var i = lo; i < plan.length && plan[i].b <= t; i++) {
         var p = plan[i], age = t - p.b; if (age > p.l) continue;
-        var u = age / p.l, s = age / 1000, rr = p.r * g.bs * d * 1.6;
-        var X = (g.bx + g.bs * (p.x + p.vx * s)) * d, Y = (g.by + g.bt * (p.y + p.vy * s)) * d;
+        var u = age / p.l, s = age / 1000, rr = p.r * g.bs * ds * 1.6;
+        var X = (g.bx + g.bs * (p.x + p.vx * s)) * ds, Y = (g.by + g.bt * (p.y + p.vy * s)) * ds;
         dctx.globalAlpha = p.a * smooth(u / 0.15) * (1 - smooth((u - 0.6) / 0.4)) * (0.7 + 0.3 * Math.sin(p.f * age + p.ph));
         dctx.drawImage(sprites[p.s], X - rr, Y - rr, 2 * rr, 2 * rr);
       }
       dctx.globalAlpha = 1;
     }
 
-    var t0 = now(), over = false, broken = false, mode = null;
-    function finish() {
-      if (over) return; over = true;
+    var t0 = now(), over = false, stopped = false, broken = false, mode = null, frames = 0;
+    var limit = (o.handOff ? HAND : EMERGE[1]) + lead + 4000;   /* on the transition's own clock */
+    var safety = setInterval(function () { if (now() - t0 > limit) bail("the screen stopped drawing"); }, 1000);
+    function finish(why) {
+      if (over) return; over = true; clearInterval(safety);
+      note({ reading: o.reading, ok: !why, why: why || "ran", scale: d, frame: g.snap, check: g.seen, mode: mode || "-",
+             frames: frames, ms: Math.round(now() - t0) });
       if (o.handOff) {
         try { sessionStorage.setItem(KEY, JSON.stringify({ at: Date.now() })); } catch (e) {}
         try { if (o.done) o.done(); } catch (e) {}   /* navigates; the sky stays until the next page is up */
         return;
       }
       try { T.remove(); } catch (e) {}
-      try { [par, gold, dust, mc, g.canvas].forEach(function (c) { c.width = c.height = 0; }); } catch (e) {}   /* their memory back at once */
+      free([par, gold, dust, mc, g.canvas]);                      /* their memory back at once */
       try { if (o.done) o.done(); } catch (e) {}
     }
+    function bail(why) {   /* BT2.1: something failed once started: the layer fades onto the reading, never stays on screen */
+      if (over || stopped) return; stopped = true;
+      if (o.handOff) { finish(why); return; }
+      try { T.style.transition = "opacity 450ms ease"; T.style.opacity = "0"; T.style.pointerEvents = "none"; } catch (e) {}
+      setTimeout(function () { finish(why); }, 480);
+    }
     function frame() {
-      if (over) return;
-      var t = now() - t0 - lead;   /* his Vedic clip's time */
-      if (!tm && t > 60 - lead) prepare();
-      if (!broken) {
-        if (!mode && t >= MAP.t0 - BAND / 2) { mode = tm ? "map" : "fade"; plan = dustPlan(20261028, timeAt); }
-        if (mode === "map") { if (t >= MAP.t1 + BAND / 2) { broken = true; par.style.display = "none"; } else breakup(t); }
-        else if (mode === "fade") { var f = span(t, FADE); par.style.opacity = String(1 - f); if (f >= 1) { broken = true; par.style.display = "none"; } }
-      }
-      gold.style.opacity = String(1 - clamp((t - GOLD_OUT[0]) / (GOLD_OUT[1] - GOLD_OUT[0])));
-      if (t < DUST_OUT[1]) { if (t >= MAP.t0 - BAND / 2) { dust.style.opacity = String(1 - span(t, DUST_OUT)); drawDust(t); } }
-      else if (dust.style.display !== "none") dust.style.display = "none";
-      if (o.handOff) { if (t >= HAND) { finish(); return; } }
-      else {
-        var u = clamp((t - EMERGE[0]) / (EMERGE[1] - EMERGE[0])), e = 0.5 * u + 0.5 * smooth(u); T.style.opacity = String(1 - e);
-        if (e > 0.6) T.style.pointerEvents = "none";
-        if (t >= EMERGE[1]) { finish(); return; }
-      }
+      if (over || stopped) return;
+      try {
+        var t = now() - t0 - lead;   /* his Vedic clip's time */
+        if (!tm && t > 60 - lead) prepare();
+        if (!broken) {
+          if (!mode && t >= MAP.t0 - BAND / 2) { mode = tm ? "map" : "fade"; plan = dustPlan(20261028, timeAt); }
+          if (mode === "map") { if (t >= MAP.t1 + BAND / 2) { broken = true; par.style.display = "none"; } else breakup(t); }
+          else if (mode === "fade") { var f = span(t, FADE); par.style.opacity = String(1 - f); if (f >= 1) { broken = true; par.style.display = "none"; } }
+        }
+        gold.style.opacity = String(1 - clamp((t - GOLD_OUT[0]) / (GOLD_OUT[1] - GOLD_OUT[0])));
+        if (t < DUST_OUT[1]) { if (t >= MAP.t0 - BAND / 2) { dust.style.opacity = String(1 - span(t, DUST_OUT)); drawDust(t); } }
+        else if (dust.style.display !== "none") dust.style.display = "none";
+        if (o.handOff) { if (t >= HAND) { finish(); return; } }
+        else {
+          var u = clamp((t - EMERGE[0]) / (EMERGE[1] - EMERGE[0])), e = 0.5 * u + 0.5 * smooth(u); T.style.opacity = String(1 - e);
+          if (e > 0.6) T.style.pointerEvents = "none";
+          if (t >= EMERGE[1]) { finish(); return; }
+        }
+      } catch (e) { bail("while running: " + msg(e)); return; }
+      frames++;
       requestAnimationFrame(frame);
     }
     requestAnimationFrame(frame);
-    return true;
   }
 
   /* Combined: combined-reading.html's words and pictures come up over its own sky, the sky the dashboard handed over
@@ -331,7 +491,7 @@
   function quiet() { try { var a = host().__cozBTSound; if (a && !a.paused) a.pause(); } catch (e) {} }
 
   load();
-  window.CozBookToReading = { run: run, arrive: arrive, prime: prime, quiet: quiet,
+  window.CozBookToReading = { run: run, arrive: arrive, prime: prime, quiet: quiet, note: note,
     times: { map: [MAP.t0, MAP.t1], band: BAND, goldOut: GOLD_OUT, dustOut: DUST_OUT, emerge: EMERGE, hand: HAND, arrive: ARRIVE,
              leads: { vedic: READINGS.vedic.lead, tropical: READINGS.tropical.lead, compare: READINGS.compare.lead } } };
 })();
