@@ -71,10 +71,12 @@ h1{font-family:var(--head);font-weight:500;font-size:calc(72 * var(--k));line-he
 </style>
 <!-- Oct 2: ?v=5 so this page loads coz-saved.js CS1.6, not a cached copy -->
 <script src="coz-saved.js?v=5"></script>
+<script src="coz-book-to-reading.js?v=2"></script>   <!-- BT2 (Oct 28 2026, staging only): the reading's words and pictures come up after the book -->
 <style id="coz-rd1">/* RD1 (Oct 22 2026): every tappable label at least 15px on a phone */html body .rfa{font-size:max(15px,calc(21 * var(--k)))}/* RD2: Compare Back/Next */html body .pager a{font-size:clamp(17px,4.6vw,20px);letter-spacing:.1em}</style>
 <style id="coz-dv1">/* DV1 (Oct 22 2026): version stamps and the diagnostic launcher show only on a device with developer view on (localStorage cozDevView = "1") */html:not(.coz-dev) .stamp,html:not(.coz-dev) .stamp2,html:not(.coz-dev) .vedic-stamp,html:not(.coz-dev) .build-stamp,html:not(.coz-dev) .lc-stamp,html:not(.coz-dev) .cs-stamp,html:not(.coz-dev) .ktw-stamp,html:not(.coz-dev) .wcn-stamp,html:not(.coz-dev) #stamp,html:not(.coz-dev) #cozDiagLaunch{display:none!important}</style><script>try{if(localStorage.getItem("cozDevView")==="1")document.documentElement.classList.add("coz-dev")}catch(e){}</script>
 </head>
 <body>
+<script>/* BT2: arriving from the Compare dashboard's book, the words and pictures come up over the same sky (first, so they are never seen before) */try{if(window.CozBookToReading)CozBookToReading.arrive()}catch(e){}</script>
 <main class="page">
  <div class="content">
   <h1>YOUR<br>COMBINED<br>READING</h1>
@@ -130,7 +132,7 @@ h1{font-family:var(--head);font-weight:500;font-size:calc(72 * var(--k));line-he
 <script src="compare-evidence.js?v=3"></script>
 <script src="compare-generator.js?v=11"></script>
 <script src="coz-compare-server.js?v=4"></script>
-<script src="coz-voice.js?v=5"></script>   <!-- VO1 (Oct 27 2026, staging only): the reading read aloud -->
+<script src="coz-voice.js?v=6"></script>   <!-- VO1 (Oct 27 2026, staging only): the reading read aloud -->
 <script>
 (function(){
   var FAIL = "We couldn\u2019t load both charts for this reading. Please return and run your chart again.";

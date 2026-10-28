@@ -426,6 +426,7 @@ body[data-view="reading"] .vedic-reading-page { animation: none; }
 <!-- Oct 2: ?v=5 so this page loads coz-saved.js CS1.6, not a cached copy -->
 <script src="coz-saved.js?v=5"></script>
 <script src="coz-book-name.js?v=1"></script>   <!-- BK1 (Oct 27 2026, staging only): the reader's name on the book -->
+<script src="coz-book-to-reading.js?v=2"></script>   <!-- BT2 (Oct 28 2026, staging only): the book gives way to the reading -->
 <script src="coz-compare-server.js?v=4"></script>
 <style id="coz-dv1">/* DV1 (Oct 22 2026): version stamps and the diagnostic launcher show only on a device with developer view on (localStorage cozDevView = "1") */html:not(.coz-dev) .stamp,html:not(.coz-dev) .stamp2,html:not(.coz-dev) .vedic-stamp,html:not(.coz-dev) .build-stamp,html:not(.coz-dev) .lc-stamp,html:not(.coz-dev) .cs-stamp,html:not(.coz-dev) .ktw-stamp,html:not(.coz-dev) .wcn-stamp,html:not(.coz-dev) #stamp,html:not(.coz-dev) #cozDiagLaunch{display:none!important}</style><script>try{if(localStorage.getItem("cozDevView")==="1")document.documentElement.classList.add("coz-dev")}catch(e){}</script>
 <style id="coz-gd1">
@@ -812,8 +813,8 @@ const revealVideo = document.getElementById("revealVideo");
    BK2 (Oct 28 2026, his ruling, staging only): the clip is his approved F1.3 at full size, opening in space (the flight
    from its first frame, then the book at 905/24 s, 51.7 s in all), with the approved soundscape (Chat's mix, unchanged)
    in the file. Same framing and name geometry as BK1; the book simply starts 116 frames earlier. */
-try { if (window.CozBookName) CozBookName.attach({ video: revealVideo, stage: document.getElementById("revealStage"),
-  clipW: 1084, clipH: 1908, bookStart: 905 / 24, bookFrames: 442, place: { sx: 1084 / 1068, sy: 1966 / 1936, ox: 0, oy: -28 } }); } catch (e) {}
+const BOOK_GEOM = { clipW: 1084, clipH: 1908, bookStart: 905 / 24, bookFrames: 442, place: { sx: 1084 / 1068, sy: 1966 / 1936, ox: 0, oy: -28 } };
+try { if (window.CozBookName) CozBookName.attach(Object.assign({ video: revealVideo, stage: document.getElementById("revealStage") }, BOOK_GEOM)); } catch (e) {}
 let revealActive = false, revealDone = false, revealTimers = [];
 /* BK2: while the clip plays, its own sound is the only sound. The app's music (every loop on the living page's engine:
    the bed, the low hum, any other bed) stops at the tap and the harmony cue no longer plays; when the clip ends, stalls
@@ -878,6 +879,7 @@ function startReveal() {
      the sound, the clip still plays, silently, with the music as before. */
   try { revealVideo.muted = false; } catch (e) {}
   clipSound(true);
+  try { if (window.CozBookToReading) CozBookToReading.prime("compare"); } catch (e) {}   /* BT2: the transition's sound, unlocked in this tap */
   const p = revealVideo.play();
   if (p && p.catch) p.catch(() => {
     if (!revealActive || revealDone) return;
@@ -1064,7 +1066,6 @@ function whenFirstSection(go) {
 function finishReveal(immediate, how) {
   if (!revealActive || revealDone) return;   // ignore clip events while the reveal is not running
   revealDone = true;
-  clipSound(false);                          /* BK2: the clip is over, the bed comes back (also under a dark wait) */
   revealTimers.forEach(clearTimeout); revealTimers = [];
   tm("mark", "revealDone", { how: how || (immediate === true ? "ended" : "stall") });   /* r5: with the Shared Themes state now */
   const land0 = () => {
@@ -1082,7 +1083,20 @@ function finishReveal(immediate, how) {
   const land = () => whenFirstSection(land0);   /* CRG1 */
   /* r5: a stall or error while Shared Themes is not ready (or during the pull-away) never goes through the curtain:
      straight to the black waiting screen. The curtain below stays for a stall when Shared Themes is ready, as before. */
-  if (immediate === true || pullOn || firstState() === "wait") { land(); return; }
+  if (immediate === true || pullOn || firstState() === "wait") {
+    /* BT2 (Oct 28 2026, his transition clip, staging only): a clip that played to its end, with Shared Themes ready,
+       lands through the book: the name holds, the parchment gives way in his own pattern to Your Combined Reading's own
+       sky, the words and the name turn gold and fade, then Your Combined Reading opens and its words and pictures come up
+       over the same sky (coz-book-to-reading.js arrive), with his transition sound. Otherwise as before. */
+    try {
+      if (immediate === true && how === "ended" && revealStarted && !pullOn && firstState() !== "wait" && window.CozBookToReading &&
+          CozBookToReading.run(Object.assign({ video: revealVideo, stage: document.getElementById("revealStage"),
+            sky: { css: 'url("combined-top.jpg?v=1") center top / 100% auto no-repeat, url("combined-mid.png?v=1") center top / 100% 1px repeat-y, rgb(1,11,26)', maxWidth: 640 },
+            base: "rgb(1,11,26)", reading: "compare", handOff: true, done: () => { clipSound(false); land(); } }, BOOK_GEOM))) return;
+    } catch (e) {}
+    clipSound(false); land(); return;            /* BK2: the clip is over, the bed comes back (also under a dark wait) */
+  }
+  clipSound(false);
   /* Sep 1 ruling: through the sun. Hold on the burst, then the camera drives into it, the light
      fills the screen, the page lands underneath and the light clears to reveal the reading. */
   if (immediate === "through"){

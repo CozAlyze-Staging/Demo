@@ -205,6 +205,8 @@
     return window.EMERGE_SOUND || null;
   }
   function hush() {
+    /* BT2 (Oct 28 2026): the book-to-reading transition's sound (an audio element on the living page) stops too */
+    try { var h = window.parent !== window ? window.parent : window, bt = h.__cozBTSound; if (bt && !bt.paused) bt.pause(); } catch (e) {}
     var snd = engine(); if (!snd || !snd.stopLoop) return;   /* no music on this page: nothing to stop */
     MUSIC.forEach(function (n) { try { snd.stopLoop(n, HUSH_S); } catch (e) {} });   /* also cancels a loop still waiting to start */
   }
