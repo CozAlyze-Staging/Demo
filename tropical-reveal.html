@@ -3460,7 +3460,7 @@ function vedicCheckout(){
                   '-> sidereal asc', SIGNS[Math.floor(sid/30)], '(ayan ' + ayan.toFixed(4) + ')');
     } catch(_){}
     try { localStorage.setItem('emergeAscendant', asc); } catch(_){}
-    var href = 'vedic-reading.html?asc=' + asc + '&v=36';   /* v=34: BT2.1, so no phone reopens an earlier copy. v=35: BT2.2. v=36: BT2.3 */
+    var href = 'vedic-reading.html?asc=' + asc + '&v=37';   /* v=34: BT2.1, so no phone reopens an earlier copy. v=35: BT2.2. v=36: BT2.3. v=37: BT2.5 */
     /* THE SOUND SEAM. Navigating the top window here tears down index.html and the
        whole audio engine with it, which is what produced the dead silence at this
        point. Instead ask the parent to swap the living frame in place: index.html
@@ -3542,7 +3542,7 @@ function tropicalCheckout(){
   try { localStorage.setItem('emergeAscendantTropical', a.tropical); localStorage.setItem('emergeAscendant', a.sidereal); } catch(_){}
   console.log('[EMERGE FLOW] tropical door: tropical asc', a.tropical);
   window.dispatchEvent(new CustomEvent('EMERGE_CHECKOUT_REQUESTED', { detail: { product: 'tropical', price: 49 } }));
-  cozHandoff('TROPICAL', 'tropical-reading.html?asc=' + a.tropical + '&v=11');   /* v=9: BT2.1. v=10: BT2.2. v=11: BT2.3 */
+  cozHandoff('TROPICAL', 'tropical-reading.html?asc=' + a.tropical + '&v=12');   /* v=9: BT2.1. v=10: BT2.2. v=11: BT2.3. v=12: BT2.5 */
 }
 function compareCheckout(){
   var a = cozAscendants();
@@ -3550,7 +3550,7 @@ function compareCheckout(){
   console.log('[EMERGE FLOW] compare door: tropical asc', a.tropical, '| sidereal asc', a.sidereal);
   window.dispatchEvent(new CustomEvent('EMERGE_CHECKOUT_REQUESTED', { detail: { product: 'compare', price: 75 } }));
   /* compare-reading.html paints its Ascendants glyph from the TROPICAL sign (its own contract) */
-  cozHandoff('COMPARE', 'compare-reading.html?asc=' + a.tropical + '&v=12');   /* v=9: C3.4 timing + charts doors, busts the cached C3.3. v=10: BT2.1. v=11: BT2.2. v=12: BT2.3 */
+  cozHandoff('COMPARE', 'compare-reading.html?asc=' + a.tropical + '&v=13');   /* v=9: C3.4 timing + charts doors, busts the cached C3.3. v=10: BT2.1. v=11: BT2.2. v=12: BT2.3. v=13: BT2.5 */
 }
 var cozInfoOverlayEl = null, cozInfoReturnTo = null, cozInfoOpenFor = null, cozInfoCloseTimer = null;
 function cozInfoBuild(){

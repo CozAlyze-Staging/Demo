@@ -37,7 +37,22 @@
    transition starts, and its first page's pictures (the read-aloud choice, about 360 KB each) arrived and were decoded
    during the breakup. Now: those pictures are fetched and decoded during the clip, about 10 s before its end, and held by
    the living page (so Your Combined Reading finds them too); and the dissolve's own one-time setup (the dust plan, the
-   first draw of the breakup) happens during the name hold, when nothing moves. Nothing seen or heard changes. */
+   first draw of the breakup) happens during the name hold, when nothing moves. Nothing seen or heard changes.
+   BT2.4 (Oct 29 2026, his Vedic test on staging, staging only): it still broke for a moment. The reading's night sky
+   (vedic-moon-bg.png, 1.8 MB) and the reading page's logo were never loaded before the transition (the sky is hidden on
+   the dashboard, and Safari loads no hidden backgrounds), so the sky arrived and was decoded in the middle of the
+   breakup. Now every picture the transition and the reading's first view show (the sky, the logo, the read-aloud
+   pictures; Combined: its page art) is fetched 25 s into the clip and held by the living page, the sky is decoded again
+   while the name holds, and the breakup starts once the sky is ready (the hold lasts at most 2 s longer, only if a
+   slow connection has not brought it in time). Nothing seen or heard changes otherwise.
+   BT2.5 (Oct 29 2026, his Tropical test: "a flash, like a blink, right after the name"): the handover from the clip to
+   the transition. On the phone a newly added layer (the copy of the page) can take a frame or two to appear, and the clip
+   was taken away at once, so for that moment the screen showed the transition's dark background instead of the page.
+   Now the transition's layer starts see-through with only the copy of the page in it, and the clip's own last frame (the
+   same picture) stays underneath until the copy has been on screen for a few frames; only then do the dark background,
+   the sky, the dust and the gold layers come on (all under the page) and the reading is switched in underneath.
+   The copy of the page now also carries the clip's Back arrow in the corner, drawn as the page draws it (before, the
+   arrow vanished at that moment); it stays through the hold and goes with the page as it breaks up. */
 (function () {
   "use strict";
   if (window.CozBookToReading) return;
@@ -90,26 +105,50 @@
   function ready(img) { return !!(img && img.complete && img.naturalWidth); }
 
   /* called in the reading tap: the lettering and the pattern are made ready (BT2.2: there is no transition sound), and
-     (BT2.3) the reading's first-page pictures are made ready 40 s into the clip */
+     (BT2.3, BT2.4) every picture the transition and the reading's first view show is fetched 25 s into the clip */
   function prime(name) {
     load();
-    try { setTimeout(function () { warm(name); }, 40000); } catch (e) {}
+    try { setTimeout(function () { warm(name); }, 25000); } catch (e) {}
   }
-  /* BT2.3: the pictures the reading's first page shows: the read-aloud choice (coz-voice.js VOICES, with its ART version
-     "?v=3"; update both together). Fetched and decoded ahead, held by the living page so they stay decoded across
-     Combined's page change. */
-  var PICTURES = { vedic: ["vedic-male", "vedic-female"], tropical: ["tropical-male", "tropical-female"],
-                   compare: ["vedic-male", "vedic-female", "tropical-male", "tropical-female"] };
+  /* BT2.3, BT2.4: the pictures the transition and the reading's first view show, exactly as the pages ask for them:
+     the reading's sky (the pages' .vedic-bg; Combined: its page background) and logo, and the read-aloud choice
+     (coz-voice.js VOICES with its ART version "?v=3"; update together). Held by the living page, so they stay loaded
+     across Combined's page change. */
+  var AVATAR = function (v) { return "avatars/avatar-" + v + ".jpg?v=3"; };
+  var PICTURES = {
+    vedic:    ["vedic-moon-bg.png", "vedic-logo.png", AVATAR("vedic-male"), AVATAR("vedic-female")],
+    tropical: ["vedic-moon-bg.png", "vedic-logo.png", AVATAR("tropical-male"), AVATAR("tropical-female")],
+    compare:  ["combined-top.jpg?v=1", "combined-mid.png?v=1", "combined-bottom.jpg?v=1",
+               AVATAR("vedic-male"), AVATAR("vedic-female"), AVATAR("tropical-male"), AVATAR("tropical-female")]
+  };
   function warm(name) {
     try {
       var H = host(), keep = H.__cozBTWarm || (H.__cozBTWarm = {});
-      (PICTURES[name] || []).forEach(function (v) {
-        var src = new URL("avatars/avatar-" + v + ".jpg?v=3", location.href).href;
+      (PICTURES[name] || []).forEach(function (u) {
+        var src = new URL(u, location.href).href;
         if (keep[src]) return;
         var im = new H.Image(); im.decoding = "async"; im.src = src; keep[src] = im;
         if (im.decode) im.decode().then(null, function () {});
       });
     } catch (e) {}
+  }
+  /* BT2.4: the sky's pictures, decoded now (a fetched picture may have been set aside since): resolves when all are
+     ready (or could not be), so the breakup never shows the sky arriving */
+  function skyPictures(spec) {
+    var css = "";
+    try { css = spec && spec.el ? getComputedStyle(spec.el).backgroundImage : (spec && spec.css) || ""; } catch (e) {}
+    var urls = [], re = /url\(\s*["']?([^"')]+)["']?\s*\)/g, m;
+    while ((m = re.exec(css))) urls.push(new URL(m[1], location.href).href);
+    return Promise.all(urls.map(function (u) {
+      return new Promise(function (res) {
+        try {
+          var im = new Image(); im.src = u;
+          var done = function () { res(); };
+          if (im.decode) im.decode().then(done, done);
+          else if (im.complete) done(); else { im.onload = done; im.onerror = done; }
+        } catch (e) { res(); }
+      });
+    }));
   }
 
   /* BT2.2: the reading's music back, gently: the living page's ambient bed starts from silence towards barely there
@@ -209,6 +248,26 @@
         g.name = nc; g.nameM = [dpr * s * m.a, dpr * s * m.b, dpr * s * m.c, dpr * s * m.d, dpr * (sr.left + s * m.e), dpr * (sr.top + s * m.f)];
         x.setTransform.apply(x, g.nameM); x.drawImage(nc, 0, 0); x.setTransform(1, 0, 0, 1, 0, 0);
       }
+      /* BT2.5: the clip's Back arrow, as the page draws it (its own path, colour and stroke), so nothing on screen
+         changes at the handover; it goes with the page */
+      try {
+        var bk = document.getElementById("revealBack"), sv = bk && bk.querySelector("svg");
+        if (sv) {
+          var bcs = getComputedStyle(bk), scs = getComputedStyle(sv), op = parseFloat(bcs.opacity), rb = sv.getBoundingClientRect();
+          var vb = String(sv.getAttribute("viewBox") || "0 0 30 20").split(/[\s,]+/).map(Number);
+          if (bcs.display !== "none" && bcs.visibility !== "hidden" && scs.visibility !== "hidden" && op > 0 && rb.width > 0 && vb[2] > 0 && vb[3] > 0) {
+            var bsx = rb.width / vb[2], bsy = rb.height / vb[3];
+            x.save();
+            x.globalAlpha = isNaN(op) ? 1 : op;
+            x.setTransform(dpr * bsx, 0, 0, dpr * bsy, dpr * (rb.left - vb[0] * bsx), dpr * (rb.top - vb[1] * bsy));
+            x.strokeStyle = scs.color; x.fillStyle = "transparent";
+            x.lineWidth = parseFloat(sv.getAttribute("stroke-width")) || 1.4;
+            x.lineCap = sv.getAttribute("stroke-linecap") || "butt"; x.lineJoin = sv.getAttribute("stroke-linejoin") || "miter";
+            [].forEach.call(sv.querySelectorAll("path"), function (pth) { var dd = pth.getAttribute("d"); if (dd) x.stroke(new Path2D(dd)); });
+            x.restore();
+          }
+        }
+      } catch (e) {}
       /* book px to screen (css px) */
       g.bx = g.fx + g.kx * g.P.ox; g.by = g.fy + g.ky * g.P.oy; g.bs = g.kx * g.P.sx; g.bt = g.ky * g.P.sy;
       return g;
@@ -374,14 +433,24 @@
     var sprites = null; try { sprites = dustSprites(); } catch (e) { sprites = null; }   /* made before anything is shown */
     var T = document.createElement("div");
     T.className = "coz-bt"; T.setAttribute("aria-hidden", "true");
-    T.style.cssText = "position:fixed;left:0;top:0;width:100%;height:100%;z-index:2147483000;overflow:hidden;background:" + base + ";touch-action:none";
+    T.style.cssText = "position:fixed;left:0;top:0;width:100%;height:100%;z-index:2147483000;overflow:hidden;background:transparent;touch-action:none";
     var full = "position:absolute;left:0;top:0;width:100%;height:100%";
-    var sky = skyLayer(o.sky);
+    var sky = skyLayer(o.sky), skyReady = false, held = 0, HOLD_MAX = 2000;
+    try { skyPictures(o.sky).then(function () { skyReady = true; }); } catch (e) { skyReady = true; }
     dust.style.cssText = full; par.style.cssText = full;          /* the gold layer has its own box */
     T.appendChild(sky); T.appendChild(dust); T.appendChild(gold); T.appendChild(par);   /* the page lies over the rest */
     T.addEventListener("touchmove", function (e) { e.preventDefault(); }, { passive: false });   /* the page under it stays still */
+    /* BT2.5: the handover: at first only the copy of the page, see-through around it, over the clip's own last frame */
+    sky.style.visibility = dust.style.visibility = gold.style.visibility = "hidden";
     document.body.appendChild(T);
-    if (!o.handOff) { try { if (o.under) o.under(); } catch (e) {} }   /* BT2.2: no sound: the quiet holds */
+    var settled = false, since = performance.now();
+    function settle() {   /* the copy has been on screen for a few frames: the rest comes on under it, the reading underneath */
+      if (settled) return; settled = true;
+      T.style.background = base;
+      sky.style.visibility = dust.style.visibility = gold.style.visibility = "";
+      if (!o.handOff) { try { if (o.under) o.under(); } catch (e) {} }   /* BT2.2: no sound: the quiet holds */
+    }
+    var settleTimer = setTimeout(settle, 500);                    /* in any case */
 
     /* the breakup: each mask pixel's moment from his pattern (around the book, his pattern carries on mirrored) */
     var md = null, px = null, tm = null, lut = new Uint32Array(256);
@@ -445,7 +514,7 @@
     var limit = (o.handOff ? HAND : EMERGE[1]) + lead + 4000;   /* on the transition's own clock */
     var safety = setInterval(function () { if (now() - t0 > limit) bail("the screen stopped drawing"); }, 1000);
     function finish(why) {
-      if (over) return; over = true; clearInterval(safety);
+      if (over) return; over = true; clearInterval(safety); clearTimeout(settleTimer); settle();
       note({ reading: o.reading, ok: !why, why: why || "ran", scale: d, frame: g.snap, check: g.seen, mode: mode || "-",
              frames: frames, ms: Math.round(now() - t0) });
       if (o.handOff) {
@@ -459,6 +528,7 @@
     }
     function bail(why) {   /* BT2.1: something failed once started: the layer fades onto the reading, never stays on screen */
       if (over || stopped) return; stopped = true;
+      settle();
       if (o.handOff) { finish(why); return; }
       try { T.style.transition = "opacity 450ms ease"; T.style.opacity = "0"; T.style.pointerEvents = "none"; } catch (e) {}
       setTimeout(function () { finish(why); }, 480);
@@ -467,6 +537,11 @@
       if (over || stopped) return;
       try {
         var t = now() - t0 - lead;   /* his Vedic clip's time */
+        if (!settled && ((frames >= 4 && performance.now() - since >= 150) || t >= MAP.t0 - BAND / 2 - 200)) settle();   /* BT2.5 */
+        if (!skyReady && held < HOLD_MAX) {   /* BT2.4: the name holds until the sky is ready (2 s longer at most) */
+          var edge = MAP.t0 - BAND / 2 - 30;
+          if (t > edge) { var extra = Math.min(t - edge, HOLD_MAX - held); t0 += extra; held += extra; t -= extra; }
+        }
         if (!tm && t > 60 - lead) {
           prepare();
           if (tm && !plan && !mode) {   /* BT2.3: during the hold, not when the breakup starts: the dust plan, and the breakup's
