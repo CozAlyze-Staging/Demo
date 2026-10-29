@@ -31,7 +31,13 @@
    no longer plays. The reading's music (the living page's ambient bed) returns only once the reading page is visible: from
    barely there (-40 dB) to its usual level over 8 s, on an even curve (musicBack). Vedic and Tropical: when the page has
    come up (done). Combined: when Your Combined Reading's words and pictures have come up (arrive). The pictures are
-   unchanged. */
+   unchanged.
+   BT2.3 (Oct 28 2026, after his iPhone screen recording, staging only): the dissolve ran on his phone but stalled twice
+   for a moment in the middle of the breakup, then jumped ahead. The reading page is switched in under the book when the
+   transition starts, and its first page's pictures (the read-aloud choice, about 360 KB each) arrived and were decoded
+   during the breakup. Now: those pictures are fetched and decoded during the clip, about 10 s before its end, and held by
+   the living page (so Your Combined Reading finds them too); and the dissolve's own one-time setup (the dust plan, the
+   first draw of the breakup) happens during the name hold, when nothing moves. Nothing seen or heard changes. */
 (function () {
   "use strict";
   if (window.CozBookToReading) return;
@@ -83,8 +89,28 @@
   }
   function ready(img) { return !!(img && img.complete && img.naturalWidth); }
 
-  /* called in the reading tap: the lettering and the pattern are made ready (BT2.2: there is no transition sound) */
-  function prime() { load(); }
+  /* called in the reading tap: the lettering and the pattern are made ready (BT2.2: there is no transition sound), and
+     (BT2.3) the reading's first-page pictures are made ready 40 s into the clip */
+  function prime(name) {
+    load();
+    try { setTimeout(function () { warm(name); }, 40000); } catch (e) {}
+  }
+  /* BT2.3: the pictures the reading's first page shows: the read-aloud choice (coz-voice.js VOICES, with its ART version
+     "?v=3"; update both together). Fetched and decoded ahead, held by the living page so they stay decoded across
+     Combined's page change. */
+  var PICTURES = { vedic: ["vedic-male", "vedic-female"], tropical: ["tropical-male", "tropical-female"],
+                   compare: ["vedic-male", "vedic-female", "tropical-male", "tropical-female"] };
+  function warm(name) {
+    try {
+      var H = host(), keep = H.__cozBTWarm || (H.__cozBTWarm = {});
+      (PICTURES[name] || []).forEach(function (v) {
+        var src = new URL("avatars/avatar-" + v + ".jpg?v=3", location.href).href;
+        if (keep[src]) return;
+        var im = new H.Image(); im.decoding = "async"; im.src = src; keep[src] = im;
+        if (im.decode) im.decode().then(null, function () {});
+      });
+    } catch (e) {}
+  }
 
   /* BT2.2: the reading's music back, gently: the living page's ambient bed starts from silence towards barely there
      (-40 dB), then rises on an even curve to its usual level over 8 s. Only ever called once the reading page is up.
@@ -441,9 +467,16 @@
       if (over || stopped) return;
       try {
         var t = now() - t0 - lead;   /* his Vedic clip's time */
-        if (!tm && t > 60 - lead) prepare();
+        if (!tm && t > 60 - lead) {
+          prepare();
+          if (tm && !plan && !mode) {   /* BT2.3: during the hold, not when the breakup starts: the dust plan, and the breakup's
+                                           first draw (at full opacity: the page looks the same) */
+            plan = dustPlan(20261028, timeAt);
+            try { breakup(0); } catch (e) {}
+          }
+        }
         if (!broken) {
-          if (!mode && t >= MAP.t0 - BAND / 2) { mode = tm ? "map" : "fade"; plan = dustPlan(20261028, timeAt); }
+          if (!mode && t >= MAP.t0 - BAND / 2) { mode = tm ? "map" : "fade"; if (!plan) plan = dustPlan(20261028, timeAt); }
           if (mode === "map") { if (t >= MAP.t1 + BAND / 2) { broken = true; par.style.display = "none"; } else breakup(t); }
           else if (mode === "fade") { var f = span(t, FADE); par.style.opacity = String(1 - f); if (f >= 1) { broken = true; par.style.display = "none"; } }
         }
