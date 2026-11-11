@@ -1,5 +1,5 @@
 /* ============================================================
-   COZALYZE · COZ_LAKE · LK1.2 (Nov 11 2026, staging only)
+   COZALYZE · COZ_LAKE · LK1.3 (Nov 11 2026, staging only)
    The Current Life Cycle lake scene, shared by current-life-cycle.html,
    current-season.html, key-time-windows.html and what-comes-next.html.
 
@@ -44,6 +44,10 @@
         away; a band in the page's own background colour fills the sides so
         the reading never shows beside it; the caption stays full size under
         the planets. At the top of the page the scene is full size again.
+        LK1.3 (his note: blend it into the words, less distracting): as it
+        shrinks, the scene softens into the page colour at its sides and
+        bottom and dims slightly, so it sits behind the reading instead of
+        ending in a hard edge.
    Reduced motion: a, b, c and the flight are off, changes are short fades.
    ============================================================ */
 (function (global) {
@@ -137,6 +141,7 @@
       '@keyframes lkBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-1.1%)}}' +
       '.coz-lake-band{position:fixed;top:0;left:0;right:0;z-index:29;height:0;pointer-events:auto}' +
       '.coz-lake{transform-origin:50% 0}' +
+      '.coz-lake .lk-veil{position:absolute;inset:0;pointer-events:none;opacity:0}' +
       '.coz-lake-cap{position:fixed;top:0;left:0;right:0;margin:0 auto;width:100%;z-index:31;text-align:center;pointer-events:none;' +
         'font-family:"Cormorant Garamond",Georgia,serif;color:#fff;text-shadow:0 1px 6px rgba(0,8,24,.85)}' +
       '.coz-lake-cap .lk-now{display:block;font-size:clamp(15px,4.3vw,19px);font-weight:500;letter-spacing:.09em;line-height:1.25}' +
@@ -262,13 +267,15 @@
     root.innerHTML =
       '<div class="lk-art"></div>' +
       '<div class="lk-slot"><img alt="" class="' + (reduce ? '' : 'lk-bob') + '"></div>' +
-      '<div class="lk-slot"><img alt="" class="' + (reduce ? '' : 'lk-bob') + '"></div>';
+      '<div class="lk-slot"><img alt="" class="' + (reduce ? '' : 'lk-bob') + '"></div>' +
+      '<div class="lk-veil"></div>';
     var band = document.createElement('div');
     band.className = 'coz-lake-band';
     band.setAttribute('aria-hidden', 'true');
     var bg = '';
     try { bg = getComputedStyle(document.body).backgroundColor; } catch (e) {}
-    band.style.background = opt.band || ((!bg || /rgba\(0, 0, 0, 0\)|transparent/.test(bg)) ? '#020b1a' : bg);
+    var bandColor = opt.band || ((!bg || /rgba\(0, 0, 0, 0\)|transparent/.test(bg)) ? 'rgb(2,11,26)' : bg);
+    band.style.background = bandColor;
     document.body.appendChild(band);
     document.body.appendChild(root);
     var cap = null;
@@ -289,6 +296,15 @@
 
     var art = root.querySelector('.lk-art');
     var slots = [].slice.call(root.querySelectorAll('.lk-slot'));
+    /* LK1.3: the soft edge and slight dim, in the page's own colour, shown as the scene shrinks */
+    var veil = root.querySelector('.lk-veil');
+    (function () {
+      var m = String(bandColor).match(/\d+(\.\d+)?/g) || [2, 11, 26], c = m.slice(0, 3).join(',');
+      var a = function (x) { return 'rgba(' + c + ',' + x + ')'; };
+      veil.style.background =
+        'linear-gradient(90deg,' + a(1) + ' 0%,' + a(0) + ' 13%,' + a(0) + ' 87%,' + a(1) + ' 100%),' +
+        'linear-gradient(180deg,' + a(.18) + ' 0%,' + a(.18) + ' 70%,' + a(.75) + ' 90%,' + a(1) + ' 100%)';
+    })();
 
     var canvas = document.createElement('canvas');
     art.appendChild(canvas);
@@ -319,6 +335,7 @@
       var ty = -W * COMPACT * s * p;
       vis.s = s; vis.ty = ty; vis.bottom = ty + H * s;
       root.style.transform = p ? 'translateY(' + ty.toFixed(2) + 'px) scale(' + s.toFixed(4) + ')' : '';
+      veil.style.opacity = p.toFixed(3);
       /* the caption sits under the water planet, never over it; in the small scene a
          two-line caption runs onto the band, which grows to hold it */
       var capEnd = 0;
