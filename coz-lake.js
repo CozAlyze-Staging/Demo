@@ -1,5 +1,5 @@
 /* ============================================================
-   COZALYZE · COZ_LAKE · LK1.3 (Nov 11 2026, staging only)
+   COZALYZE · COZ_LAKE · LK1.4 (Nov 11 2026, staging only)
    The Current Life Cycle lake scene, shared by current-life-cycle.html,
    current-season.html, key-time-windows.html and what-comes-next.html.
 
@@ -139,7 +139,7 @@
       '.coz-lake .lk-slot img{position:absolute;inset:0;width:100%;height:100%;display:block}' +
       '.coz-lake .lk-slot img.lk-bob{animation:lkBob 7s ease-in-out infinite}' +
       '@keyframes lkBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-1.1%)}}' +
-      '.coz-lake-band{position:fixed;top:0;left:0;right:0;z-index:29;height:0;pointer-events:auto}' +
+      '.coz-lake-band{position:fixed;top:0;left:0;right:0;z-index:29;height:0;pointer-events:auto;transform-origin:50% 0;transform:scaleY(0)}' +
       '.coz-lake{transform-origin:50% 0}' +
       '.coz-lake .lk-veil{position:absolute;inset:0;pointer-events:none;opacity:0}' +
       '.coz-lake-cap{position:fixed;top:0;left:0;right:0;margin:0 auto;width:100%;z-index:31;text-align:center;pointer-events:none;' +
@@ -320,35 +320,67 @@
     var cur = { main: key(opt.main), sub: key(opt.sub) };
     if (glS) glS.st.C = skyCenter(cur.main);
 
-    /* g. while reading, the scene rises to the top and shrinks to the top quarter */
-    var vis = { s: 1, ty: 0, bottom: 0 };
-    function compactScale() {
+    /* g. while reading, the scene rises to the top and shrinks to the top quarter.
+       LK1.4 (his note: it jitters as you move): the shrink is handed to the
+       browser's own scrolling (a scroll-linked CSS animation) so it moves in
+       step with the finger, and its size is worked out from the phone's fixed
+       screen height, not the visible height that changes as Safari's bars
+       shrink. Browsers without scroll-linked animation get a frame-synced
+       fallback with every measurement taken ahead of time. */
+    var G = null, lastW = 0, tick = 0;
+    var TL = false;
+    try { TL = !!(global.CSS && CSS.supports && CSS.supports('animation-timeline: scroll()')); } catch (e) {}
+    var tlStyle = null;
+    function geo() {
       var W = root.offsetWidth, H = root.offsetHeight;
-      var target = Math.max(150, Math.min((global.innerHeight || 700) * QUARTER, H * .8));
-      return { W: W, H: H, s: target / (H - W * COMPACT) };
-    }
-    function layout() {
-      var g = compactScale(), H = g.H, W = g.W;
-      var y = Math.max(0, global.pageYOffset || 0);
-      var p = opt.compact === false ? 0 : Math.min(1, y / Math.max(1, H - (H - W * COMPACT) * g.s));
-      var s = 1 + (g.s - 1) * p;
-      var ty = -W * COMPACT * s * p;
-      vis.s = s; vis.ty = ty; vis.bottom = ty + H * s;
-      root.style.transform = p ? 'translateY(' + ty.toFixed(2) + 'px) scale(' + s.toFixed(4) + ')' : '';
-      veil.style.opacity = p.toFixed(3);
+      var sh = (global.screen && global.screen.height) || global.innerHeight || 700;
+      var target = Math.max(150, Math.min(sh * QUARTER, H * .8));
+      var s1 = target / (H - W * COMPACT), ty1 = -W * COMPACT * s1;
+      var ch = cap ? cap.offsetHeight : 0;
       /* the caption sits under the water planet, never over it; in the small scene a
          two-line caption runs onto the band, which grows to hold it */
-      var capEnd = 0;
-      if (cap) {
-        var ch = cap.offsetHeight;
-        var top = Math.max(vis.bottom - ch - H * s * .016, ty + (SUB_BOTTOM + .01) * W * s);
-        cap.style.transform = 'translateY(' + top.toFixed(2) + 'px)';
-        capEnd = top + ch + 4;
-      }
-      band.style.height = (p > 0 && !root.classList.contains('lk-hidden') ? Math.max(0, vis.bottom, capEnd) : 0) + 'px';   /* only needed once the scene narrows */
+      var cap0 = Math.max(H - ch - H * .016, (SUB_BOTTOM + .01) * W);
+      var cap1 = Math.max(target - ch - H * s1 * .016, ty1 + (SUB_BOTTOM + .01) * W * s1);
+      var band1 = Math.max(target, cap ? cap1 + ch + 4 : 0);
+      return { W: W, H: H, s1: s1, ty1: ty1, target: target, D: Math.max(1, H - target), cap0: cap0, cap1: cap1, band1: band1 };
     }
-    global.addEventListener('scroll', layout, { passive: true });
-    global.addEventListener('resize', layout);
+    function apply(p) {                       /* fallback path: same in-between values the CSS animation uses */
+      var g = G, ty = g.ty1 * p, s = 1 + (g.s1 - 1) * p;
+      root.style.transform = p ? 'translateY(' + ty.toFixed(2) + 'px) scale(' + s.toFixed(4) + ')' : '';
+      veil.style.opacity = p.toFixed(3);
+      if (cap) cap.style.transform = 'translateY(' + (g.cap0 + (g.cap1 - g.cap0) * p).toFixed(2) + 'px)';
+      band.style.transform = 'scaleY(' + (p > 0 ? 1 + (g.band1 / g.H - 1) * p : 0).toFixed(4) + ')';
+    }
+    function onScroll() {
+      if (tick) return;
+      tick = requestAnimationFrame(function () {
+        tick = 0;
+        apply(Math.min(1, Math.max(0, global.pageYOffset || 0) / G.D));
+      });
+    }
+    function layout() {
+      G = geo(); lastW = G.W;
+      band.style.height = G.H + 'px';
+      band.style.display = root.classList.contains('lk-hidden') ? 'none' : '';
+      if (TL) {
+        if (!tlStyle) { tlStyle = document.createElement('style'); document.head.appendChild(tlStyle); }
+        var run = 'animation-timing-function:linear;animation-fill-mode:both;animation-duration:1ms;animation-duration:auto;' +
+                  'animation-timeline:scroll(root block);animation-range:0px ' + G.D.toFixed(1) + 'px;';
+        tlStyle.textContent =
+          '@keyframes lkRoot{from{transform:translateY(0px) scale(1)}to{transform:translateY(' + G.ty1.toFixed(2) + 'px) scale(' + G.s1.toFixed(4) + ')}}' +
+          '@keyframes lkVeil{from{opacity:0}to{opacity:1}}' +
+          '@keyframes lkCap{from{transform:translateY(' + G.cap0.toFixed(2) + 'px)}to{transform:translateY(' + G.cap1.toFixed(2) + 'px)}}' +
+          '@keyframes lkBand{0%{transform:scaleY(0)}0.5%{transform:scaleY(1)}100%{transform:scaleY(' + (G.band1 / G.H).toFixed(4) + ')}}' +
+          '#cozLake{animation-name:lkRoot;' + run + '}' +
+          '#cozLake .lk-veil{animation-name:lkVeil;' + run + '}' +
+          '.coz-lake-cap{animation-name:lkCap;' + run + '}' +
+          '.coz-lake-band{animation-name:lkBand;' + run + '}';
+      } else {
+        apply(Math.min(1, Math.max(0, global.pageYOffset || 0) / G.D));
+      }
+    }
+    if (!TL) global.addEventListener('scroll', onScroll, { passive: true });
+    global.addEventListener('resize', function () { if (root.offsetWidth !== lastW) layout(); });   /* Safari's bars changing height do not count */
     layout();
 
     function geom(lord) {
@@ -472,7 +504,7 @@
         return { left: root.offsetLeft + b.x * k, top: b.y * k, width: b.w * k, height: b.h * k };
       },
       /* Where the scene ends on screen once the page has scrolled into the reading. */
-      compactBottom: function () { var g = compactScale(); return (g.H - g.W * COMPACT) * g.s; },
+      compactBottom: function () { return G ? G.band1 : 0; },
       state: function () { return { main: cur.main, sub: cur.sub }; }
     };
     if (!opt.hidden && opt.sub) ready.then(settleSub);
