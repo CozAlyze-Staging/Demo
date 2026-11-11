@@ -1,5 +1,5 @@
 /* ============================================================
-   COZALYZE · COZ_LAKE · LK1.1 (Nov 11 2026, staging only)
+   COZALYZE · COZ_LAKE · LK1.2 (Nov 11 2026, staging only)
    The Current Life Cycle lake scene, shared by current-life-cycle.html,
    current-season.html, key-time-windows.html and what-comes-next.html.
 
@@ -37,9 +37,13 @@
         it as it rises while the scene brightens and settles from a
         slight zoom, the planet lands in the painted sky, the water wakes,
         then the subperiod planet rises
-     g. when the page scrolls, the scene slides up by the empty sky above
-        the planet and pins there, so more of the reading shows; it comes
-        back down at the top of the page
+     g. LK1.2 (his ruling, Nov 11 2026, option A of the two he was shown):
+        as the page scrolls into the reading, the whole scene rises to the
+        very top of the screen and shrinks until it takes the top quarter,
+        both planets still in view, the empty sky above the planet cropped
+        away; a band in the page's own background colour fills the sides so
+        the reading never shows beside it; the caption stays full size under
+        the planets. At the top of the page the scene is full size again.
    Reduced motion: a, b, c and the flight are off, changes are short fades.
    ============================================================ */
 (function (global) {
@@ -52,7 +56,8 @@
   var HORIZON = 0.566;               /* shoreline, fraction of scene height */
   var BODY_X = 0.4966;               /* sky planets' centre line, fraction of width */
   var SUB_BOTTOM = 0.700;            /* water planet's base ring, in scene widths from the top */
-  var COMPACT = 0.115;               /* sky above the planets that slides away while reading, in scene widths */
+  var COMPACT = 0.115;               /* sky above the planets cropped away while reading, in scene widths */
+  var QUARTER = 0.25;                /* while reading, the scene takes this share of the screen height */
 
   /* Sky planet boxes in the scene frame, matched from his art. */
   var SKY = {
@@ -119,7 +124,8 @@
     s.id = 'cozLakeCSS';
     s.textContent =
       '.coz-lake,.coz-lake-spacer{width:100%;aspect-ratio:' + FW + '/' + FH + ';margin:0 auto}' +
-      '@media (min-width:520px){.coz-lake,.coz-lake-spacer{max-width:480px}}' +
+      '@media (min-width:520px){.coz-lake,.coz-lake-spacer,.coz-lake-cap{max-width:480px}}' +
+      '.coz-lake-cap.lk-off{display:none}' +
       '.coz-lake{position:fixed;top:0;left:0;right:0;z-index:30;overflow:hidden;pointer-events:auto;-webkit-tap-highlight-color:transparent}' +
       '.coz-lake.lk-hidden{opacity:0;pointer-events:none}' +
       '.coz-lake .lk-art{position:absolute;inset:0;-webkit-mask-image:linear-gradient(180deg,#000 97.6%,transparent);mask-image:linear-gradient(180deg,#000 97.6%,transparent)}' +
@@ -129,13 +135,15 @@
       '.coz-lake .lk-slot img{position:absolute;inset:0;width:100%;height:100%;display:block}' +
       '.coz-lake .lk-slot img.lk-bob{animation:lkBob 7s ease-in-out infinite}' +
       '@keyframes lkBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-1.1%)}}' +
-      '.coz-lake .lk-cap{position:absolute;left:0;right:0;bottom:1.6%;text-align:center;pointer-events:none;' +
+      '.coz-lake-band{position:fixed;top:0;left:0;right:0;z-index:29;height:0;pointer-events:auto}' +
+      '.coz-lake{transform-origin:50% 0}' +
+      '.coz-lake-cap{position:fixed;top:0;left:0;right:0;margin:0 auto;width:100%;z-index:31;text-align:center;pointer-events:none;' +
         'font-family:"Cormorant Garamond",Georgia,serif;color:#fff;text-shadow:0 1px 6px rgba(0,8,24,.85)}' +
-      '.coz-lake .lk-cap .lk-now{display:block;font-size:clamp(15px,4.3vw,19px);font-weight:500;letter-spacing:.09em;line-height:1.25}' +
-      '.coz-lake .lk-cap .lk-back{display:inline-block;margin-top:0;padding:2px 14px 3px;pointer-events:auto;cursor:pointer;' +
+      '.coz-lake-cap .lk-now{display:block;font-size:clamp(15px,4.3vw,19px);font-weight:500;letter-spacing:.09em;line-height:1.25}' +
+      '.coz-lake-cap .lk-back{display:inline-block;margin-top:0;padding:2px 14px 3px;pointer-events:auto;cursor:pointer;' +
         'font-family:"Cormorant Garamond",Georgia,serif;font-size:clamp(15px,4.2vw,18px);font-weight:600;letter-spacing:.05em;' +
         'color:#d4a178;background:none;border:0;-webkit-tap-highlight-color:transparent}' +
-      '.coz-lake .lk-cap .lk-back:focus-visible{outline:1px solid #d4a178;outline-offset:2px}' +
+      '.coz-lake-cap .lk-back:focus-visible{outline:1px solid #d4a178;outline-offset:2px}' +
       '.coz-lake-flyer{position:fixed;z-index:35;pointer-events:none;transform-origin:0 0;opacity:0;will-change:transform,opacity,filter}' +
       '@media (prefers-reduced-motion:reduce){.coz-lake .lk-slot img.lk-bob{animation:none}}';
     document.head.appendChild(s);
@@ -254,9 +262,22 @@
     root.innerHTML =
       '<div class="lk-art"></div>' +
       '<div class="lk-slot"><img alt="" class="' + (reduce ? '' : 'lk-bob') + '"></div>' +
-      '<div class="lk-slot"><img alt="" class="' + (reduce ? '' : 'lk-bob') + '"></div>' +
-      (opt.caption ? '<div class="lk-cap" aria-live="polite"></div>' : '');
+      '<div class="lk-slot"><img alt="" class="' + (reduce ? '' : 'lk-bob') + '"></div>';
+    var band = document.createElement('div');
+    band.className = 'coz-lake-band';
+    band.setAttribute('aria-hidden', 'true');
+    var bg = '';
+    try { bg = getComputedStyle(document.body).backgroundColor; } catch (e) {}
+    band.style.background = opt.band || ((!bg || /rgba\(0, 0, 0, 0\)|transparent/.test(bg)) ? '#020b1a' : bg);
+    document.body.appendChild(band);
     document.body.appendChild(root);
+    var cap = null;
+    if (opt.caption) {
+      cap = document.createElement('div');
+      cap.className = 'coz-lake-cap' + (opt.hidden ? ' lk-off' : '');
+      cap.setAttribute('aria-live', 'polite');
+      document.body.appendChild(cap);
+    }
     if (opt.spacer) {
       var sp = document.createElement('div');
       sp.className = 'coz-lake-spacer';
@@ -268,7 +289,6 @@
 
     var art = root.querySelector('.lk-art');
     var slots = [].slice.call(root.querySelectorAll('.lk-slot'));
-    var cap = root.querySelector('.lk-cap');
 
     var canvas = document.createElement('canvas');
     art.appendChild(canvas);
@@ -284,18 +304,35 @@
     var cur = { main: key(opt.main), sub: key(opt.sub) };
     if (glS) glS.st.C = skyCenter(cur.main);
 
-    /* g. while the page scrolls, the empty sky above the planet slides away */
-    var off = 0;
-    function onScroll() {
-      var y = Math.max(0, global.pageYOffset || 0), c = root.clientWidth * COMPACT;
-      var o = Math.round(Math.min(y, c));
-      if (o !== off) { off = o; root.style.transform = o ? 'translateY(' + (-o) + 'px)' : ''; }
+    /* g. while reading, the scene rises to the top and shrinks to the top quarter */
+    var vis = { s: 1, ty: 0, bottom: 0 };
+    function compactScale() {
+      var W = root.offsetWidth, H = root.offsetHeight;
+      var target = Math.max(150, Math.min((global.innerHeight || 700) * QUARTER, H * .8));
+      return { W: W, H: H, s: target / (H - W * COMPACT) };
     }
-    if (opt.compact !== false) {
-      global.addEventListener('scroll', onScroll, { passive: true });
-      global.addEventListener('resize', onScroll);
-      onScroll();
+    function layout() {
+      var g = compactScale(), H = g.H, W = g.W;
+      var y = Math.max(0, global.pageYOffset || 0);
+      var p = opt.compact === false ? 0 : Math.min(1, y / Math.max(1, H - (H - W * COMPACT) * g.s));
+      var s = 1 + (g.s - 1) * p;
+      var ty = -W * COMPACT * s * p;
+      vis.s = s; vis.ty = ty; vis.bottom = ty + H * s;
+      root.style.transform = p ? 'translateY(' + ty.toFixed(2) + 'px) scale(' + s.toFixed(4) + ')' : '';
+      /* the caption sits under the water planet, never over it; in the small scene a
+         two-line caption runs onto the band, which grows to hold it */
+      var capEnd = 0;
+      if (cap) {
+        var ch = cap.offsetHeight;
+        var top = Math.max(vis.bottom - ch - H * s * .016, ty + (SUB_BOTTOM + .01) * W * s);
+        cap.style.transform = 'translateY(' + top.toFixed(2) + 'px)';
+        capEnd = top + ch + 4;
+      }
+      band.style.height = (p > 0 && !root.classList.contains('lk-hidden') ? Math.max(0, vis.bottom, capEnd) : 0) + 'px';   /* only needed once the scene narrows */
     }
+    global.addEventListener('scroll', layout, { passive: true });
+    global.addEventListener('resize', layout);
+    layout();
 
     function geom(lord) {
       var g = SUB[lord] || SUB.venus, hW = g.w / g.a;
@@ -408,15 +445,17 @@
         }).catch(function (e) { if (global.console) console.warn('[LAKE] change failed: ' + (e && e.message)); });
         return mainQ;
       },
-      caption: function (html) { if (cap) cap.innerHTML = html; },
+      caption: function (html) { if (cap) { cap.innerHTML = html; layout(); } },
+      /* Back to You Are Here, wherever the caption offers it */
+      onBack: function (fn) { if (cap) cap.addEventListener('click', function (ev) { if (ev.target.closest('.lk-back')) fn(ev); }); },
+      layout: layout,
       /* The sky planet's box on screen with the scene at rest (top of the page). */
       skyRect: function (lord) {
-        var b = SKY[key(lord)] || SKY.venus, r = root.getBoundingClientRect(), k = r.width / FW;
-        var top = r.top + off;
-        return { left: r.left + b.x * k, top: top + b.y * k, width: b.w * k, height: b.h * k };
+        var b = SKY[key(lord)] || SKY.venus, W = root.offsetWidth, k = W / FW;
+        return { left: root.offsetLeft + b.x * k, top: b.y * k, width: b.w * k, height: b.h * k };
       },
       /* Where the scene ends on screen once the page has scrolled into the reading. */
-      compactBottom: function () { var h = root.clientHeight, w = root.clientWidth; return h - w * COMPACT; },
+      compactBottom: function () { var g = compactScale(); return (g.H - g.W * COMPACT) * g.s; },
       state: function () { return { main: cur.main, sub: cur.sub }; }
     };
     if (!opt.hidden && opt.sub) ready.then(settleSub);
@@ -436,7 +475,7 @@
       (fadeEls || []).forEach(function (el) { anim(el, [{ opacity: 1 }, { opacity: 0 }], { duration: 500, fill: 'forwards' }); });
       if (reduce) {
         anim(fromEl, [{ opacity: 1 }, { opacity: 0 }], { duration: 200, fill: 'forwards' });
-        root.classList.remove('lk-hidden');
+        root.classList.remove('lk-hidden'); lake.layout();
         return anim(root, [{ opacity: 0 }, { opacity: 1 }], { duration: 400, fill: 'backwards' })
           .then(function () { return lake.showSub(lake.state().sub); });
       }
@@ -456,7 +495,7 @@
       /* the lake waits dark and closed, zoomed in a little on the landing point */
       if (glS) { glS.st.R = 0; glS.st.L = 0; glS.st.Z = 1.12; glS.st.K = 0; glS.draw(); }
       else { lake.art.style.clipPath = 'circle(0% at 50% 27%)'; }
-      root.classList.remove('lk-hidden');
+      root.classList.remove('lk-hidden'); lake.layout();
 
       /* 0.0 s  the medallion gathers light */
       anim(fromEl, [

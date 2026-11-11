@@ -198,10 +198,10 @@ h1.ktw-h1{text-align:center;font-family:var(--display-font);font-weight:500;
   </div>
 </div>
 
-<div class="ktw-stamp" aria-hidden="true">KEY TIME WINDOWS · KTW1.5 · LK1.1 lake drop-downs · VO1.4 read aloud, music stops</div>
+<div class="ktw-stamp" aria-hidden="true">KEY TIME WINDOWS · KTW1.6 · LK1.2 lake drop-downs · VO1.4 read aloud, music stops</div>
 
 <script src="coz-graha.js"></script>
-<script src="coz-lake.js?v=2"></script>
+<script src="coz-lake.js?v=3"></script>
 <script src="coz-voice.js?v=6"></script>   <!-- VO1 (Oct 27 2026, staging only): the page read aloud -->
 <script>
 (function () {
@@ -474,7 +474,7 @@ h1.ktw-h1{text-align:center;font-family:var(--display-font);font-weight:500;
         var k = +w.getAttribute('data-k');
         w.querySelector('.ktw-tog').addEventListener('click', function () { setOpen(openK === k ? -1 : k); });
       });
-      lake.el.addEventListener('click', function (ev) { if (ev.target.closest('.lk-back')) setOpen(-1); });
+      lake.onBack(function () { setOpen(-1); });
       lake.caption(CozLake.capHere(md.lord, ad.lord));
       /* every water planet this chapter can show, fetched ahead so a tap never waits */
       trio.forEach(function (t) { if (t.seg) CozLake.preload('sub', t.seg.lord).catch(function () {}); });

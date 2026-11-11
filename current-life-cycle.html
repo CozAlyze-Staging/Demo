@@ -170,7 +170,7 @@ html, body {
 <div class="lc-stage" id="lcStage"></div>
 
 <script src="coz-graha.js"></script>
-<script src="coz-lake.js?v=2"></script>
+<script src="coz-lake.js?v=3"></script>
 <script>
 (function () {
   'use strict';
@@ -192,7 +192,7 @@ html, body {
       '<a href="#" data-foot="saved" aria-label="Saved"></a>' +
       '<a href="#" data-foot="account" aria-label="Account"></a>' +
     '</div>' +
-    '<div class="lc-stamp" aria-hidden="true">LC3.1 · LK1.1 lake</div>';
+    '<div class="lc-stamp" aria-hidden="true">LC3.2 · LK1.2 lake</div>';
 
   function failClosed(reason) {
     stage.innerHTML =
@@ -275,7 +275,7 @@ html, body {
   try {
     if (window.CozLake) {
       var back = /(current-season|key-time-windows|what-comes-next)\.html/.test(document.referrer || '');
-      var lake = CozLake.create({ main: md.lord, sub: ad.lord, hidden: !back });
+      var lake = CozLake.create({ main: md.lord, sub: ad.lord, hidden: !back, band: 'rgb(2,15,34)' });   /* band in the art's own navy */
       if (!back) {
         var medal = stage.querySelector('.lc-medallion span');
         var fades = [stage.querySelector('.lc-lord'), stage.querySelector('.lc-years')].filter(Boolean);
