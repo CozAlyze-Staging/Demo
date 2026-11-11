@@ -119,6 +119,20 @@ h1.ktw-h1{text-align:center;font-family:var(--display-font);font-weight:500;
 .ktw-line b{font-family:var(--display-font);font-weight:600;font-style:italic;
   font-size:1.08em;color:var(--vedic-gold);letter-spacing:.015em}
 
+/* LK1.0 (Nov 11 2026, his ruling, staging only): each window is its title with a drop-down.
+   Opening one shows its dates and reading and brings its planet onto the lake above;
+   one window open at a time. Chevron as on the approved result-page drop-downs. */
+.ktw-tog{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;margin:0;padding:8px 2px;
+  background:none;border:0;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent;font:inherit}
+.ktw-tog .ktw-pair{margin:0}
+.ktw-tog:focus-visible{outline:1px solid var(--vedic-gold);outline-offset:4px;border-radius:6px}
+.ktw-chev{display:block;flex:none;width:20px;height:20px;color:#CCA466;transition:transform .32s ease}
+.ktw-chev svg{display:block;width:100%;height:100%}
+.ktw-win.open .ktw-chev{transform:rotate(180deg)}
+.ktw-drop{display:none;padding:10px 0 0}
+.ktw-win.open .ktw-drop{display:block}
+@media (prefers-reduced-motion:reduce){.ktw-chev{transition:none}}
+
 .ktw-disclaimer{text-align:center;font-family:var(--body-font);
   font-size:clamp(15px,4vw,16.4px);line-height:1.66;color:var(--vedic-ivory-muted);margin:6px 0 0}
 
@@ -184,9 +198,10 @@ h1.ktw-h1{text-align:center;font-family:var(--display-font);font-weight:500;
   </div>
 </div>
 
-<div class="ktw-stamp" aria-hidden="true">KEY TIME WINDOWS · KTW1.3 · VO1.4 read aloud, music stops</div>
+<div class="ktw-stamp" aria-hidden="true">KEY TIME WINDOWS · KTW1.4 · LK1.0 lake drop-downs · VO1.4 read aloud, music stops</div>
 
 <script src="coz-graha.js"></script>
+<script src="coz-lake.js?v=1"></script>
 <script src="coz-voice.js?v=6"></script>   <!-- VO1 (Oct 27 2026, staging only): the page read aloud -->
 <script>
 (function () {
@@ -349,7 +364,9 @@ h1.ktw-h1{text-align:center;font-family:var(--display-font);font-weight:500;
     return M[d.getUTCMonth()] + ' ' + d.getUTCFullYear();
   }
 
-  function windowHTML(entry) {
+  var CHEV = '<span class="ktw-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 9l7 7 7-7"/></svg></span>';
+
+  function windowHTML(entry, idx) {
     var seg = entry.seg;
     if (!seg) return '';
     var p = G.planet(chart, seg.lord);
@@ -381,17 +398,21 @@ h1.ktw-h1{text-align:center;font-family:var(--display-font);font-weight:500;
     var opp = esc(H.opp) + ', and ' + esc(LORD_OPP[seg.lord] || 'working with what the period offers') + '.';
     var prs = esc(H.prs) + ', ' + esc(LORD_PRS[seg.lord] || 'or pushing past what the period supports') + '.';
 
-    return '<div class="ktw-win">' +
-      '<p class="ktw-pair">' + esc(md.lord) + '\u2013' + esc(seg.lord) + '</p>' +
-      '<p class="ktw-when"><span class="pos">' + esc(entry.pos) + '</span> \u00B7 ' +
-        esc(longDate(seg.startTimestamp)) + '\u2013' + esc(longDate(seg.endTimestamp)) + '</p>' +
-      (body ? '<p class="ktw-body">' + body + '</p>' : '') +
-      '<p class="ktw-line"><b>Potential Opportunities:</b> ' + opp + '</p>' +
-      '<p class="ktw-line"><b>Possible Pressures:</b> ' + prs + '</p>' +
+    return '<div class="ktw-win" data-k="' + idx + '">' +
+      '<button type="button" class="ktw-tog" aria-expanded="false" aria-controls="ktwD' + idx + '">' +
+        '<span class="ktw-pair">' + esc(md.lord) + '\u2013' + esc(seg.lord) + '</span>' + CHEV +
+      '</button>' +
+      '<div class="ktw-drop" id="ktwD' + idx + '">' +
+        '<p class="ktw-when"><span class="pos">' + esc(entry.pos) + '</span> \u00B7 ' +
+          esc(longDate(seg.startTimestamp)) + '\u2013' + esc(longDate(seg.endTimestamp)) + '</p>' +
+        (body ? '<p class="ktw-body">' + body + '</p>' : '') +
+        '<p class="ktw-line"><b>Potential Opportunities:</b> ' + opp + '</p>' +
+        '<p class="ktw-line"><b>Possible Pressures:</b> ' + prs + '</p>' +
+      '</div>' +
     '</div>';
   }
 
-  var blocks = trio.map(windowHTML).filter(Boolean);
+  var blocks = trio.map(windowHTML).filter(Boolean);   /* each block keeps its trio index in data-k */
   if (!blocks.length) { failClosed('no window had a verified house for its lord'); return; }
 
   panel.innerHTML =
@@ -419,6 +440,46 @@ h1.ktw-h1{text-align:center;font-family:var(--display-font);font-weight:500;
       collect: function () { return CozVoice.collect(panel, { include: '.ktw-eyebrow, h1.ktw-h1, .ktw-intro p, .ktw-pair, .ktw-when, .ktw-body, .ktw-line, .ktw-disclaimer' }); }
     });
   } catch (e) {}
+
+  /* LK1.0 (Nov 11 2026, his spec, staging only): the lake scene pinned at the top. Opening a
+     window's drop-down brings that window's planet onto the water while the Mahadasha planet
+     stays in the sky; closing it, or Back to You Are Here, returns to the current window. */
+  try {
+    if (window.CozLake) {
+      var lake = CozLake.create({ main: md.lord, sub: ad.lord, caption: true, spacer: true });
+      var wins = [].slice.call(panel.querySelectorAll('.ktw-win'));
+      var openK = -1;
+      var reduceM = false;
+      try { reduceM = matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e2) {}
+      var here = function () { lake.showSub(ad.lord); lake.caption(CozLake.capHere(md.lord, ad.lord)); };
+      var setOpen = function (k) {
+        openK = k;
+        wins.forEach(function (w) {
+          var on = +w.getAttribute('data-k') === k;
+          w.classList.toggle('open', on);
+          w.querySelector('.ktw-tog').setAttribute('aria-expanded', on ? 'true' : 'false');
+        });
+        if (k < 0) { here(); return; }
+        var seg = trio[k].seg;
+        lake.showSub(seg.lord);
+        lake.caption(seg.startTimestamp === ad.startTimestamp
+          ? CozLake.capHere(md.lord, ad.lord)
+          : CozLake.capPreview(md.lord, seg.lord, seg));
+        /* Always start at top: the opened window's title sits just under the scene. */
+        var w = panel.querySelector('.ktw-win[data-k="' + k + '"]');
+        var y = w.getBoundingClientRect().top + (window.pageYOffset || 0) - lake.el.getBoundingClientRect().height - 8;
+        window.scrollTo({ top: Math.max(0, y), behavior: reduceM ? 'auto' : 'smooth' });
+      };
+      wins.forEach(function (w) {
+        var k = +w.getAttribute('data-k');
+        w.querySelector('.ktw-tog').addEventListener('click', function () { setOpen(openK === k ? -1 : k); });
+      });
+      lake.el.addEventListener('click', function (ev) { if (ev.target.closest('.lk-back')) setOpen(-1); });
+      lake.caption(CozLake.capHere(md.lord, ad.lord));
+      /* every water planet this chapter can show, fetched ahead so a tap never waits */
+      trio.forEach(function (t) { if (t.seg) CozLake.preload('sub', t.seg.lord).catch(function () {}); });
+    }
+  } catch (e) { if (window.console) console.warn('[KEY TIME WINDOWS] lake scene unavailable: ' + (e && e.message)); }
 
   if (window.console) {
     console.log('[KEY TIME WINDOWS] mode=' + lc.mode + ' year=' + lc.yearLengthDays + 'd status=' + lc.validationStatus);

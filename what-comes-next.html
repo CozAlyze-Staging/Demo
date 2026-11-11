@@ -159,9 +159,10 @@ h1.wcn-h1{text-align:center;font-family:var(--display-font);font-weight:500;
   </div>
 </div>
 
-<div class="wcn-stamp" aria-hidden="true">WHAT COMES NEXT · WCN1.3 · VO1.4 read aloud, music stops</div>
+<div class="wcn-stamp" aria-hidden="true">WHAT COMES NEXT · WCN1.4 · LK1.0 lake · VO1.4 read aloud, music stops</div>
 
 <script src="coz-graha.js"></script>
+<script src="coz-lake.js?v=1"></script>
 <script src="coz-voice.js?v=6"></script>   <!-- VO1 (Oct 27 2026, staging only): the page read aloud -->
 <script>
 (function () {
@@ -340,6 +341,30 @@ h1.wcn-h1{text-align:center;font-family:var(--display-font);font-weight:500;
       collect: function () { return CozVoice.collect(panel, { include: '.wcn-eyebrow, h1.wcn-h1, .wcn-lede, .wcn-lord, .wcn-when, .wcn-span, .wcn-body p, .wcn-disclaimer' }); }
     });
   } catch (e) {}
+
+  /* LK1.0 (Nov 11 2026, his spec, staging only): the lake scene pinned at the top opens on
+     where the person is now, then the chapter changes: the water planet sinks, the sky
+     dissolves to the next Mahadasha lord's scene, and that lord rises on the water as the
+     first subperiod of its own chapter. Back to You Are Here returns to the current scene. */
+  try {
+    if (window.CozLake && lc.antardasha && lc.antardasha.lord) {
+      var ad = lc.antardasha;
+      var lake = CozLake.create({ main: md.lord, sub: ad.lord, caption: true, spacer: true });
+      var nextFirst = { startTimestamp: nx.startTimestamp, endTimestamp: nx.endTimestamp };
+      lake.caption(CozLake.capHere(md.lord, ad.lord));
+      CozLake.preload('scene', nx.lord).catch(function () {});
+      CozLake.preload('sub', nx.lord).catch(function () {});
+      lake.ready.then(function () { return new Promise(function (r) { setTimeout(r, 1700); }); }).then(function () {
+        lake.caption(CozLake.capPreview(nx.lord, nx.lord, nextFirst));
+        return lake.setMain(nx.lord, nx.lord);
+      });
+      lake.el.addEventListener('click', function (ev) {
+        if (!ev.target.closest('.lk-back')) return;
+        lake.caption(CozLake.capHere(md.lord, ad.lord));
+        lake.setMain(md.lord, ad.lord);
+      });
+    }
+  } catch (e) { if (window.console) console.warn('[WHAT COMES NEXT] lake scene unavailable: ' + (e && e.message)); }
 
   if (window.console) {
     var words = panel.querySelector('.wcn-body').textContent.trim().split(/\s+/).length;

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Your Current Life Cycle · CozAlyze</title>
 <!--
-  COZALYZE · CURRENT LIFE CYCLE · LC2.4
+  COZALYZE · CURRENT LIFE CYCLE · LC3.0 (LK1.0 lake scene, staging only; LC2.4 below unchanged)
   Reached from vedic-reading.html (the "Your Current Life Cycle" door).
 
   LC2.0 replaces the CSS-composed layout of LC1.0. The artwork is now a single
@@ -170,6 +170,7 @@ html, body {
 <div class="lc-stage" id="lcStage"></div>
 
 <script src="coz-graha.js"></script>
+<script src="coz-lake.js?v=1"></script>
 <script>
 (function () {
   'use strict';
@@ -191,7 +192,7 @@ html, body {
       '<a href="#" data-foot="saved" aria-label="Saved"></a>' +
       '<a href="#" data-foot="account" aria-label="Account"></a>' +
     '</div>' +
-    '<div class="lc-stamp" aria-hidden="true">LC2.4</div>';
+    '<div class="lc-stamp" aria-hidden="true">LC3.0 · LK1.0 lake</div>';
 
   function failClosed(reason) {
     stage.innerHTML =
@@ -263,6 +264,31 @@ html, body {
     '<a class="lc-btn wcn" href="what-comes-next.html" aria-label="What Comes Next"></a>' +
 
     NAV;
+
+  /* LK1.0 (Nov 11 2026, his spec, staging only): the lake scene.
+     The page first looks exactly as before. The first tap anywhere (the
+     bottom bar excepted) lifts the Mahadasha planet out of its medallion
+     into the sky of his lake scene, the lake opens around it and the
+     Antardasha planet rises on the water; the scene then stays pinned at the
+     top, covering the art down to You Are Here. Coming back here from the
+     other three life-cycle pages, the scene is already in place. */
+  try {
+    if (window.CozLake) {
+      var back = /(current-season|key-time-windows|what-comes-next)\.html/.test(document.referrer || '');
+      var lake = CozLake.create({ main: md.lord, sub: ad.lord, hidden: !back });
+      if (!back) {
+        var medal = stage.querySelector('.lc-medallion span');
+        var fades = [stage.querySelector('.lc-lord'), stage.querySelector('.lc-years')].filter(Boolean);
+        var first = function (ev) {
+          if (ev.target.closest && ev.target.closest('.lc-nav, #cozNavNote')) return;
+          document.removeEventListener('click', first, true);
+          ev.preventDefault(); ev.stopImmediatePropagation();
+          CozLake.reveal(lake, medal, md.lord, fades);
+        };
+        document.addEventListener('click', first, true);
+      }
+    }
+  } catch (e) { if (window.console) console.warn('[LIFE CYCLE] lake scene unavailable: ' + (e && e.message)); }
 
   /* GD1 r2: the life cycle is on screen: the dashboard door counts, for the chart run it was drawn from */
   try { (window.CozDoors ? CozDoors.mark : function (s, d, r) { (window.__cozDoorsQ = window.__cozDoorsQ || []).push([s, d, r]); })('vedic', 'timing', chart.run); } catch (e) {}
