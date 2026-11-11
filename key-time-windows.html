@@ -198,10 +198,10 @@ h1.ktw-h1{text-align:center;font-family:var(--display-font);font-weight:500;
   </div>
 </div>
 
-<div class="ktw-stamp" aria-hidden="true">KEY TIME WINDOWS · KTW1.4 · LK1.0 lake drop-downs · VO1.4 read aloud, music stops</div>
+<div class="ktw-stamp" aria-hidden="true">KEY TIME WINDOWS · KTW1.5 · LK1.1 lake drop-downs · VO1.4 read aloud, music stops</div>
 
 <script src="coz-graha.js"></script>
-<script src="coz-lake.js?v=1"></script>
+<script src="coz-lake.js?v=2"></script>
 <script src="coz-voice.js?v=6"></script>   <!-- VO1 (Oct 27 2026, staging only): the page read aloud -->
 <script>
 (function () {
@@ -446,7 +446,7 @@ h1.ktw-h1{text-align:center;font-family:var(--display-font);font-weight:500;
      stays in the sky; closing it, or Back to You Are Here, returns to the current window. */
   try {
     if (window.CozLake) {
-      var lake = CozLake.create({ main: md.lord, sub: ad.lord, caption: true, spacer: true });
+      var lake = CozLake.create({ main: md.lord, sub: ad.lord, caption: true, spacer: true, hideHeader: '.ktw-head' });
       var wins = [].slice.call(panel.querySelectorAll('.ktw-win'));
       var openK = -1;
       var reduceM = false;
@@ -467,7 +467,7 @@ h1.ktw-h1{text-align:center;font-family:var(--display-font);font-weight:500;
           : CozLake.capPreview(md.lord, seg.lord, seg));
         /* Always start at top: the opened window's title sits just under the scene. */
         var w = panel.querySelector('.ktw-win[data-k="' + k + '"]');
-        var y = w.getBoundingClientRect().top + (window.pageYOffset || 0) - lake.el.getBoundingClientRect().height - 8;
+        var y = w.getBoundingClientRect().top + (window.pageYOffset || 0) - lake.compactBottom() - 8;
         window.scrollTo({ top: Math.max(0, y), behavior: reduceM ? 'auto' : 'smooth' });
       };
       wins.forEach(function (w) {

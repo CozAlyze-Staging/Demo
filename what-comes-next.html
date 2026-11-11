@@ -159,10 +159,10 @@ h1.wcn-h1{text-align:center;font-family:var(--display-font);font-weight:500;
   </div>
 </div>
 
-<div class="wcn-stamp" aria-hidden="true">WHAT COMES NEXT · WCN1.4 · LK1.0 lake · VO1.4 read aloud, music stops</div>
+<div class="wcn-stamp" aria-hidden="true">WHAT COMES NEXT · WCN1.5 · LK1.1 lake · VO1.4 read aloud, music stops</div>
 
 <script src="coz-graha.js"></script>
-<script src="coz-lake.js?v=1"></script>
+<script src="coz-lake.js?v=2"></script>
 <script src="coz-voice.js?v=6"></script>   <!-- VO1 (Oct 27 2026, staging only): the page read aloud -->
 <script>
 (function () {
@@ -349,7 +349,7 @@ h1.wcn-h1{text-align:center;font-family:var(--display-font);font-weight:500;
   try {
     if (window.CozLake && lc.antardasha && lc.antardasha.lord) {
       var ad = lc.antardasha;
-      var lake = CozLake.create({ main: md.lord, sub: ad.lord, caption: true, spacer: true });
+      var lake = CozLake.create({ main: md.lord, sub: ad.lord, caption: true, spacer: true, hideHeader: '.wcn-head' });
       var nextFirst = { startTimestamp: nx.startTimestamp, endTimestamp: nx.endTimestamp };
       lake.caption(CozLake.capHere(md.lord, ad.lord));
       CozLake.preload('scene', nx.lord).catch(function () {});

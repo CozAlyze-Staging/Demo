@@ -1,5 +1,5 @@
 /* ============================================================
-   COZALYZE · COZ_LAKE · LK1.0 (Nov 11 2026, staging only)
+   COZALYZE · COZ_LAKE · LK1.1 (Nov 11 2026, staging only)
    The Current Life Cycle lake scene, shared by current-life-cycle.html,
    current-season.html, key-time-windows.html and what-comes-next.html.
 
@@ -12,23 +12,35 @@
                   Rahu / Ketu files, nothing redrawn.
      FLIGHT     = his plain planets and emblems (lake-orb-<lord>.webp), used
                   only for the rise from the medallion on the overview page.
-   The scene pins to the top of each page and the reading scrolls under it.
    Timing comes only from cozChartJSON.lifeCycle; nothing is recalculated.
 
-   Measurements (scene frame 1267 x 1081, the nine scenes share one
-   background and were aligned to it): the sky planet boxes below were
-   found by matching each plain planet against its own scene. The water
-   planet sits where his New Mahadasha art puts it, scaled so its planet
-   stays smaller than the Mahadasha planet in the sky.
-
+   LK1.1, his notes after seeing LK1.0 on his phone (Nov 11 2026):
+     1. a more dramatic first reveal with a sense of build
+     2. more life in the water
+     3. no popping: the leaving subperiod planet rises away up the water's
+        centre line (the line of the sky planet's reflection) and the
+        arriving one rises into place along the same line, both moving at once
+     4. the scene takes less of the screen while reading
    Motion, all of it, so it can be named and changed one item at a time:
-     1. water shimmer, the lake below the shoreline only (WebGL)
-     2. a slow float of the water planet, 7 s, about 1% of its height
-     3. subperiod change: the water planet sinks, the next one rises
-     4. Mahadasha change: the water planet sinks, the sky scene dissolves
-        to the next lord's scene over 2 s, the next water planet rises
-     5. overview only: the medallion's planet rises into the sky
-   Reduced motion: 1, 2 and the flight are off, changes are short fades.
+     a. water: ripples below the shoreline, slow broad flow, glints that
+        travel across the lit reflections (WebGL)
+     b. the whole scene breathes very slightly, 1% over 22 s, centred on
+        the sky planet so the planet itself stays put
+     c. the water planet floats, 7 s, about 1% of its height
+     d. subperiod change: the leaving planet rises up the centre line toward
+        the shoreline, growing smaller and fading as it goes, while the
+        arriving planet rises up the same line from below the frame
+     e. Mahadasha change: the water planet leaves the same way, the sky
+        dissolves to the next lord's scene, the next water planet arrives
+     f. overview only, the reveal: the medallion gathers light, his planet
+        lifts out of it glowing and climbs to the sky, the lake opens around
+        it as it rises while the scene brightens and settles from a
+        slight zoom, the planet lands in the painted sky, the water wakes,
+        then the subperiod planet rises
+     g. when the page scrolls, the scene slides up by the empty sky above
+        the planet and pins there, so more of the reading shows; it comes
+        back down at the top of the page
+   Reduced motion: a, b, c and the flight are off, changes are short fades.
    ============================================================ */
 (function (global) {
   'use strict';
@@ -36,9 +48,11 @@
 
   var V = 'v=1';
   var FW = 1267, FH = 1081;          /* scene frame */
+  var AR = FH / FW;                  /* scene height in scene widths */
   var HORIZON = 0.566;               /* shoreline, fraction of scene height */
   var BODY_X = 0.4966;               /* sky planets' centre line, fraction of width */
-  var SUB_BOTTOM = 0.700;            /* water planet's base ring, in scene widths from the top (room under it for the caption) */
+  var SUB_BOTTOM = 0.700;            /* water planet's base ring, in scene widths from the top */
+  var COMPACT = 0.115;               /* sky above the planets that slides away while reading, in scene widths */
 
   /* Sky planet boxes in the scene frame, matched from his art. */
   var SKY = {
@@ -93,6 +107,10 @@
     var a = el.animate(frames, opt);
     return new Promise(function (r) { a.onfinish = function () { r(a); }; a.oncancel = function () { r(a); }; });
   }
+  function stopAnims(el) { if (el.getAnimations) el.getAnimations().forEach(function (a) { if (!a.animationName) a.cancel(); }); }
+  function skyCenter(lord) { var b = SKY[key(lord)] || SKY.venus; return [(b.x + b.w / 2) / FW, (b.y + b.h / 2) / FH]; }
+  var easeOut = function (p) { return 1 - Math.pow(1 - p, 3); };
+  var easeInOut = function (p) { return p < .5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2; };
 
   /* ---------------- styles ---------------- */
   function css() {
@@ -107,10 +125,9 @@
       '.coz-lake .lk-art{position:absolute;inset:0;-webkit-mask-image:linear-gradient(180deg,#000 97.6%,transparent);mask-image:linear-gradient(180deg,#000 97.6%,transparent)}' +
       '.coz-lake canvas,.coz-lake .lk-img{position:absolute;inset:0;width:100%;height:100%;display:block}' +
       '.coz-lake .lk-img{object-fit:cover}' +
-      '.coz-lake .lk-sub{position:absolute;overflow:hidden}' +
-      '.coz-lake .lk-rise{position:absolute;inset:0;opacity:0}' +
-      '.coz-lake .lk-rise img{position:absolute;inset:0;width:100%;height:100%;display:block}' +
-      '.coz-lake .lk-rise img.lk-bob{animation:lkBob 7s ease-in-out infinite}' +
+      '.coz-lake .lk-slot{position:absolute;opacity:0;transform-origin:50% 100%;will-change:transform,opacity}' +
+      '.coz-lake .lk-slot img{position:absolute;inset:0;width:100%;height:100%;display:block}' +
+      '.coz-lake .lk-slot img.lk-bob{animation:lkBob 7s ease-in-out infinite}' +
       '@keyframes lkBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-1.1%)}}' +
       '.coz-lake .lk-cap{position:absolute;left:0;right:0;bottom:1.6%;text-align:center;pointer-events:none;' +
         'font-family:"Cormorant Garamond",Georgia,serif;color:#fff;text-shadow:0 1px 6px rgba(0,8,24,.85)}' +
@@ -119,28 +136,40 @@
         'font-family:"Cormorant Garamond",Georgia,serif;font-size:clamp(15px,4.2vw,18px);font-weight:600;letter-spacing:.05em;' +
         'color:#d4a178;background:none;border:0;-webkit-tap-highlight-color:transparent}' +
       '.coz-lake .lk-cap .lk-back:focus-visible{outline:1px solid #d4a178;outline-offset:2px}' +
-      '.coz-lake-flyer{position:fixed;z-index:35;pointer-events:none;transform-origin:0 0;opacity:0;will-change:transform,opacity}' +
-      '@media (prefers-reduced-motion:reduce){.coz-lake .lk-rise img.lk-bob{animation:none}}';
+      '.coz-lake-flyer{position:fixed;z-index:35;pointer-events:none;transform-origin:0 0;opacity:0;will-change:transform,opacity,filter}' +
+      '@media (prefers-reduced-motion:reduce){.coz-lake .lk-slot img.lk-bob{animation:none}}';
     document.head.appendChild(s);
   }
 
-  /* ---------------- WebGL scene: two scenes for the dissolve, shimmer below the shoreline ---------------- */
+  /* ---------------- WebGL scene ----------------
+     A, B: the two scenes (B only during a Mahadasha dissolve, mixed by M)
+     K: water life 0..1      L: light 0..1 (dark at the start of the reveal)
+     Z: zoom about C (the sky planet's centre)      R: reveal radius around RC */
   var VS = 'attribute vec2 p;varying vec2 u;void main(){u=vec2(p.x*.5+.5,.5-p.y*.5);gl_Position=vec4(p,0.,1.);}';
   var FS =
-    'precision highp float;varying vec2 u;uniform sampler2D A;uniform sampler2D B;uniform float M,T,K,H;' +
+    'precision highp float;varying vec2 u;uniform sampler2D A;uniform sampler2D B;' +
+    'uniform float M,T,K,H,Z,L,R,AR;uniform vec2 C,RC;' +
     'void main(){' +
-      'float d=clamp((u.y-H)/(1.-H),0.,1.);' +
-      'float k=smoothstep(0.,.06,d)*K;' +
-      'float f=mix(240.,60.,sqrt(d));' +
-      'float dx=(sin(u.y*f+T*1.15)*.65+sin(u.y*f*.53-T*.8+u.x*5.)*.35)*mix(.0007,.003,d)*k;' +
-      'float dy=sin(u.y*f*.9+T*.95+u.x*2.5)*mix(.0003,.0014,d)*k;' +
-      'vec2 q=u+vec2(dx,dy);' +
-      'gl_FragColor=mix(texture2D(A,q),texture2D(B,q),M);' +
+      'vec2 z=C+(u-C)/Z;' +
+      'float d=clamp((z.y-H)/(1.-H),0.,1.);' +
+      'float k=smoothstep(0.,.05,d)*K;' +
+      'float f=mix(230.,55.,sqrt(d));' +
+      'float ph=z.y*f;' +
+      'float dx=(sin(ph+T*1.1)*.55+sin(ph*.51-T*.75+z.x*5.)*.3+sin(z.y*16.-T*.32+z.x*2.2)*.15)*mix(.0012,.0052,d)*k;' +
+      'float dy=sin(ph*.87+T*.9+z.x*2.5)*mix(.0004,.0018,d)*k;' +
+      'vec2 q=z+vec2(dx,dy);' +
+      'vec3 c=mix(texture2D(A,q).rgb,texture2D(B,q).rgb,M);' +
+      'float lum=dot(c,vec3(.299,.587,.114));' +
+      'float g=pow(max(0.,sin(ph*1.63+T*1.7+sin(z.x*11.+T*.6)*2.2)),18.)*(.55+.45*sin(z.x*37.+T*1.3+ph*.2))*smoothstep(.02,.25,d)*K;' +
+      'c+=c*g*smoothstep(.12,.5,lum)*.9+g*.035*vec3(.75,.82,1.)*smoothstep(0.,.3,d);' +
+      'c*=mix(.2,1.,L);' +
+      'float m=1.-smoothstep(R-.2,R,length((u-RC)*vec2(1.,AR)));' +
+      'gl_FragColor=vec4(c*m,m);' +
     '}';
 
   function GLScene(canvas) {
     var gl = null;
-    try { gl = canvas.getContext('webgl', { alpha: false, antialias: false, premultipliedAlpha: false }); } catch (e) {}
+    try { gl = canvas.getContext('webgl', { alpha: true, premultipliedAlpha: true, antialias: false }); } catch (e) {}
     if (!gl) return null;
     function sh(t, src) { var s = gl.createShader(t); gl.shaderSource(s, src); gl.compileShader(s); return gl.getShaderParameter(s, gl.COMPILE_STATUS) ? s : null; }
     var vs = sh(gl.VERTEX_SHADER, VS), fs = sh(gl.FRAGMENT_SHADER, FS);
@@ -151,9 +180,10 @@
     var b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
     var lp = gl.getAttribLocation(pr, 'p'); gl.enableVertexAttribArray(lp); gl.vertexAttribPointer(lp, 2, gl.FLOAT, false, 0, 0);
-    var U = { A: gl.getUniformLocation(pr, 'A'), B: gl.getUniformLocation(pr, 'B'), M: gl.getUniformLocation(pr, 'M'),
-              T: gl.getUniformLocation(pr, 'T'), K: gl.getUniformLocation(pr, 'K'), H: gl.getUniformLocation(pr, 'H') };
-    gl.uniform1i(U.A, 0); gl.uniform1i(U.B, 1); gl.uniform1f(U.H, HORIZON);
+    var U = {};
+    ['A', 'B', 'M', 'T', 'K', 'H', 'Z', 'L', 'R', 'AR', 'C', 'RC'].forEach(function (n) { U[n] = gl.getUniformLocation(pr, n); });
+    gl.uniform1i(U.A, 0); gl.uniform1i(U.B, 1); gl.uniform1f(U.H, HORIZON); gl.uniform1f(U.AR, AR);
+    gl.clearColor(0, 0, 0, 0);
     function tex(unit) {
       var t = gl.createTexture(); gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, t);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
@@ -164,7 +194,8 @@
     }
     var tA = tex(0), tB = tex(1);
     function put(unit, t, img) { gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, t); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, img); }
-    var st = { mix: 0, amp: reduce ? 0 : 1, t0: performance.now(), raf: 0, live: false };
+
+    var st = { M: 0, K: reduce ? 0 : 1, L: 1, R: 3, Z: 1, C: [BODY_X, .27], RC: [BODY_X, .27], breath: !reduce, t0: performance.now(), raf: 0, live: false, tweens: 0 };
     function size() {
       var dpr = Math.min(global.devicePixelRatio || 1, 2);
       var w = Math.round(canvas.clientWidth * dpr), h = Math.round(canvas.clientHeight * dpr);
@@ -173,30 +204,41 @@
     }
     function draw() {
       size();
-      gl.uniform1f(U.M, st.mix);
-      gl.uniform1f(U.K, st.amp);
-      gl.uniform1f(U.T, ((performance.now() - st.t0) / 1000) % 600);
+      var t = (performance.now() - st.t0) / 1000;
+      var breath = st.breath ? 1 + .006 * (1 - Math.cos(t * 2 * Math.PI / 22)) : 1;
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.uniform1f(U.M, st.M); gl.uniform1f(U.K, st.K); gl.uniform1f(U.L, st.L);
+      gl.uniform1f(U.R, st.R); gl.uniform1f(U.Z, st.Z * breath); gl.uniform2f(U.C, st.C[0], st.C[1]); gl.uniform2f(U.RC, st.RC[0], st.RC[1]);
+      gl.uniform1f(U.T, t % 600);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     }
-    function loop() { st.raf = 0; if (!st.live || document.hidden) return; draw(); st.raf = requestAnimationFrame(loop); }
-    function run() { if (!st.raf && st.live && !document.hidden) st.raf = requestAnimationFrame(loop); }
+    function loop() {
+      st.raf = 0;
+      if (document.hidden || !(st.live || st.tweens)) return;
+      draw(); st.raf = requestAnimationFrame(loop);
+    }
+    function run() { if (!st.raf) st.raf = requestAnimationFrame(loop); }
     document.addEventListener('visibilitychange', function () { if (!document.hidden) run(); });
     global.addEventListener('resize', function () { draw(); });
-    return {
-      setA: function (img) { put(0, tA, img); st.mix = 0; draw(); },
-      setB: function (img) { put(1, tB, img); },
-      dissolve: function (ms) {
+    function tween(name, to, ms, ease, delay) {
+      return wait(delay || 0).then(function () {
         return new Promise(function (res) {
-          var s = performance.now();
+          var from = st[name], s = performance.now();
+          st.tweens++; run();
           (function step() {
-            var p = Math.min(1, (performance.now() - s) / ms);
-            st.mix = p < .5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
-            if (!st.live) draw();
-            if (p < 1) requestAnimationFrame(step); else res();
+            var p = ms ? Math.min(1, (performance.now() - s) / ms) : 1;
+            st[name] = from + (to - from) * (ease || easeInOut)(p);
+            if (p < 1) requestAnimationFrame(step); else { st.tweens--; draw(); res(); }
           })();
         });
-      },
-      promote: function (img) { put(0, tA, img); st.mix = 0; draw(); },
+      });
+    }
+    return {
+      st: st,
+      setA: function (img) { put(0, tA, img); st.M = 0; draw(); },
+      setB: function (img) { put(1, tB, img); },
+      promote: function (img) { put(0, tA, img); st.M = 0; draw(); },
+      tween: tween,
       start: function () { st.live = !reduce; draw(); run(); },
       draw: draw
     };
@@ -211,7 +253,8 @@
     root.setAttribute('role', 'img');
     root.innerHTML =
       '<div class="lk-art"></div>' +
-      '<div class="lk-sub"><div class="lk-rise"><img alt="" class="' + (reduce ? '' : 'lk-bob') + '"></div></div>' +
+      '<div class="lk-slot"><img alt="" class="' + (reduce ? '' : 'lk-bob') + '"></div>' +
+      '<div class="lk-slot"><img alt="" class="' + (reduce ? '' : 'lk-bob') + '"></div>' +
       (opt.caption ? '<div class="lk-cap" aria-live="polite"></div>' : '');
     document.body.appendChild(root);
     if (opt.spacer) {
@@ -220,8 +263,11 @@
       sp.setAttribute('aria-hidden', 'true');
       document.body.insertBefore(sp, document.body.firstChild);
     }
+    /* The scene stands in for the page's logo header, as it does on the overview. */
+    if (opt.hideHeader) { var hh = document.querySelector(opt.hideHeader); if (hh) hh.style.display = 'none'; }
+
     var art = root.querySelector('.lk-art');
-    var subBox = root.querySelector('.lk-sub'), rise = root.querySelector('.lk-rise'), subImg = rise.querySelector('img');
+    var slots = [].slice.call(root.querySelectorAll('.lk-slot'));
     var cap = root.querySelector('.lk-cap');
 
     var canvas = document.createElement('canvas');
@@ -236,58 +282,88 @@
     }
 
     var cur = { main: key(opt.main), sub: key(opt.sub) };
-    var subShown = null;
+    if (glS) glS.st.C = skyCenter(cur.main);
 
-    function placeSub(lord) {
-      var g = SUB[lord] || SUB.venus;
-      var hW = g.w / g.a;                                     /* height in scene widths */
-      var left = BODY_X - g.fx * g.w;
-      var H = FH / FW;                                         /* scene height in widths */
-      subBox.style.left = (left * 100) + '%';
-      subBox.style.width = (g.w * 100) + '%';
-      subBox.style.top = ((SUB_BOTTOM - hW) / H * 100) + '%';
-      subBox.style.height = (hW / H * 100) + '%';
+    /* g. while the page scrolls, the empty sky above the planet slides away */
+    var off = 0;
+    function onScroll() {
+      var y = Math.max(0, global.pageYOffset || 0), c = root.clientWidth * COMPACT;
+      var o = Math.round(Math.min(y, c));
+      if (o !== off) { off = o; root.style.transform = o ? 'translateY(' + (-o) + 'px)' : ''; }
+    }
+    if (opt.compact !== false) {
+      global.addEventListener('scroll', onScroll, { passive: true });
+      global.addEventListener('resize', onScroll);
+      onScroll();
+    }
+
+    function geom(lord) {
+      var g = SUB[lord] || SUB.venus, hW = g.w / g.a;
+      return { g: g, hW: hW, left: BODY_X - g.fx * g.w, top: SUB_BOTTOM - hW };
+    }
+    function place(slot, lord) {
+      var q = geom(lord);
+      slot.style.left = (q.left * 100) + '%';
+      slot.style.width = (q.g.w * 100) + '%';
+      slot.style.top = (q.top / AR * 100) + '%';
+      slot.style.height = (q.hW / AR * 100) + '%';
     }
     function label(main, sub) {
       var a = main.charAt(0).toUpperCase() + main.slice(1), b = sub.charAt(0).toUpperCase() + sub.slice(1);
       root.setAttribute('aria-label', a + ' Mahadasha, ' + b + ' subperiod');
     }
 
-    /* Sub transitions run one at a time; a tap during one simply moves the
-       target, and the scene goes straight there when the current one ends. */
-    var wantSub = cur.sub, busy = null;
-    function riseIn(lord) {
-      placeSub(lord);
+    /* d. the water's centre line: arrivals come up it from below the frame,
+          departures go on up it toward the shoreline and fade into the distance */
+    var shownSlot = null, shownLord = null;
+    function arrive(lord, delay, leaving) {
+      var slot = leaving === slots[0] ? slots[1] : slots[0];
+      place(slot, lord);
       return load(url('sub', lord)).then(function (im) {
-        subImg.src = im.src; subShown = lord;
-        if (reduce) return anim(rise, [{ opacity: 0, transform: 'translateY(0)' }, { opacity: 1, transform: 'translateY(0)' }], { duration: 220, fill: 'forwards' });
-        return anim(rise, [
-          { opacity: 0, transform: 'translateY(100%)' },
-          { opacity: .9, transform: 'translateY(30%)', offset: .55 },
-          { opacity: 1, transform: 'translateY(0)' }
-        ], { duration: 1150, easing: 'cubic-bezier(.22,.8,.3,1)', fill: 'forwards' });
+        stopAnims(slot);
+        slot.querySelector('img').src = im.src;
+        shownSlot = slot; shownLord = lord;
+        if (reduce) return anim(slot, [{ opacity: 0 }, { opacity: 1 }], { duration: 260, delay: delay || 0, fill: 'both' });
+        var q = geom(lord);
+        var below = ((AR - q.top) / q.hW) * 100 + 6;          /* fully below the frame, in its own heights */
+        return anim(slot, [
+          { transform: 'translateY(' + below + '%)', opacity: 0 },
+          { opacity: 1, offset: .22 },
+          { transform: 'translateY(0)', opacity: 1 }
+        ], { duration: 1750, delay: delay || 0, easing: 'cubic-bezier(.22,.72,.26,1)', fill: 'both' });
       });
     }
-    function sinkOut() {
-      if (!subShown) return Promise.resolve();
-      subShown = null;
-      if (reduce) return anim(rise, [{ opacity: 1 }, { opacity: 0 }], { duration: 180, fill: 'forwards' });
-      return anim(rise, [
-        { opacity: 1, transform: 'translateY(0)' },
-        { opacity: .75, transform: 'translateY(45%)', offset: .6 },
-        { opacity: 0, transform: 'translateY(100%)' }
-      ], { duration: 650, easing: 'cubic-bezier(.5,0,.75,.4)', fill: 'forwards' });
+    function depart() {
+      var slot = shownSlot, lord = shownLord;
+      shownSlot = null; shownLord = null;
+      if (!slot) return Promise.resolve();
+      stopAnims(slot);
+      if (reduce) return anim(slot, [{ opacity: 1 }, { opacity: 0 }], { duration: 220, fill: 'forwards' });
+      var q = geom(lord);
+      var rise = ((SUB_BOTTOM - HORIZON * AR) / q.hW) * 100;   /* base ring up to the shoreline */
+      return anim(slot, [
+        { transform: 'translateY(0) scale(1)', opacity: 1 },
+        { opacity: .9, offset: .45 },
+        { transform: 'translateY(-' + rise + '%) scale(.38)', opacity: 0 }
+      ], { duration: 1600, easing: 'cubic-bezier(.42,0,.5,1)', fill: 'forwards' });
     }
+
+    /* Changes run one at a time; a tap during one only moves the target,
+       and the scene goes straight there when the current change ends. */
+    var wantSub = cur.sub, busy = null;
     function settleSub() {
       if (busy) return busy;
       var run = (function step() {
-        if (subShown === wantSub) return Promise.resolve();
-        return sinkOut().then(function () { return riseIn(wantSub); }).then(step);
+        if (shownLord === wantSub) return Promise.resolve();
+        var target = wantSub, leaving = shownSlot;
+        var out = depart();
+        var inn = arrive(target, reduce ? 0 : 180, leaving);
+        return Promise.all([out, inn]).then(step);
       })();
       busy = run.then(function () { busy = null; }, function () { busy = null; });
       return busy;
     }
-    var mainQ = Promise.resolve();   /* Mahadasha changes run strictly one after another */
+    var mainQ = Promise.resolve();
 
     function sceneImg(lord) { return load(url('scene', lord)); }
 
@@ -300,93 +376,131 @@
     var api = {
       el: root,
       ready: ready,
-      /* Show the water planet, rising from the water. */
+      gl: glS,
+      art: art,
       showSub: function (lord) {
         wantSub = key(lord); cur.sub = wantSub; label(cur.main, cur.sub);
         return ready.then(function () { return mainQ; }).then(settleSub);
       },
-      /* Mahadasha change: sink, dissolve the sky to the next scene, rise. */
+      /* e. Mahadasha change: the water planet leaves, the sky dissolves, the next one arrives. */
       setMain: function (main, sub) {
         main = key(main); sub = key(sub);
         mainQ = mainQ.then(function () { return ready; }).then(function () { return busy; }).then(function () {
           if (main === cur.main) { wantSub = sub; cur.sub = sub; label(cur.main, cur.sub); return settleSub(); }
           var next = sceneImg(main);
-          return sinkOut().then(function () { return next; }).then(function (im) {
+          var out = depart();
+          return next.then(function (im) {
             cur.main = main;
+            var dissolve;
             if (glS) {
               glS.setB(im);
-              return glS.dissolve(reduce ? 250 : 2000).then(function () { glS.promote(im); });
+              dissolve = glS.tween('M', 1, reduce ? 250 : 2200, easeInOut, reduce ? 0 : 350).then(function () { glS.promote(im); glS.st.C = skyCenter(main); });
+            } else {
+              imgB.src = im.src;
+              dissolve = anim(imgB, [{ opacity: 0 }, { opacity: 1 }], { duration: reduce ? 250 : 2200, delay: reduce ? 0 : 350, easing: 'ease-in-out', fill: 'forwards' })
+                .then(function () { imgA.src = im.src; stopAnims(imgB); imgB.style.opacity = '0'; });
             }
-            imgB.src = im.src;
-            return anim(imgB, [{ opacity: 0 }, { opacity: 1 }], { duration: reduce ? 250 : 2000, easing: 'ease-in-out', fill: 'forwards' })
-              .then(function () { imgA.src = im.src; imgB.style.opacity = '0'; var a = imgB.getAnimations ? imgB.getAnimations() : []; a.forEach(function (x) { x.cancel(); }); });
+            return Promise.all([out, dissolve]);
           }).then(function () {
             wantSub = sub; cur.sub = sub; label(cur.main, cur.sub);
-            return reduce ? null : wait(250);
-          }).then(settleSub);
+            return settleSub();
+          });
         }).catch(function (e) { if (global.console) console.warn('[LAKE] change failed: ' + (e && e.message)); });
         return mainQ;
       },
       caption: function (html) { if (cap) cap.innerHTML = html; },
-      /* The sky planet's box on screen, for the flight. */
+      /* The sky planet's box on screen with the scene at rest (top of the page). */
       skyRect: function (lord) {
         var b = SKY[key(lord)] || SKY.venus, r = root.getBoundingClientRect(), k = r.width / FW;
-        return { left: r.left + b.x * k, top: r.top + b.y * k, width: b.w * k, height: b.h * k };
+        var top = r.top + off;
+        return { left: r.left + b.x * k, top: top + b.y * k, width: b.w * k, height: b.h * k };
       },
-      show: function (ms) {
-        root.classList.remove('lk-hidden');
-        if (!ms) return Promise.resolve();
-        return anim(root, [{ opacity: 0 }, { opacity: 1 }], { duration: ms, easing: 'ease-in-out', fill: 'backwards' });
-      },
+      /* Where the scene ends on screen once the page has scrolled into the reading. */
+      compactBottom: function () { var h = root.clientHeight, w = root.clientWidth; return h - w * COMPACT; },
       state: function () { return { main: cur.main, sub: cur.sub }; }
     };
-    placeSub(cur.sub);
     if (!opt.hidden && opt.sub) ready.then(settleSub);
     return api;
   }
 
-  /* ---------------- overview: the medallion's planet rises into the sky ---------------- */
+  /* ---------------- f. overview: the reveal ---------------- */
   function reveal(lake, fromEl, mainLord, fadeEls) {
     var orbP = load(url('orb', mainLord));
     return Promise.all([lake.ready, orbP]).then(function (r) {
       var orb = r[1];
+      var root = lake.el, glS = lake.gl;
+      if ((global.pageYOffset || 0) > 0) global.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
       var to = lake.skyRect(mainLord);
       var from = fromEl.getBoundingClientRect();
+
+      (fadeEls || []).forEach(function (el) { anim(el, [{ opacity: 1 }, { opacity: 0 }], { duration: 500, fill: 'forwards' }); });
+      if (reduce) {
+        anim(fromEl, [{ opacity: 1 }, { opacity: 0 }], { duration: 200, fill: 'forwards' });
+        root.classList.remove('lk-hidden');
+        return anim(root, [{ opacity: 0 }, { opacity: 1 }], { duration: 400, fill: 'backwards' })
+          .then(function () { return lake.showSub(lake.state().sub); });
+      }
+
       var s0 = Math.min(from.width * .66 / to.width, from.height * .66 / to.height);
       var x0 = from.left + from.width / 2 - to.width * s0 / 2 - to.left;
       var y0 = from.top + from.height / 2 - to.height * s0 / 2 - to.top;
-
-      (fadeEls || []).forEach(function (el) { anim(el, [{ opacity: 1 }, { opacity: 0 }], { duration: 450, fill: 'forwards' }); });
-      if (reduce) {
-        if ((global.pageYOffset || 0) > 0) global.scrollTo(0, 0);
-        anim(fromEl, [{ opacity: 1 }, { opacity: 0 }], { duration: 200, fill: 'forwards' });
-        return lake.show(400).then(function () { return lake.showSub(lake.state().sub); });
-      }
-
+      var start = 'translate(' + x0 + 'px,' + y0 + 'px) scale(' + s0 + ')';
       var fly = document.createElement('img');
       fly.className = 'coz-lake-flyer'; fly.alt = ''; fly.src = orb.src;
       fly.style.left = to.left + 'px'; fly.style.top = to.top + 'px';
       fly.style.width = to.width + 'px'; fly.style.height = to.height + 'px';
-      fly.style.transform = 'translate(' + x0 + 'px,' + y0 + 'px) scale(' + s0 + ')';
+      fly.style.transform = start;
       document.body.appendChild(fly);
+      var GOLD = 'rgba(255,206,140,';
 
-      /* the scene covers the art down to You Are Here only when the page is at its top */
-      if ((global.pageYOffset || 0) > 0) global.scrollTo({ top: 0, behavior: 'smooth' });
-      /* 0.0 s  the medallion hands over to his planet, in place */
-      anim(fromEl, [{ opacity: 1 }, { opacity: 0 }], { duration: 380, fill: 'forwards' });
-      anim(fly, [{ opacity: 0 }, { opacity: 1 }], { duration: 380, fill: 'forwards' });
-      /* 0.3 s  it rises and grows into the sky position */
+      /* the lake waits dark and closed, zoomed in a little on the landing point */
+      if (glS) { glS.st.R = 0; glS.st.L = 0; glS.st.Z = 1.12; glS.st.K = 0; glS.draw(); }
+      else { lake.art.style.clipPath = 'circle(0% at 50% 27%)'; }
+      root.classList.remove('lk-hidden');
+
+      /* 0.0 s  the medallion gathers light */
+      anim(fromEl, [
+        { transform: 'scale(1)', filter: 'drop-shadow(0 0 0 ' + GOLD + '0))' },
+        { transform: 'scale(1.14)', filter: 'drop-shadow(0 0 14px ' + GOLD + '.85))' }
+      ], { duration: 700, easing: 'cubic-bezier(.3,0,.2,1)', fill: 'forwards' });
+      /* 0.45 s  his planet appears inside it, already glowing */
+      anim(fly, [{ opacity: 0 }, { opacity: 1 }], { duration: 450, delay: 450, fill: 'forwards' });
+      anim(fromEl, [{ opacity: 1 }, { opacity: 0 }], { duration: 450, delay: 750, fill: 'forwards' });
+      /* 0.75 s  it lifts slowly, gathers speed, then glides into the sky; the glow swells and eases */
       var flight = anim(fly, [
-        { transform: 'translate(' + x0 + 'px,' + y0 + 'px) scale(' + s0 + ')' },
-        { transform: 'translate(0px,0px) scale(1)' }
-      ], { duration: 1800, delay: 300, easing: 'cubic-bezier(.45,0,.2,1)', fill: 'forwards' });
-      /* 0.7 s  the lake opens around it */
-      wait(700).then(function () { return lake.show(1400); });
-      return flight.then(function () { return wait(60); }).then(function () {
-        /* 2.2 s  it settles into the painted sky, the water planet rises */
-        var out = anim(fly, [{ opacity: 1 }, { opacity: 0 }], { duration: 520, easing: 'ease-in', fill: 'forwards' });
-        var up = wait(160).then(function () { return lake.showSub(lake.state().sub); });
-        return Promise.all([out, up]);
+        { transform: start, filter: 'drop-shadow(0 0 6px ' + GOLD + '.55))' },
+        { filter: 'drop-shadow(0 0 22px ' + GOLD + '.9))', offset: .55 },
+        { transform: 'translate(0px,0px) scale(1)', filter: 'drop-shadow(0 0 12px ' + GOLD + '.7))' }
+      ], { duration: 2400, delay: 750, easing: 'cubic-bezier(.6,0,.2,1)', fill: 'forwards' });
+      /* 1.5 s  the lake opens around the rising planet, following it up,
+                brightening and settling, so the painted planet only shows as it lands */
+      var opening, flying = true;
+      if (glS) {
+        (function follow() {
+          var a = fly.getBoundingClientRect(), b = root.getBoundingClientRect();
+          if (b.width) glS.st.RC = [(a.left + a.width / 2 - b.left) / b.width, (a.top + a.height / 2 - b.top) / b.height];
+          if (flying) requestAnimationFrame(follow); else glS.st.RC = skyCenter(mainLord);
+        })();
+        opening = Promise.all([
+          glS.tween('R', 1.15, 2700, easeInOut, 1500),
+          glS.tween('L', 1, 2800, easeInOut, 1500),
+          glS.tween('Z', 1, 2300, easeOut, 1600)
+        ]).then(function () { glS.st.R = 3; });
+      } else {
+        opening = anim(lake.art, [{ clipPath: 'circle(0% at 50% 27%)' }, { clipPath: 'circle(150% at 50% 27%)' }],
+          { duration: 2500, delay: 1600, easing: 'cubic-bezier(.2,.6,.3,1)', fill: 'forwards' })
+          .then(function () { stopAnims(lake.art); lake.art.style.clipPath = ''; });
+      }
+      return flight.then(function () {
+        flying = false;
+        /* 3.15 s  it lands in the painted sky; the water wakes; the subperiod planet rises */
+        var settle = anim(fly, [
+          { opacity: 1, filter: 'drop-shadow(0 0 12px ' + GOLD + '.7))' },
+          { opacity: 0, filter: 'drop-shadow(0 0 0 ' + GOLD + '0))' }
+        ], { duration: 900, easing: 'ease-in', fill: 'forwards' });
+        if (glS) glS.tween('K', 1, 2000, easeInOut, 150);
+        var up = wait(550).then(function () { return lake.showSub(lake.state().sub); });
+        return Promise.all([settle, up, opening]);
       }).then(function () { if (fly.parentNode) fly.parentNode.removeChild(fly); });
     });
   }
