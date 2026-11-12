@@ -17,6 +17,9 @@
    Note his Sep 24 rule that the wheel never implies real positions: the star
    points are fixed slots, not the natal points' zodiac places.
 
+   TS-A1.5 (Nov 12 2026, his note: he cannot see the water move on his phone): the water layer
+   now starts the way the Vedic lake does (in place from the start, no on-screen check while
+   pinned, which Safari could leave switched off), and every wave rolls forward toward the viewer.
    TS-A1.4 (Nov 12 2026, his note: no movement at the bottom of the lake): the waves now run at
    full strength to the bottom of the scene and grow larger toward the front, and moonlit
    wave crests roll in across the dark water so its movement shows where there is little light.
@@ -205,13 +208,13 @@
     'void main(){' +
       'float y=mix(Y0,Y1,u.y);' +                                   /* row in the whole artwork, 0..1 */
       'float d=clamp((y-S)/(Y1-S),0.,1.);' +                       /* 0 at the shoreline, 1 at the bottom of the layer */
-      'float k=smoothstep(0.,.05,d)*(PN>.5?1.:smoothstep(1.,.82,u.y));' +   /* still at the shoreline; full strength to the bottom when pinned */
+      'float k=smoothstep(0.,.05,d)*(PN>.5?1.:1.-smoothstep(.82,1.,u.y));' +   /* still at the shoreline; full strength to the bottom when pinned */
       'float f=mix(900.,260.,sqrt(d));float ph=y*f;' +
-      'float dx=(sin(ph+T*1.1)*.55+sin(ph*.51-T*.75+u.x*5.)*.3+sin(y*60.-T*.32+u.x*2.2)*.15)*mix(.0030,.0190,d*d)*k;' +
-      'float dy=sin(ph*.87+T*.9+u.x*2.5)*mix(.0003,.0024,d*d)*k;' +
+      'float dx=(sin(ph-T*1.1)*.55+sin(ph*.51-T*.75+u.x*5.)*.3+sin(y*60.-T*.32+u.x*2.2)*.15)*mix(.0030,.0190,d*d)*k;' +
+      'float dy=sin(ph*.87-T*.9+u.x*2.5)*mix(.0003,.0024,d*d)*k;' +
       'vec3 c=texture2D(A,vec2(u.x+dx,y+dy)).rgb;' +
       'float lum=dot(c,vec3(.299,.587,.114));' +
-      'float g=pow(max(0.,sin(ph*1.63+T*1.7+sin(u.x*11.+T*.6)*2.2)),10.)*(.55+.45*sin(u.x*37.+T*1.3+ph*.2))*smoothstep(.02,.25,d)*k;' +
+      'float g=pow(max(0.,sin(ph*1.63-T*1.7+sin(u.x*11.+T*.6)*2.2)),10.)*(.55+.45*sin(u.x*37.+T*1.3+ph*.2))*smoothstep(.02,.25,d)*k;' +
       'c+=c*g*smoothstep(.1,.45,lum)*1.5+g*.06*vec3(.75,.82,1.)*smoothstep(0.,.3,d);' +
       'c*=1.+.24*sin(ph*.7-T*2.2+u.x*3.)*smoothstep(.18,.55,lum)*k;' +   /* the gold reflections shimmer */
       'float wv=y*mix(700.,140.,sqrt(d))+sin(u.x*7.+T*.45)*1.6+sin(u.x*17.-T*.7)*.6-T*1.05;' +
@@ -247,6 +250,7 @@
     gl.uniform1f(gl.getUniformLocation(pr, 'S'), SHORE / ART_H);
     gl.uniform1f(gl.getUniformLocation(pr, 'PN'), PIN ? 1 : 0);   /* pinned: the layer ends at the scene's edge, no fade needed */
     gl.clearColor(0, 0, 0, 0);
+    host.insertBefore(cv, host.firstChild);     /* in place from the start (TS-A1.5); transparent until the art is loaded */
     var t0 = performance.now(), raf = 0, onScreen = true, ready = false;
     function draw() {
       var dpr = Math.min(global.devicePixelRatio || 1, 2), w = Math.round(cv.clientWidth * dpr), h = Math.round(cv.clientHeight * dpr);
@@ -259,17 +263,20 @@
     function loop() { raf = 0; if (!ready || document.hidden || !onScreen) return; draw(); raf = requestAnimationFrame(loop); }
     function run() { if (!raf) raf = requestAnimationFrame(loop); }
     var img = new Image();
-    img.onload = function () {
+    img.decoding = 'async';
+    img.onload = function () { (img.decode ? img.decode().catch(function () {}) : Promise.resolve()).then(start); };
+    function start() {
       var tx = gl.createTexture(); gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tx);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, img);
       gl.uniform1i(gl.getUniformLocation(pr, 'A'), 0);
-      ready = true; host.insertBefore(cv, host.firstChild); run();
-    };
+      ready = true; draw(); run();
+    }
     img.src = 'tropical-transits-bg.jpg?v=1';
     document.addEventListener('visibilitychange', function () { if (!document.hidden) run(); });
-    if (global.IntersectionObserver) new IntersectionObserver(function (es) { onScreen = es[0].isIntersecting; if (onScreen) run(); }).observe(cv);
+    /* the pinned scene is always on screen, so the on-screen check is only used when the scene scrolls away */
+    if (!PIN && global.IntersectionObserver) new IntersectionObserver(function (es) { onScreen = es[0].isIntersecting; if (onScreen) run(); }).observe(cv);
   }
 
   /* ---------------- TS-A1.3: pinned, shrinking to the top quarter while reading ---------------- */
