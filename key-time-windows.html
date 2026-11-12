@@ -198,10 +198,10 @@ h1.ktw-h1{text-align:center;font-family:var(--display-font);font-weight:500;
   </div>
 </div>
 
-<div class="ktw-stamp" aria-hidden="true">KEY TIME WINDOWS · KTW1.8 · LK1.4 lake drop-downs · VO1.4 read aloud, music stops</div>
+<div class="ktw-stamp" aria-hidden="true">KEY TIME WINDOWS · KTW2.0 · LK2.0 lake drop-downs · VO1.4 read aloud, music stops</div>
 
 <script src="coz-graha.js"></script>
-<script src="coz-lake.js?v=5"></script>
+<script src="coz-lake.js?v=6"></script>
 <script src="coz-voice.js?v=6"></script>   <!-- VO1 (Oct 27 2026, staging only): the page read aloud -->
 <script>
 (function () {
@@ -451,7 +451,7 @@ h1.ktw-h1{text-align:center;font-family:var(--display-font);font-weight:500;
       var openK = -1;
       var reduceM = false;
       try { reduceM = matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e2) {}
-      var here = function () { lake.showSub(ad.lord); lake.caption(CozLake.capHere(md.lord, ad.lord)); };
+      var here = function () { lake.showSub(ad.lord); lake.caption(CozLake.capHere(md.lord, ad.lord, ad)); };
       var setOpen = function (k) {
         openK = k;
         wins.forEach(function (w) {
@@ -463,7 +463,7 @@ h1.ktw-h1{text-align:center;font-family:var(--display-font);font-weight:500;
         var seg = trio[k].seg;
         lake.showSub(seg.lord);
         lake.caption(seg.startTimestamp === ad.startTimestamp
-          ? CozLake.capHere(md.lord, ad.lord)
+          ? CozLake.capHere(md.lord, ad.lord, ad)
           : CozLake.capPreview(md.lord, seg.lord, seg));
         /* Always start at top: the opened window's title sits just under the scene. */
         var w = panel.querySelector('.ktw-win[data-k="' + k + '"]');
@@ -475,9 +475,9 @@ h1.ktw-h1{text-align:center;font-family:var(--display-font);font-weight:500;
         w.querySelector('.ktw-tog').addEventListener('click', function () { setOpen(openK === k ? -1 : k); });
       });
       lake.onBack(function () { setOpen(-1); });
-      lake.caption(CozLake.capHere(md.lord, ad.lord));
+      lake.caption(CozLake.capHere(md.lord, ad.lord, ad));
       /* every water planet this chapter can show, fetched ahead so a tap never waits */
-      trio.forEach(function (t) { if (t.seg) CozLake.preload('sub', t.seg.lord).catch(function () {}); });
+      trio.forEach(function (t) { if (t.seg) CozLake.preload('orb', t.seg.lord).catch(function () {}); });
     }
   } catch (e) { if (window.console) console.warn('[KEY TIME WINDOWS] lake scene unavailable: ' + (e && e.message)); }
 

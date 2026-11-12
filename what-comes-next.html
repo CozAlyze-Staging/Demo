@@ -159,10 +159,10 @@ h1.wcn-h1{text-align:center;font-family:var(--display-font);font-weight:500;
   </div>
 </div>
 
-<div class="wcn-stamp" aria-hidden="true">WHAT COMES NEXT · WCN1.8 · LK1.4 lake · VO1.4 read aloud, music stops</div>
+<div class="wcn-stamp" aria-hidden="true">WHAT COMES NEXT · WCN2.0 · LK2.0 lake · VO1.4 read aloud, music stops</div>
 
 <script src="coz-graha.js"></script>
-<script src="coz-lake.js?v=5"></script>
+<script src="coz-lake.js?v=6"></script>
 <script src="coz-voice.js?v=6"></script>   <!-- VO1 (Oct 27 2026, staging only): the page read aloud -->
 <script>
 (function () {
@@ -350,16 +350,16 @@ h1.wcn-h1{text-align:center;font-family:var(--display-font);font-weight:500;
     if (window.CozLake && lc.antardasha && lc.antardasha.lord) {
       var ad = lc.antardasha;
       var lake = CozLake.create({ main: md.lord, sub: ad.lord, caption: true, spacer: true, hideHeader: '.wcn-head' });
-      var nextFirst = { startTimestamp: nx.startTimestamp, endTimestamp: nx.endTimestamp };
-      lake.caption(CozLake.capHere(md.lord, ad.lord));
+      var nextFirst = { startTimestamp: nx.startTimestamp };   /* label reads Begins <month year> */
+      lake.caption(CozLake.capHere(md.lord, ad.lord, ad));
       CozLake.preload('scene', nx.lord).catch(function () {});
-      CozLake.preload('sub', nx.lord).catch(function () {});
+      CozLake.preload('orb', nx.lord).catch(function () {});
       lake.ready.then(function () { return new Promise(function (r) { setTimeout(r, 1700); }); }).then(function () {
         lake.caption(CozLake.capPreview(nx.lord, nx.lord, nextFirst));
         return lake.setMain(nx.lord, nx.lord);
       });
       lake.onBack(function () {
-        lake.caption(CozLake.capHere(md.lord, ad.lord));
+        lake.caption(CozLake.capHere(md.lord, ad.lord, ad));
         lake.setMain(md.lord, ad.lord);
       });
     }

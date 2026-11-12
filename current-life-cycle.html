@@ -170,7 +170,7 @@ html, body {
 <div class="lc-stage" id="lcStage"></div>
 
 <script src="coz-graha.js"></script>
-<script src="coz-lake.js?v=5"></script>
+<script src="coz-lake.js?v=6"></script>
 <script>
 (function () {
   'use strict';
@@ -192,7 +192,7 @@ html, body {
       '<a href="#" data-foot="saved" aria-label="Saved"></a>' +
       '<a href="#" data-foot="account" aria-label="Account"></a>' +
     '</div>' +
-    '<div class="lc-stamp" aria-hidden="true">LC3.4 · LK1.4 lake</div>';
+    '<div class="lc-stamp" aria-hidden="true">LC4.0 · LK2.0 lake</div>';
 
   function failClosed(reason) {
     stage.innerHTML =
@@ -275,17 +275,18 @@ html, body {
   try {
     if (window.CozLake) {
       var back = /(current-season|key-time-windows|what-comes-next)\.html/.test(document.referrer || '');
-      var lake = CozLake.create({ main: md.lord, sub: ad.lord, hidden: !back, band: 'rgb(2,15,34)' });   /* band in the art's own navy */
+      var lake = CozLake.create({ main: md.lord, sub: ad.lord, hidden: !back, caption: true, band: 'rgb(2,15,34)' });   /* band in the art's own navy */
+      lake.caption(CozLake.capHere(md.lord, ad.lord, ad));
       if (!back) {
         var medal = stage.querySelector('.lc-medallion span');
         var fades = [stage.querySelector('.lc-lord'), stage.querySelector('.lc-years')].filter(Boolean);
         var first = function (ev) {
           if (ev.target.closest && ev.target.closest('.lc-nav, #cozNavNote')) return;
-          document.removeEventListener('click', first, true);
+          window.removeEventListener('click', first, true);
           ev.preventDefault(); ev.stopImmediatePropagation();
           CozLake.reveal(lake, medal, md.lord, fades);
         };
-        document.addEventListener('click', first, true);
+        window.addEventListener('click', first, true);   /* window, before coz-nav.js, so a first tap on a door plays the reveal without starting the page-change notice */
       }
     }
   } catch (e) { if (window.console) console.warn('[LIFE CYCLE] lake scene unavailable: ' + (e && e.message)); }
