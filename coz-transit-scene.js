@@ -17,6 +17,9 @@
    Note his Sep 24 rule that the wheel never implies real positions: the star
    points are fixed slots, not the natal points' zodiac places.
 
+   TS-A1.4 (Nov 12 2026, his note: no movement at the bottom of the lake): the waves now run at
+   full strength to the bottom of the scene and grow larger toward the front, and moonlit
+   wave crests roll in across the dark water so its movement shows where there is little light.
    TS-A1.3 (Nov 12 2026, his ruling, as on the Vedic life-cycle pages): the scene is
    pinned. At the top of the page it is exactly the artwork as before (logo, title,
    wheel, water). As the page scrolls into the reading, the whole scene rises to the
@@ -198,19 +201,22 @@
   var ART_H = 1850, W0 = 830, W1 = 1380, SHORE = 845;
   var VS = 'attribute vec2 p;varying vec2 u;void main(){u=vec2(p.x*.5+.5,.5-p.y*.5);gl_Position=vec4(p,0.,1.);}';
   var FS =
-    'precision highp float;varying vec2 u;uniform sampler2D A;uniform float T,Y0,Y1,S;' +
+    'precision highp float;varying vec2 u;uniform sampler2D A;uniform float T,Y0,Y1,S,PN;' +
     'void main(){' +
       'float y=mix(Y0,Y1,u.y);' +                                   /* row in the whole artwork, 0..1 */
       'float d=clamp((y-S)/(Y1-S),0.,1.);' +                       /* 0 at the shoreline, 1 at the bottom of the layer */
-      'float k=smoothstep(0.,.05,d)*smoothstep(1.,.82,u.y);' +     /* still at the shoreline and at the layer\'s bottom edge */
+      'float k=smoothstep(0.,.05,d)*(PN>.5?1.:smoothstep(1.,.82,u.y));' +   /* still at the shoreline; full strength to the bottom when pinned */
       'float f=mix(900.,260.,sqrt(d));float ph=y*f;' +
-      'float dx=(sin(ph+T*1.1)*.55+sin(ph*.51-T*.75+u.x*5.)*.3+sin(y*60.-T*.32+u.x*2.2)*.15)*mix(.0030,.0110,d)*k;' +
-      'float dy=sin(ph*.87+T*.9+u.x*2.5)*mix(.0003,.0012,d)*k;' +
+      'float dx=(sin(ph+T*1.1)*.55+sin(ph*.51-T*.75+u.x*5.)*.3+sin(y*60.-T*.32+u.x*2.2)*.15)*mix(.0030,.0190,d*d)*k;' +
+      'float dy=sin(ph*.87+T*.9+u.x*2.5)*mix(.0003,.0024,d*d)*k;' +
       'vec3 c=texture2D(A,vec2(u.x+dx,y+dy)).rgb;' +
       'float lum=dot(c,vec3(.299,.587,.114));' +
       'float g=pow(max(0.,sin(ph*1.63+T*1.7+sin(u.x*11.+T*.6)*2.2)),10.)*(.55+.45*sin(u.x*37.+T*1.3+ph*.2))*smoothstep(.02,.25,d)*k;' +
       'c+=c*g*smoothstep(.1,.45,lum)*1.5+g*.06*vec3(.75,.82,1.)*smoothstep(0.,.3,d);' +
       'c*=1.+.24*sin(ph*.7-T*2.2+u.x*3.)*smoothstep(.18,.55,lum)*k;' +   /* the gold reflections shimmer */
+      'float wv=y*mix(700.,140.,sqrt(d))+sin(u.x*7.+T*.45)*1.6+sin(u.x*17.-T*.7)*.6-T*1.05;' +
+      'float crest=pow(max(0.,sin(wv)),26.)*smoothstep(.04,.35,d);' +
+      'c+=vec3(.62,.72,.95)*crest*(.07+.10*d)*(.6+.4*sin(u.x*5.-T*.35))*k;' +   /* moonlit wave crests rolling in across the dark water */
       'float a=smoothstep(0.,.03,u.y);' +                          /* the layer\'s top edge melts into the painted art */
       'gl_FragColor=vec4(c*a,a);' +
     '}';
@@ -239,6 +245,7 @@
     gl.uniform1f(gl.getUniformLocation(pr, 'Y0'), W0 / ART_H);
     gl.uniform1f(gl.getUniformLocation(pr, 'Y1'), W1 / ART_H);
     gl.uniform1f(gl.getUniformLocation(pr, 'S'), SHORE / ART_H);
+    gl.uniform1f(gl.getUniformLocation(pr, 'PN'), PIN ? 1 : 0);   /* pinned: the layer ends at the scene's edge, no fade needed */
     gl.clearColor(0, 0, 0, 0);
     var t0 = performance.now(), raf = 0, onScreen = true, ready = false;
     function draw() {
