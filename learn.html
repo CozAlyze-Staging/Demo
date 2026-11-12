@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Understanding Astrology · CozAlyze</title>
+<!-- LEARN · LN1 (Nov 12 2026, his request, staging only). A page that explains astrology to customers, every topic a
+     tap-down so readers pick what they want: The Basics (terms), Vedic and Western, Your Readings (each part of the
+     platform's readings), Common Questions. Draft wording for his review; nothing here changes a reading.
+     Look: the account pages' frame and styles (account-area.css, from his approved mockups). Tap-downs use the
+     platform's existing open/close pattern from the saved documents (details + gold chevron turning on open).
+     Facts are taken from the live code: Lahiri ayanamsa, mean node and whole sign houses for Vedic; Placidus with
+     whole sign fallback for Western; traditional rulers in both; Vimshottari in 354-day lunar years; the section
+     titles exactly as the readings show them. Not linked from any page yet: where it opens from is his call.
+     Ruling kept: a tap-down that opens shows its beginning (Oct 27, "Always start at top"). -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@400;500&family=Montserrat:wght@300;400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="account-area.css?v=2">
+<script src="account-area.js?v=1"></script>
+<script src="coz-saved.js?v=6"></script>
+<style>
+.ln-card{padding-bottom:.6rem}
+.ln-item{border-top:1px solid var(--rule)}
+.ln-card .card-title.ruled+.ln-item{border-top:0}
+.ln-item summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:1rem;
+  min-height:44px;padding:.7rem 0;-webkit-tap-highlight-color:transparent}
+.ln-item summary::-webkit-details-marker{display:none}
+.ln-item summary h3{font-family:var(--head);font-weight:500;font-size:1.1875rem;line-height:1.25;color:var(--cream)}
+.ln-item summary .chev{color:var(--gold);font-size:1.35rem;line-height:1;flex:none;transition:transform .15s}
+.ln-item[open] summary .chev{transform:rotate(90deg)}
+.ln-item summary:focus-visible{outline:1px solid var(--gold);outline-offset:2px}
+.ln-body{padding:0 0 1.1rem}
+.ln-body p{font-size:1.0625rem;line-height:1.5;color:var(--text)}
+.ln-body p+p{margin-top:.75rem}
+.ln-body ul{list-style:none;margin-top:.75rem;display:flex;flex-direction:column;gap:.6rem}
+.ln-body li{font-size:1.0625rem;line-height:1.45;color:var(--text);padding-left:1rem;position:relative}
+.ln-body li::before{content:"";position:absolute;left:0;top:.62em;width:.32rem;height:.32rem;border-radius:50%;background:var(--gold)}
+.ln-body strong{font-weight:400;color:var(--cream)}
+</style>
+</head>
+<body>
+<div class="acct">
+  <img class="acct-sky" src="acct-sky-top.jpg?v=1" alt="CozAlyze" width="1024" height="311">
+  <main class="acct-main" id="main">
+    <header class="acct-head">
+      <h1>Understanding Astrology</h1>
+      <p class="sub">Tap any topic to read more.</p>
+      <div class="acct-div" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0 13.6 10.4 24 12 13.6 13.6 12 24 10.4 13.6 0 12 10.4 10.4Z"/></svg></div>
+    </header>
+    <div class="acct-body">
+
+      <section class="card ln-card" aria-labelledby="g1">
+        <h2 class="card-title ruled" id="g1">The Basics</h2>
+
+        <details class="ln-item"><summary><h3>Birth Chart</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body">
+          <p>A birth chart is a map of the sky at the moment and place you were born. It shows where the Sun, the Moon and the planets were, which sign each one was in, and which sign was rising in the east.</p>
+          <p>Every reading on CozAlyze starts from this map. In Vedic astrology the main birth chart is called the Rashi chart, or kundli.</p>
+        </div></details>
+
+        <details class="ln-item"><summary><h3>Zodiac Signs</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body">
+          <p>The twelve signs, Aries through Pisces, divide the circle of the sky into twelve equal parts of 30 degrees each. Each sign has its own character, and a planet takes on some of that character from the sign it sits in.</p>
+          <p>Vedic and Western astrology use the same twelve signs but start counting from different points, which is why your signs can differ between the two.</p>
+        </div></details>
+
+        <details class="ln-item"><summary><h3>Planets</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body">
+          <p>Each planet stands for a different part of life:</p>
+          <ul>
+            <li><strong>Sun:</strong> identity, vitality and purpose</li>
+            <li><strong>Moon:</strong> the mind, feelings and what you need to feel settled</li>
+            <li><strong>Mercury:</strong> thinking, learning and speech</li>
+            <li><strong>Venus:</strong> love, beauty and pleasure</li>
+            <li><strong>Mars:</strong> drive, courage and action</li>
+            <li><strong>Jupiter:</strong> growth, wisdom and good fortune</li>
+            <li><strong>Saturn:</strong> discipline, effort and time</li>
+          </ul>
+          <p>Vedic astrology calls them grahas and works with nine: these seven plus Rahu and Ketu. Western astrology also uses Uranus, Neptune and Pluto.</p>
+        </div></details>
+
+        <details class="ln-item"><summary><h3>Houses</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body">
+          <p>The houses divide your chart into twelve areas of life, such as self, money, home, children, work and relationships. A planet’s house shows which part of life it tends to act on.</p>
+          <p>Your Vedic chart uses whole sign houses, where each sign is one complete house. Your Western chart uses the Placidus system, which divides the sky by time, so houses can be different sizes. For births far enough north or south that Placidus can’t be calculated, CozAlyze uses whole sign houses instead.</p>
+        </div></details>
+
+        <details class="ln-item"><summary><h3>Ascendant (Rising Sign)</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body">
+          <p>Your Ascendant, or rising sign, is the sign that was coming up over the eastern horizon when you were born. It sets your first house and the order of every house after it, so it shapes how your whole chart reads.</p>
+          <p>It often describes how you meet the world and how others first see you. In Vedic astrology it’s called the Lagna and is the starting point of the chart.</p>
+          <p>The rising sign changes about every two hours on average, faster for some signs and slower for others, so it depends on an accurate birth time.</p>
+        </div></details>
+
+        <details class="ln-item"><summary><h3>Guiding Planet (Chart Ruler)</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body">
+          <p>Every sign is ruled by a planet. The planet that rules your rising sign is your guiding planet, also called the chart ruler, or in Vedic astrology the Lagna lord. Its sign and house show where the energy of your whole chart tends to go.</p>
+          <p>CozAlyze uses the traditional rulers in both systems, so Scorpio is ruled by Mars, Aquarius by Saturn and Pisces by Jupiter.</p>
+        </div></details>
+
+        <details class="ln-item"><summary><h3>Moon Sign</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body">
+          <p>Your Moon sign is the sign the Moon was in when you were born. Vedic astrology gives the Moon great weight, because it describes the mind and emotional life: how you feel, how you react, and what helps you feel at peace.</p>
+          <p>Your Moon is also where your nakshatra and your life cycle timing begin.</p>
+        </div></details>
+
+        <details class="ln-item"><summary><h3>Nakshatra</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body">
+          <p>Nakshatras are 27 star groups along the Moon’s path, each covering 13 degrees 20 minutes of the zodiac. They are one of the oldest layers of Indian astrology. Each has its own symbol, ruling deity and ruling planet.</p>
+          <p>Every planet sits in a nakshatra, but the Moon’s, called your birth star, matters most. It colors your emotional nature and sets the timing of your life’s chapters.</p>
+        </div></details>
+
+        <details class="ln-item"><summary><h3>Pada</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body">
+          <p>Each nakshatra is split into four quarters called padas, each 3 degrees 20 minutes wide, which makes 108 in all. The pada fine-tunes the nakshatra’s meaning.</p>
+          <p>Each pada also matches a sign in the navamsa, a divisional chart Vedic astrologers use to look more deeply at a planet’s strength and at marriage.</p>
+        </div></details>
+
+        <details class="ln-item"><summary><h3>Rahu and Ketu</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body">
+          <p>Rahu and Ketu aren’t physical bodies. They are the two points where the Moon’s path crosses the Sun’s path, the places where eclipses happen. Rahu is the north node and Ketu the south node, and they always sit exactly opposite each other.</p>
+          <p>Vedic astrology counts them as two of the nine grahas. Rahu is traditionally linked with desire, ambition and the unfamiliar, and Ketu with detachment, spiritual insight and letting go. Western astrology reads them as the North Node and South Node.</p>
+        </div></details>
+
+        <details class="ln-item"><summary><h3>Aspects</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body">
+          <p>An aspect is an angle between two planets, such as a conjunction (together), a square (90 degrees apart) or a trine (120 degrees apart). Aspects show where planets support each other and where they pull against each other.</p>
+          <p>Vedic astrology uses its own system, called drishti, where each planet looks at certain houses counted from where it sits. Every planet looks at the house opposite, and Mars, Jupiter and Saturn have extra ones of their own.</p>
+        </div></details>
+
+        <details class="ln-item"><summary><h3>Transits</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body">
+          <p>Transits are where the planets are now, compared with where they were when you were born. As a planet moves through a part of your chart, it can bring its themes into that area of life for a while.</p>
+        </div></details>
+
+        <details class="ln-item"><summary><h3>Mahadasha and Antardasha</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body">
+          <p>Vedic astrology divides life into chapters ruled by the planets, called dashas. CozAlyze uses Vimshottari, the most widely used system, a 120-year cycle shared among the nine grahas.</p>
+          <p>Each main period, the Mahadasha, lasts between 6 and 20 years, and each is split into shorter sub-periods called Antardashas. The planet ruling your current period tends to color that chapter of your life. Where your cycle starts comes from your Moon’s nakshatra at birth.</p>
+        </div></details>
+
+        <details class="ln-item"><summary><h3>Panchanga</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body">
+          <p>Panchanga means “five limbs.” It describes the quality of the day you were born through five factors:</p>
+          <ul>
+            <li><strong>Vara:</strong> the weekday</li>
+            <li><strong>Tithi:</strong> the lunar day</li>
+            <li><strong>Nakshatra:</strong> the Moon’s star group</li>
+            <li><strong>Yoga:</strong> a pattern formed by the Sun and Moon together</li>
+            <li><strong>Karana:</strong> half of a lunar day</li>
+          </ul>
+          <p>You’ll find it on your Vedic birth chart.</p>
+        </div></details>
+
+        <details class="ln-item"><summary><h3>Ayanamsa</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body">
+          <p>The ayanamsa is the gap between the Western and Vedic zodiacs, now about 24 degrees. CozAlyze uses the Lahiri ayanamsa, the standard set for India’s national calendar and the one most Vedic astrologers use.</p>
+        </div></details>
+      </section>
+
+      <section class="card ln-card" aria-labelledby="g2">
+        <h2 class="card-title ruled" id="g2">Vedic and Western</h2>
+
+        <details class="ln-item"><summary><h3>Two Ways to Measure the Sky</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body">
+          <p>Western astrology uses the tropical zodiac, which is tied to the seasons. Aries always begins at the spring equinox.</p>
+          <p>Vedic astrology uses the sidereal zodiac, which is tied to the stars themselves. The Earth slowly wobbles on its axis, so the equinox slides back against the stars by about one degree every 72 years. Over the centuries the two zodiacs have drifted apart, and today they sit about 24 degrees from each other.</p>
+        </div></details>
+
+        <details class="ln-item"><summary><h3>Why Your Signs Can Differ</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body">
+          <p>Because of that gap, a planet usually lands one sign earlier in your Vedic chart than in your Western chart. Someone with a Western Sun in Leo will often have a Vedic Sun in Cancer.</p>
+          <p>A planet keeps the same sign in both only when it sits in roughly the last 6 degrees of its Western sign. Both answers are correct. They’re measured from different starting points.</p>
+        </div></details>
+
+        <details class="ln-item"><summary><h3>What Each Lens Shows</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body">
+          <p>On CozAlyze, your Western reading looks at how you meet the world: your personality, how you express yourself and how you move through daily life.</p>
+          <p>Your Vedic reading looks at what lies underneath: your mind and emotional nature, your sense of purpose, and the timing of your life’s chapters. Together they give two views of the same person.</p>
+        </div></details>
+
+        <details class="ln-item"><summary><h3>Different Tools</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body">
+          <p>Vedic astrology adds the nakshatras, the Panchanga and dasha timing. It works with nine grahas and whole sign houses.</p>
+          <p>Western astrology adds Uranus, Neptune and Pluto, uses Placidus houses, and leans on the aspects between planets.</p>
+        </div></details>
+
+        <details class="ln-item"><summary><h3>The Combined Reading</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body">
+          <p>Your Combined Reading puts your Vedic and Western charts side by side. It shows the themes both systems agree on, where they place the emphasis differently, and how the two fit together into one picture of you.</p>
+        </div></details>
+      </section>
+
+      <section class="card ln-card" aria-labelledby="g3">
+        <h2 class="card-title ruled" id="g3">Your Readings</h2>
+
+        <details class="ln-item"><summary><h3>Your Vedic Reading</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body">
+          <p>Six parts, each building on the last:</p>
+          <ul>
+            <li><strong>Essential Nature &amp; Guiding Planet:</strong> your rising sign and the planet that rules it, the basic tone of your chart</li>
+            <li><strong>Mind, Intuition &amp; Spiritual Patterning:</strong> your Moon, its sign and nakshatra, and how your inner life works</li>
+            <li><strong>Relationships, Desire &amp; Karmic Exchange:</strong> what you look for and what you offer in close relationships</li>
+            <li><strong>Dharma, Work &amp; Life Direction:</strong> purpose, your most useful abilities, and the work and conditions that suit you</li>
+            <li><strong>Rahu &amp; Ketu: Growth, Release &amp; Balance:</strong> where the two lunar nodes fall in your chart, and the balance between what you reach for and what you are asked to let go</li>
+            <li><strong>Essential Takeaway:</strong> the main threads pulled together, with a practical direction</li>
+          </ul>
+        </div></details>
+
+        <details class="ln-item"><summary><h3>Your Tropical Reading</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body">
+          <p>Six parts from your Western chart:</p>
+          <ul>
+            <li><strong>At Your Core:</strong> who you are at heart, how you feel and how you come across</li>
+            <li><strong>Love, Desire &amp; Creativity:</strong> how you love, what draws you, and how you create and enjoy life</li>
+            <li><strong>Work, Money &amp; Expression:</strong> how you work, how you handle money and how you put your skills to use</li>
+            <li><strong>Wisdom, Purpose &amp; Legacy:</strong> what gives your life meaning and what you want to build over time</li>
+            <li><strong>Challenges &amp; Resilience:</strong> the pressure points in your chart and the strengths you can draw on</li>
+            <li><strong>Your Essential Takeaway:</strong> the reading’s main themes pulled together into a clear direction</li>
+          </ul>
+        </div></details>
+
+        <details class="ln-item"><summary><h3>Your Ascendant</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body">
+          <p>A reading of your rising sign on its own: how you meet the world and the lens your whole chart is seen through. Your Tropical Ascendant reading also looks at your chart ruler and where it sits.</p>
+        </div></details>
+
+        <details class="ln-item"><summary><h3>Current Life Cycle (Vedic)</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body">
+          <p>Where you are in your dasha timeline now: your current Mahadasha and Antardasha, with their dates.</p>
+          <ul>
+            <li><strong>Current Season:</strong> what the present sub-period tends to bring within the larger chapter</li>
+            <li><strong>Key Time Windows:</strong> the sub-periods just behind you, now and next, with their dates</li>
+            <li><strong>What Comes Next:</strong> when your current main period ends and what the next one may bring</li>
+          </ul>
+        </div></details>
+
+        <details class="ln-item"><summary><h3>Your Current Transits (Tropical)</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body">
+          <p>Where the planets are today and how they touch your birth chart: the present sky, the transits active for you, and what to notice now. The page shows the date it was calculated for.</p>
+        </div></details>
+
+        <details class="ln-item"><summary><h3>Your Combined Reading</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body">
+          <ul>
+            <li><strong>Combined Reading:</strong> Shared Themes, Different Emphases and Your Integrated View</li>
+            <li><strong>Your Ascendants:</strong> your Tropical rising sign, your Vedic Ascendant, and How They Work Together</li>
+            <li><strong>Current Timing:</strong> the present period seen through both systems</li>
+            <li><strong>Your Birth Charts:</strong> both charts in one place</li>
+          </ul>
+        </div></details>
+
+        <details class="ln-item"><summary><h3>Your Birth Charts</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body">
+          <p>Your Vedic birth chart is drawn in the North Indian style, with each planet’s sign, degree, house, nakshatra and pada, plus your birth Panchanga and the Mahadasha you were born into.</p>
+          <p>Your Tropical birth chart is the Western wheel, with each planet’s sign, degree and house.</p>
+        </div></details>
+      </section>
+
+      <section class="card ln-card" aria-labelledby="g4">
+        <h2 class="card-title ruled" id="g4">Common Questions</h2>
+
+        <details class="ln-item"><summary><h3>Why is my sign different from my horoscope app?</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body">
+          <p>Most horoscope apps use the Western zodiac and look only at your Sun sign. Your Vedic chart is measured against the stars, about 24 degrees from the Western zodiac, so your Vedic signs are often one sign earlier. Your Western reading on CozAlyze should match the Sun sign you already know.</p>
+        </div></details>
+
+        <details class="ln-item"><summary><h3>Why does my birth time matter so much?</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body">
+          <p>The rising sign and the houses turn with the Earth, changing sign about every two hours. The Moon moves quickly too, changing nakshatra about once a day, and the Moon’s exact position sets your dasha dates. A birth certificate or hospital record gives the most reliable time.</p>
+        </div></details>
+
+        <details class="ln-item"><summary><h3>What if I don’t know my birth time?</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body">
+          <p>Enter your best estimate. Most planets will still be in the right signs, but your rising sign, your houses and your dasha dates may not be correct. On a day when the Moon changes sign or nakshatra, those can be off as well.</p>
+        </div></details>
+
+        <details class="ln-item"><summary><h3>Who writes the readings?</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body">
+          <p>Your chart is calculated first. The readings are then written by AI from your calculated chart, following CozAlyze’s interpretation rules. Each one is an AI-generated personalized astrology reading, for entertainment purposes only.</p>
+        </div></details>
+
+        <details class="ln-item"><summary><h3>How is my chart calculated?</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body">
+          <p>Planet positions come from Astronomy Engine, a precise astronomy library. Your Vedic chart uses the Lahiri ayanamsa, the mean lunar node and whole sign houses. Your Western chart uses the tropical zodiac and Placidus houses.</p>
+        </div></details>
+
+        <details class="ln-item"><summary><h3>Why are my period dates different from other Vedic software?</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body">
+          <p>CozAlyze measures Vimshottari periods in lunar years of 354 days. Most software uses the 365-day solar year. The order and length of the periods are the same, but the dates shift, and the gap grows the older the chart is. They’re two different conventions, not an error in either one.</p>
+        </div></details>
+
+        <details class="ln-item"><summary><h3>Does my chart predict what will happen?</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body">
+          <p>Your readings describe tendencies and possibilities, not fixed outcomes. Your chart shows patterns you may notice in yourself, and your choices decide what you make of them.</p>
+        </div></details>
+
+        <details class="ln-item"><summary><h3>Will my reading change if I open it again?</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body">
+          <p>No. A saved reading opens exactly as it was written. Pages about the current sky, like transits and timing, show the date they were calculated for.</p>
+        </div></details>
+
+        <details class="ln-item"><summary><h3>Can I print or save my reading?</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body">
+          <p>Yes. Your saved readings have a Print / Save PDF button at the top, and Print Your Chart at the end of each birth chart opens the full reading ready to print.</p>
+        </div></details>
+      </section>
+
+    </div>
+  </main>
+  <footer class="acct-foot">
+    <a class="back" href="account.html" id="lnBack"><svg viewBox="0 0 32 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M30 10H3M10 3 3 10l7 7"/></svg><span>Back</span></a>
+  </footer>
+  <img class="acct-cloud l" src="acct-cloud-left.webp?v=1" alt="" width="368" height="293">
+  <img class="acct-cloud r" src="acct-cloud-right.webp?v=1" alt="" width="356" height="293">
+  <div class="stamp">LEARN · LN1 · staging</div>
+</div>
+<script>
+(function(){
+  /* "Always start at top" (Oct 27): a topic that opens shows its beginning */
+  document.querySelectorAll(".ln-item").forEach(function(d){
+    d.addEventListener("toggle", function(){
+      if (!d.open) return;
+      var top = d.querySelector("summary").getBoundingClientRect().top;
+      if (top < 0) d.scrollIntoView({ block: "start" });
+    });
+  });
+  /* Back: the page it was opened from; Account if it was opened directly */
+  document.getElementById("lnBack").addEventListener("click", function(ev){
+    var r = ""; try { r = document.referrer || ""; } catch (e) {}
+    if (r && r.indexOf(location.origin) === 0 && history.length > 1) { ev.preventDefault(); history.back(); }
+  });
+})();
+</script>
+<script src="coz-nav.js?v=2"></script>
+</body>
+</html>
