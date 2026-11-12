@@ -1,5 +1,5 @@
 /* ============================================================
-   COZALYZE · COZ_LAKE · LK2.0 (Nov 11 2026, staging only)
+   COZALYZE · COZ_LAKE · LK2.1 (Nov 12 2026, staging only)
    The Current Life Cycle lake scene, shared by current-life-cycle.html,
    current-season.html, key-time-windows.html and what-comes-next.html.
 
@@ -587,7 +587,24 @@
       state: function () { return { main: cur.main, sub: cur.sub }; }
     };
 
-    if (!TL) global.addEventListener('scroll', onScroll, { passive: true });
+    /* LK2.1: Safari on his iPhone stopped the Tropical page's scroll-linked shrink partway; the
+       same self-check guards this scene. On the first scroll past the start, if the scene's real
+       size is not the size it should have, the CSS animation is dropped for the frame-synced path. */
+    var verified = !TL;
+    function verify() {
+      if (verified || !G) return;
+      var p = Math.min(1, Math.max(0, global.pageYOffset || 0) / G.D);
+      if (p < .05) return;
+      /* checked on every scroll, because the page grows when a drop-down opens */
+      var m = /matrix\(([^)]+)\)/.exec(getComputedStyle(root).transform || ''), sNow = m ? parseFloat(m[1].split(',')[0]) : 1;
+      if (Math.abs(sNow - (1 + (G.s1 - 1) * p)) > .06) {
+        verified = true; TL = false; if (tlStyle) tlStyle.textContent = '';
+        global.addEventListener('scroll', onScroll, { passive: true });
+        apply(Math.min(1, p));
+      }
+    }
+    if (TL) global.addEventListener('scroll', function () { if (!verified) requestAnimationFrame(verify); }, { passive: true });
+    else global.addEventListener('scroll', onScroll, { passive: true });
     global.addEventListener('resize', function () { if (root.offsetWidth !== lastW) layout(); });
     layout();
 

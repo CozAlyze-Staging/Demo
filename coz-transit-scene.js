@@ -17,6 +17,9 @@
    Note his Sep 24 rule that the wheel never implies real positions: the star
    points are fixed slots, not the natal points' zodiac places.
 
+   TS-A1.6 (Nov 12 2026, from his screen recording): the water moves 1.8 times faster so it is
+   easy to see, and the shrink to the top quarter checks itself on the first scroll (Safari
+   stopped the scroll-linked version partway) and falls back to following the scroll frame by frame.
    TS-A1.5 (Nov 12 2026, his note: he cannot see the water move on his phone): the water layer
    now starts the way the Vedic lake does (in place from the start, no on-screen check while
    pinned, which Safari could leave switched off), and every wave rolls forward toward the viewer.
@@ -257,7 +260,7 @@
       if (w && h && (cv.width !== w || cv.height !== h)) { cv.width = w; cv.height = h; }
       gl.viewport(0, 0, cv.width, cv.height);
       gl.clear(gl.COLOR_BUFFER_BIT);
-      gl.uniform1f(uT, ((performance.now() - t0) / 1000) % 600);
+      gl.uniform1f(uT, ((performance.now() - t0) / 1000 * 1.8) % 600);   /* TS-A1.6: water moves 1.8x faster, his note */
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     }
     function loop() { raf = 0; if (!ready || document.hidden || !onScreen) return; draw(); raf = requestAnimationFrame(loop); }
@@ -358,10 +361,29 @@
         apply(Math.min(1, Math.max(0, global.pageYOffset || 0) / G.D));
       }
     }
-    if (!TL) global.addEventListener('scroll', function () {
+    function onScroll() {
       if (tick) return;
       tick = requestAnimationFrame(function () { tick = 0; apply(Math.min(1, Math.max(0, global.pageYOffset || 0) / G.D)); });
-    }, { passive: true });
+    }
+    /* TS-A1.6: Safari on his iPhone ran the scroll-linked animation but stopped it partway (the
+       scene stayed large). On the first scroll past the start the page compares the scene's real
+       size with the size it should have; if they differ it drops the CSS animation and follows
+       the scroll frame by frame instead. */
+    var verified = !TL;
+    function verify() {
+      if (verified || !G) return;
+      var p = Math.min(1, Math.max(0, global.pageYOffset || 0) / G.D);
+      if (p < .05) return;
+      /* checked on every scroll, because the page grows when a drop-down opens */
+      var m = /matrix\(([^)]+)\)/.exec(getComputedStyle(root).transform || ''), sNow = m ? parseFloat(m[1].split(',')[0]) : 1;
+      if (Math.abs(sNow - at(qFor(p)).s) > .06) {
+        verified = true; TL = false; if (tlStyle) tlStyle.textContent = '';
+        global.addEventListener('scroll', onScroll, { passive: true });
+        apply(Math.min(1, p));
+      }
+    }
+    if (TL) global.addEventListener('scroll', function () { if (!verified) requestAnimationFrame(verify); }, { passive: true });
+    else global.addEventListener('scroll', onScroll, { passive: true });
     global.addEventListener('resize', function () { if (root.offsetWidth !== lastW) layout(); });   /* Safari's bars changing height do not count */
     layout();
     PIN = { root: root, bottom: function () { return G ? G.target : 0; } };
