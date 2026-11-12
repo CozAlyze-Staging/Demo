@@ -107,7 +107,7 @@ h3{font-family:var(--head);font-weight:500;font-size:clamp(16px,4.5cqw,19.5px);l
       <a href="tropical-reading.html">&lsaquo; Back to Your Tropical Reading</a>
       <a href="tropical-birth-chart.html">Next: Your Birth Chart &rsaquo;</a>
     </nav>
-    <div class="stamp" aria-hidden="true"><span id="ttPinState"></span> CURRENT TRANSITS · TT1.10 · TS-A1.7 pinned shrink on iPhone, quicker water, transits travel to the wheel · VO1.4 read aloud, music stops</div>
+    <div class="stamp" aria-hidden="true">CURRENT TRANSITS · TT1.11 · TS-A1.8 shrink follows the reading on iPhone, quicker water, transits travel to the wheel · VO1.4 read aloud, music stops</div>
   </div>
  </div>
 </main>
@@ -124,10 +124,15 @@ h3{font-family:var(--head);font-weight:500;font-size:clamp(16px,4.5cqw,19.5px);l
 <script src="ascendant-library.js?v=4"></script>
 <script src="compare-current-timing.js?v=4"></script>
 <script src="coz-voice.js?v=6"></script>   <!-- VO1 (Oct 27 2026, staging only): the page read aloud -->
-<script src="coz-transit-scene.js?v=8"></script>   <!-- TS-A1.0/1.1 (Nov 11-12 2026, staging only): transits travel to the wheel, the water lives -->
-<script>try { CozTransitScene.pin(); CozTransitScene.water(document.querySelector('.page')); } catch (e) {}
-/* developer view only: the stamp shows how the shrink is running on this device */
-try { if (document.documentElement.classList.contains('coz-dev')) { var ttS = 0; document.addEventListener('scroll', function () { if (ttS) return; ttS = setTimeout(function () { ttS = 0; var el = document.getElementById('ttPinState'); if (el) el.textContent = '[' + CozTransitScene.pinState() + ']'; }, 250); }, { passive: true, capture: true }); } } catch (e) {}</script>
+<script src="coz-transit-scene.js?v=9"></script>   <!-- TS-A1.0/1.1 (Nov 11-12 2026, staging only): transits travel to the wheel, the water lives -->
+<script>try { CozTransitScene.pin(); } catch (e) { window.ttPinErr = 'pin: ' + (e && e.message || e); }
+try { CozTransitScene.water(document.querySelector('.page')); } catch (e) { window.ttPinErr = (window.ttPinErr || '') + ' water: ' + (e && e.message || e); }
+/* TS-A1.8: ?diag=1 adds a small readout of how the shrink is running on this device (testing only) */
+try { if (/[?&]diag=1/.test(location.search)) { var ttD = document.createElement('div');
+  ttD.style.cssText = 'position:fixed;left:6px;right:6px;bottom:calc(var(--asq-nav-h) + 10px + env(safe-area-inset-bottom));z-index:99999;font:12px/1.35 -apple-system,system-ui,sans-serif;color:#fff;background:rgba(0,0,0,.78);padding:6px 8px;border-radius:6px;pointer-events:none;word-break:break-all';
+  document.body.appendChild(ttD);
+  setInterval(function () { var se = document.scrollingElement; ttD.textContent = 'TS-A1.8 · ' + (window.CozTransitScene ? CozTransitScene.pinState() : 'no scene') +
+    ' · ih' + innerHeight + ' sh' + screen.height + ' se=' + (se ? se.nodeName : '-') + (window.ttPinErr ? ' · ERR ' + window.ttPinErr : '') + ' · ' + (navigator.userAgent.match(/OS [\d_]+|Version\/[\d.]+|CriOS\/[\d.]+/g) || []).join(' '); }, 300); } } catch (e) {}</script>
 <script>
 (function(){
   'use strict';

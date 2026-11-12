@@ -17,6 +17,10 @@
    Note his Sep 24 rule that the wheel never implies real positions: the star
    points are fixed slots, not the natal points' zodiac places.
 
+   TS-A1.8 (Nov 12 2026, his note: TS-A1.7 still did not shrink on his iPhone): on iPhone the shrink
+   follows where the reading sits on the screen, measured every frame, instead of Safari's
+   scroll-linked animation or a scroll number; ?diag=1 shows a readout of what the phone is doing.
+
    TS-A1.7 (Nov 12 2026, his note: still no shrink on his iPhone): the page no longer lets its body
    become its own scroller (overflow-x clip), the scroll is read from whichever element scrolls and
    heard on the document, and developer view shows how the shrink is running in the stamp.
@@ -313,16 +317,20 @@
     var band = document.createElement('div'); band.className = 'tt-pin-band'; band.setAttribute('aria-hidden', 'true');
     document.body.appendChild(band); document.body.appendChild(root);
 
-    var G = null, lastW = 0, tick = 0, tlStyle = null, TL = false;
-    /* TS-A1.7: read the scroll from whichever element is scrolling (on his iPhone the page body
-       may be the scroller, which leaves the window's own position at 0) */
-    function sy() {
-      var se = document.scrollingElement, b = document.body, d = document.documentElement;
-      return Math.max(0, global.pageYOffset || 0, se ? se.scrollTop : 0, b ? b.scrollTop : 0, d ? d.scrollTop : 0);
-    }
-    try { TL = !!(global.CSS && CSS.supports && CSS.supports('animation-timeline: scroll()')); } catch (e) {}
+    var G = null, lastW = 0, tlStyle = null, TL = false, top0 = 0, lastP = -1, polling = false;
+    /* TS-A1.8: on iPhone the shrink no longer relies on Safari's scroll-linked animation or on any
+       scroll number. Every frame it measures where the reading itself sits on the screen (the empty
+       hero space that the scene left behind) and sets the size from that, so it follows the reading
+       whatever element is doing the scrolling. */
+    var UA = navigator.userAgent || '';
+    var WEBKIT = /iPhone|iPad|iPod/.test(UA) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) ||
+                 (/AppleWebKit/.test(UA) && !/Chrome\/|Chromium|Android|Edg\//.test(UA));
+    try { TL = !WEBKIT && !!(global.CSS && CSS.supports && CSS.supports('animation-timeline: scroll()')); } catch (e) {}
+    function topOf(el) { var t = 0; while (el) { t += el.offsetTop || 0; el = el.offsetParent; } return t; }
+    function scrolled() { return Math.max(0, top0 - hero.getBoundingClientRect().top); }
+    function progress() { return G ? Math.min(1, scrolled() / G.D) : 0; }
     function geo() {
-      var W = root.offsetWidth, k = W / AW, H = AH * k;
+      var W = root.offsetWidth || document.documentElement.clientWidth || 390, k = W / AW, H = AH * k;
       var sh = (global.screen && global.screen.height) || global.innerHeight || 700;
       var target = Math.max(150, Math.min(sh * QUARTER, H * .6));
       var s1 = target / ((KEEP_BOT - KEEP_TOP) * k);
@@ -347,11 +355,23 @@
       var q = qFor(p), f = frame(q);
       root.style.transform = q ? f.tf : '';
       root.style.clipPath = q ? f.clip : '';
+      root.style.webkitClipPath = q ? f.clip : '';
       veil.style.opacity = q.toFixed(3);
       band.style.transform = 'scaleY(' + (q > 0 ? f.bottom / G.H : 0).toFixed(4) + ')';
     }
+    function follow() {
+      if (TL || !G) return;
+      var p = progress();
+      if (Math.abs(p - lastP) > .0002) { lastP = p; apply(p); }
+    }
+    function poll() { follow(); requestAnimationFrame(poll); }
+    function startFollowing() {
+      TL = false; if (tlStyle) tlStyle.textContent = '';
+      lastP = -1; follow();
+      if (!polling) { polling = true; requestAnimationFrame(poll); }
+    }
     function layout() {
-      G = geo(); lastW = G.W;
+      G = geo(); lastW = G.W; top0 = topOf(hero);
       band.style.height = G.H + 'px';
       if (TL) {
         if (!tlStyle) { tlStyle = document.createElement('style'); document.head.appendChild(tlStyle); }
@@ -368,41 +388,31 @@
         tlStyle.textContent = '@keyframes ttPin{' + kr + '}@keyframes ttVeil{' + kv + '}@keyframes ttBand{' + kb + '}' +
           '.tt-pin{animation-name:ttPin;' + run + '}.tt-pin-veil{animation-name:ttVeil;' + run + '}.tt-pin-band{animation-name:ttBand;' + run + '}';
       } else {
-        apply(Math.min(1, sy() / G.D));
+        lastP = -1; follow();
       }
     }
-    function onScroll() {
-      if (tick) return;
-      tick = requestAnimationFrame(function () { tick = 0; apply(Math.min(1, sy() / G.D)); });
-    }
-    /* TS-A1.6: Safari on his iPhone ran the scroll-linked animation but stopped it partway (the
-       scene stayed large). On the first scroll past the start the page compares the scene's real
-       size with the size it should have; if they differ it drops the CSS animation and follows
-       the scroll frame by frame instead. */
-    var verified = !TL;
+    /* other browsers keep the scroll-linked animation, checked against where the reading really is */
     function verify() {
-      if (verified || !G) return;
-      var p = Math.min(1, sy() / G.D);
+      if (!TL || !G) return;
+      var p = progress();
       if (p < .05) return;
-      /* checked on every scroll, because the page grows when a drop-down opens */
       var m = /matrix\(([^)]+)\)/.exec(getComputedStyle(root).transform || ''), sNow = m ? parseFloat(m[1].split(',')[0]) : 1;
-      if (Math.abs(sNow - at(qFor(p)).s) > .06) {
-        verified = true; TL = false; if (tlStyle) tlStyle.textContent = '';
-        document.addEventListener('scroll', onScroll, { passive: true, capture: true });
-        apply(Math.min(1, p));
-      }
+      if (Math.abs(sNow - at(qFor(p)).s) > .06) startFollowing();
     }
-    if (TL) document.addEventListener('scroll', function () { if (!verified) requestAnimationFrame(verify); }, { passive: true, capture: true });
-    else document.addEventListener('scroll', onScroll, { passive: true, capture: true });
+    function onScroll() { if (TL) requestAnimationFrame(verify); else follow(); }
+    document.addEventListener('scroll', onScroll, { passive: true, capture: true });
+    document.addEventListener('touchmove', onScroll, { passive: true, capture: true });
     global.addEventListener('resize', function () { if (root.offsetWidth !== lastW) layout(); });   /* Safari's bars changing height do not count */
+    global.addEventListener('load', function () { top0 = topOf(hero); lastP = -1; follow(); });
     layout();
+    if (!TL) startFollowing();
     PIN = { root: root, bottom: function () { return G ? G.target : 0; },
-      /* developer view only: how the shrink is running on this device */
+      /* developer readout (?diag=1): how the shrink is running on this device */
       state: function () {
         var m = /matrix\(([^)]+)\)/.exec(getComputedStyle(root).transform || '');
-        var se = document.scrollingElement;
-        return (TL ? 'css' : 'js') + ' y' + Math.round(sy()) + ' w' + Math.round(global.pageYOffset || 0) + ' b' + Math.round(document.body.scrollTop || 0) +
-          (se && se !== document.documentElement ? ' se=' + se.nodeName : '') + ' s' + (m ? parseFloat(m[1].split(',')[0]).toFixed(2) : '1.00') + (G ? '/' + G.s1.toFixed(2) + ' D' + Math.round(G.D) : '');
+        return (TL ? 'css' : 'follow') + (WEBKIT ? ' webkit' : '') + ' read' + Math.round(scrolled()) + ' win' + Math.round(global.pageYOffset || 0) +
+          ' body' + Math.round(document.body.scrollTop || 0) + ' p' + progress().toFixed(2) +
+          ' s' + (m ? parseFloat(m[1].split(',')[0]).toFixed(2) : '1.00') + (G ? '/' + G.s1.toFixed(2) + ' W' + Math.round(G.W) + ' D' + Math.round(G.D) + ' top' + Math.round(top0) : '');
       } };
     return PIN;
   }
