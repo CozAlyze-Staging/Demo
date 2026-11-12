@@ -17,6 +17,10 @@
    Note his Sep 24 rule that the wheel never implies real positions: the star
    points are fixed slots, not the natal points' zodiac places.
 
+   TS-A1.7 (Nov 12 2026, his note: still no shrink on his iPhone): the page no longer lets its body
+   become its own scroller (overflow-x clip), the scroll is read from whichever element scrolls and
+   heard on the document, and developer view shows how the shrink is running in the stamp.
+
    TS-A1.6 (Nov 12 2026, from his screen recording): the water moves 1.8 times faster so it is
    easy to see, and the shrink to the top quarter checks itself on the first scroll (Safari
    stopped the scroll-linked version partway) and falls back to following the scroll frame by frame.
@@ -310,6 +314,12 @@
     document.body.appendChild(band); document.body.appendChild(root);
 
     var G = null, lastW = 0, tick = 0, tlStyle = null, TL = false;
+    /* TS-A1.7: read the scroll from whichever element is scrolling (on his iPhone the page body
+       may be the scroller, which leaves the window's own position at 0) */
+    function sy() {
+      var se = document.scrollingElement, b = document.body, d = document.documentElement;
+      return Math.max(0, global.pageYOffset || 0, se ? se.scrollTop : 0, b ? b.scrollTop : 0, d ? d.scrollTop : 0);
+    }
     try { TL = !!(global.CSS && CSS.supports && CSS.supports('animation-timeline: scroll()')); } catch (e) {}
     function geo() {
       var W = root.offsetWidth, k = W / AW, H = AH * k;
@@ -358,12 +368,12 @@
         tlStyle.textContent = '@keyframes ttPin{' + kr + '}@keyframes ttVeil{' + kv + '}@keyframes ttBand{' + kb + '}' +
           '.tt-pin{animation-name:ttPin;' + run + '}.tt-pin-veil{animation-name:ttVeil;' + run + '}.tt-pin-band{animation-name:ttBand;' + run + '}';
       } else {
-        apply(Math.min(1, Math.max(0, global.pageYOffset || 0) / G.D));
+        apply(Math.min(1, sy() / G.D));
       }
     }
     function onScroll() {
       if (tick) return;
-      tick = requestAnimationFrame(function () { tick = 0; apply(Math.min(1, Math.max(0, global.pageYOffset || 0) / G.D)); });
+      tick = requestAnimationFrame(function () { tick = 0; apply(Math.min(1, sy() / G.D)); });
     }
     /* TS-A1.6: Safari on his iPhone ran the scroll-linked animation but stopped it partway (the
        scene stayed large). On the first scroll past the start the page compares the scene's real
@@ -372,23 +382,30 @@
     var verified = !TL;
     function verify() {
       if (verified || !G) return;
-      var p = Math.min(1, Math.max(0, global.pageYOffset || 0) / G.D);
+      var p = Math.min(1, sy() / G.D);
       if (p < .05) return;
       /* checked on every scroll, because the page grows when a drop-down opens */
       var m = /matrix\(([^)]+)\)/.exec(getComputedStyle(root).transform || ''), sNow = m ? parseFloat(m[1].split(',')[0]) : 1;
       if (Math.abs(sNow - at(qFor(p)).s) > .06) {
         verified = true; TL = false; if (tlStyle) tlStyle.textContent = '';
-        global.addEventListener('scroll', onScroll, { passive: true });
+        document.addEventListener('scroll', onScroll, { passive: true, capture: true });
         apply(Math.min(1, p));
       }
     }
-    if (TL) global.addEventListener('scroll', function () { if (!verified) requestAnimationFrame(verify); }, { passive: true });
-    else global.addEventListener('scroll', onScroll, { passive: true });
+    if (TL) document.addEventListener('scroll', function () { if (!verified) requestAnimationFrame(verify); }, { passive: true, capture: true });
+    else document.addEventListener('scroll', onScroll, { passive: true, capture: true });
     global.addEventListener('resize', function () { if (root.offsetWidth !== lastW) layout(); });   /* Safari's bars changing height do not count */
     layout();
-    PIN = { root: root, bottom: function () { return G ? G.target : 0; } };
+    PIN = { root: root, bottom: function () { return G ? G.target : 0; },
+      /* developer view only: how the shrink is running on this device */
+      state: function () {
+        var m = /matrix\(([^)]+)\)/.exec(getComputedStyle(root).transform || '');
+        var se = document.scrollingElement;
+        return (TL ? 'css' : 'js') + ' y' + Math.round(sy()) + ' w' + Math.round(global.pageYOffset || 0) + ' b' + Math.round(document.body.scrollTop || 0) +
+          (se && se !== document.documentElement ? ' se=' + se.nodeName : '') + ' s' + (m ? parseFloat(m[1].split(',')[0]).toFixed(2) : '1.00') + (G ? '/' + G.s1.toFixed(2) + ' D' + Math.round(G.D) : '');
+      } };
     return PIN;
   }
 
-  global.CozTransitScene = { play: play, water: water, pin: pin, pinBottom: function () { return PIN ? PIN.bottom() : 0; } };
+  global.CozTransitScene = { play: play, water: water, pin: pin, pinBottom: function () { return PIN ? PIN.bottom() : 0; }, pinState: function () { return PIN ? PIN.state() : 'no pin'; } };
 })(window);

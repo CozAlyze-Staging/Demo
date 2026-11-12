@@ -24,7 +24,7 @@
 :root{ --water:#000006; --cream:#EEE7D8; --gold:#D6B98C; --gold-soft:#B89A6E;
   --head:"Cinzel",Georgia,serif; --body:"EB Garamond",Georgia,serif; --asq-nav-h:64px; }
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{background:var(--water);color:var(--cream);-webkit-text-size-adjust:100%;overflow-x:hidden}
+html,body{background:var(--water);color:var(--cream);-webkit-text-size-adjust:100%;overflow-x:hidden;overflow-x:clip}   /* TS-A1.7: clip keeps the body from becoming its own scroller on iPhone */
 body{font-family:var(--body)}
 .page{position:relative;width:100%;max-width:640px;margin:0 auto;container-type:inline-size;
   background:url("tropical-transits-bg.jpg?v=1") center top/100% auto no-repeat,var(--water)}
@@ -107,7 +107,7 @@ h3{font-family:var(--head);font-weight:500;font-size:clamp(16px,4.5cqw,19.5px);l
       <a href="tropical-reading.html">&lsaquo; Back to Your Tropical Reading</a>
       <a href="tropical-birth-chart.html">Next: Your Birth Chart &rsaquo;</a>
     </nav>
-    <div class="stamp" aria-hidden="true">CURRENT TRANSITS · TT1.9 · TS-A1.6 pinned, quicker water, transits travel to the wheel · VO1.4 read aloud, music stops</div>
+    <div class="stamp" aria-hidden="true"><span id="ttPinState"></span> CURRENT TRANSITS · TT1.10 · TS-A1.7 pinned shrink on iPhone, quicker water, transits travel to the wheel · VO1.4 read aloud, music stops</div>
   </div>
  </div>
 </main>
@@ -124,8 +124,10 @@ h3{font-family:var(--head);font-weight:500;font-size:clamp(16px,4.5cqw,19.5px);l
 <script src="ascendant-library.js?v=4"></script>
 <script src="compare-current-timing.js?v=4"></script>
 <script src="coz-voice.js?v=6"></script>   <!-- VO1 (Oct 27 2026, staging only): the page read aloud -->
-<script src="coz-transit-scene.js?v=7"></script>   <!-- TS-A1.0/1.1 (Nov 11-12 2026, staging only): transits travel to the wheel, the water lives -->
-<script>try { CozTransitScene.pin(); CozTransitScene.water(document.querySelector('.page')); } catch (e) {}</script>
+<script src="coz-transit-scene.js?v=8"></script>   <!-- TS-A1.0/1.1 (Nov 11-12 2026, staging only): transits travel to the wheel, the water lives -->
+<script>try { CozTransitScene.pin(); CozTransitScene.water(document.querySelector('.page')); } catch (e) {}
+/* developer view only: the stamp shows how the shrink is running on this device */
+try { if (document.documentElement.classList.contains('coz-dev')) { var ttS = 0; document.addEventListener('scroll', function () { if (ttS) return; ttS = setTimeout(function () { ttS = 0; var el = document.getElementById('ttPinState'); if (el) el.textContent = '[' + CozTransitScene.pinState() + ']'; }, 250); }, { passive: true, capture: true }); } } catch (e) {}</script>
 <script>
 (function(){
   'use strict';
