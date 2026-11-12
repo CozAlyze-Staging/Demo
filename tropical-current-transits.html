@@ -107,7 +107,7 @@ h3{font-family:var(--head);font-weight:500;font-size:clamp(16px,4.5cqw,19.5px);l
       <a href="tropical-reading.html">&lsaquo; Back to Your Tropical Reading</a>
       <a href="tropical-birth-chart.html">Next: Your Birth Chart &rsaquo;</a>
     </nav>
-    <div class="stamp" aria-hidden="true">CURRENT TRANSITS · TT1.4 · TS-A1.1 living water, transits travel to the wheel · VO1.4 read aloud, music stops</div>
+    <div class="stamp" aria-hidden="true">CURRENT TRANSITS · TT1.6 · TS-A1.3 pinned, living water, transits travel to the wheel · VO1.4 read aloud, music stops</div>
   </div>
  </div>
 </main>
@@ -124,8 +124,8 @@ h3{font-family:var(--head);font-weight:500;font-size:clamp(16px,4.5cqw,19.5px);l
 <script src="ascendant-library.js?v=4"></script>
 <script src="compare-current-timing.js?v=4"></script>
 <script src="coz-voice.js?v=6"></script>   <!-- VO1 (Oct 27 2026, staging only): the page read aloud -->
-<script src="coz-transit-scene.js?v=2"></script>   <!-- TS-A1.0/1.1 (Nov 11-12 2026, staging only): transits travel to the wheel, the water lives -->
-<script>try { CozTransitScene.water(document.querySelector('.page')); } catch (e) {}</script>
+<script src="coz-transit-scene.js?v=4"></script>   <!-- TS-A1.0/1.1 (Nov 11-12 2026, staging only): transits travel to the wheel, the water lives -->
+<script>try { CozTransitScene.pin(); CozTransitScene.water(document.querySelector('.page')); } catch (e) {}</script>
 <script>
 (function(){
   'use strict';
@@ -210,6 +210,8 @@ h3{font-family:var(--head);font-weight:500;font-size:clamp(16px,4.5cqw,19.5px);l
        above the screen is what slid the screen to the end of the one just opened), the one tapped is kept where it was,
        and then it glides to the top of the screen, so its reading starts there. A touch stops the glide. */
     var REST = 16, glide = null;                                        /* px left above the drop-down's line */
+    /* TS-A1.3: with the scene pinned at the top, a drop-down glides to just below it */
+    function restPx(){ var b = window.CozTransitScene && CozTransitScene.pinBottom ? CozTransitScene.pinBottom() : 0; return b ? b + 12 : REST; }
     function stopGlide(){ if (glide) { cancelAnimationFrame(glide); glide = null; } }
     window.addEventListener('touchstart', stopGlide, { passive: true });
     window.addEventListener('wheel', stopGlide, { passive: true });
@@ -223,7 +225,7 @@ h3{font-family:var(--head);font-weight:500;font-size:clamp(16px,4.5cqw,19.5px);l
       var from = window.scrollY, t0 = performance.now();
       var MS = (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) ? 0 : 650;
       (function step(now){
-        var to = Math.max(0, sec.getBoundingClientRect().top + window.scrollY - REST);   /* the room below grows as it opens */
+        var to = Math.max(0, sec.getBoundingClientRect().top + window.scrollY - restPx());   /* the room below grows as it opens */
         var p = MS ? Math.min(1, (now - t0) / MS) : 1, e = p < .5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
         window.scrollTo(0, from + (to - from) * e);
         glide = (p < 1 || Math.abs(window.scrollY - to) > 1 && now - t0 < 1200) ? requestAnimationFrame(step) : null;

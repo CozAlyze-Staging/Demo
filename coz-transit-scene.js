@@ -17,6 +17,16 @@
    Note his Sep 24 rule that the wheel never implies real positions: the star
    points are fixed slots, not the natal points' zodiac places.
 
+   TS-A1.3 (Nov 12 2026, his ruling, as on the Vedic life-cycle pages): the scene is
+   pinned. At the top of the page it is exactly the artwork as before (logo, title,
+   wheel, water). As the page scrolls into the reading, the whole scene rises to the
+   top of the screen and shrinks to the top quarter, keeping the wheel, the planets
+   and the lit water (art rows 360 to 1110), softening into the page's own dark blue
+   at its sides and bottom and dimming slightly; a band of that blue fills the sides
+   so no text shows beside it. Driven by the browser's own scrolling (scroll-linked
+   CSS animation) with a frame-synced fallback; size from the fixed screen height.
+   TS-A1.2 (Nov 12 2026): the water's movement made clearly visible on a phone (about twice the
+   ripple, more glints, a shimmer through the gold reflections) after he could not see it.
    TS-A1.1 (Nov 12 2026, his note "bring it to life"): the water lives, the same
    treatment as the Vedic lake: ripples below the shoreline, a slow broad flow and
    glints travelling across the lit reflections, drawn from his own artwork in a
@@ -95,6 +105,7 @@
   }
 
   function play(host, d) {
+    if (PIN) host = PIN.root;
     if (!host || !d || !d.ok) return;
     var list = [];
     if (d.slow) list.push(d.slow);
@@ -193,16 +204,18 @@
       'float d=clamp((y-S)/(Y1-S),0.,1.);' +                       /* 0 at the shoreline, 1 at the bottom of the layer */
       'float k=smoothstep(0.,.05,d)*smoothstep(1.,.82,u.y);' +     /* still at the shoreline and at the layer\'s bottom edge */
       'float f=mix(900.,260.,sqrt(d));float ph=y*f;' +
-      'float dx=(sin(ph+T*1.1)*.55+sin(ph*.51-T*.75+u.x*5.)*.3+sin(y*60.-T*.32+u.x*2.2)*.15)*mix(.0012,.0052,d)*k;' +
-      'float dy=sin(ph*.87+T*.9+u.x*2.5)*mix(.00012,.0005,d)*k;' +
+      'float dx=(sin(ph+T*1.1)*.55+sin(ph*.51-T*.75+u.x*5.)*.3+sin(y*60.-T*.32+u.x*2.2)*.15)*mix(.0030,.0110,d)*k;' +
+      'float dy=sin(ph*.87+T*.9+u.x*2.5)*mix(.0003,.0012,d)*k;' +
       'vec3 c=texture2D(A,vec2(u.x+dx,y+dy)).rgb;' +
       'float lum=dot(c,vec3(.299,.587,.114));' +
-      'float g=pow(max(0.,sin(ph*1.63+T*1.7+sin(u.x*11.+T*.6)*2.2)),18.)*(.55+.45*sin(u.x*37.+T*1.3+ph*.2))*smoothstep(.02,.25,d)*k;' +
-      'c+=c*g*smoothstep(.12,.5,lum)*.9+g*.035*vec3(.75,.82,1.)*smoothstep(0.,.3,d);' +
+      'float g=pow(max(0.,sin(ph*1.63+T*1.7+sin(u.x*11.+T*.6)*2.2)),10.)*(.55+.45*sin(u.x*37.+T*1.3+ph*.2))*smoothstep(.02,.25,d)*k;' +
+      'c+=c*g*smoothstep(.1,.45,lum)*1.5+g*.06*vec3(.75,.82,1.)*smoothstep(0.,.3,d);' +
+      'c*=1.+.24*sin(ph*.7-T*2.2+u.x*3.)*smoothstep(.18,.55,lum)*k;' +   /* the gold reflections shimmer */
       'float a=smoothstep(0.,.03,u.y);' +                          /* the layer\'s top edge melts into the painted art */
       'gl_FragColor=vec4(c*a,a);' +
     '}';
   function water(host) {
+    if (PIN) host = PIN.root;
     if (!host || reduce || host.querySelector('.tt-water')) return;
     css();
     var cv = document.createElement('canvas');
@@ -252,5 +265,94 @@
     if (global.IntersectionObserver) new IntersectionObserver(function (es) { onScreen = es[0].isIntersecting; if (onScreen) run(); }).observe(cv);
   }
 
-  global.CozTransitScene = { play: play, water: water };
+  /* ---------------- TS-A1.3: pinned, shrinking to the top quarter while reading ---------------- */
+  var PIN = null;
+  var KEEP_TOP = 360, KEEP_BOT = 1110, QUARTER = .25, WATERC = 'rgb(0,0,6)';
+  function pin() {
+    if (PIN) return PIN;
+    var page = document.querySelector('.page'), hero = page && page.querySelector('.hero');
+    if (!page || !hero) return null;
+    var st = document.createElement('style');
+    st.textContent =
+      '.tt-pin{position:fixed;top:0;left:0;right:0;margin:0 auto;width:100%;max-width:640px;aspect-ratio:' + AW + '/' + AH + ';z-index:30;' +
+        'container-type:inline-size;overflow:hidden;transform-origin:50% 0;pointer-events:auto}' +
+      '.tt-pin-art{position:absolute;inset:0;background:url("tropical-transits-bg.jpg?v=1") center top/100% auto no-repeat,' + WATERC + '}' +
+      '.tt-pin .tt-pin-head{position:relative;z-index:3}' +
+      '.tt-pin-veil{position:absolute;inset:0;z-index:5;pointer-events:none;opacity:0;' +
+        'background:linear-gradient(90deg,rgba(0,0,6,1) 0%,rgba(0,0,6,0) 13%,rgba(0,0,6,0) 87%,rgba(0,0,6,1) 100%),' +
+        'linear-gradient(180deg,rgba(0,0,6,.18) 0%,rgba(0,0,6,.18) ' + (KEEP_BOT / AH * 100 - 13).toFixed(1) + '%,rgba(0,0,6,.8) ' + (KEEP_BOT / AH * 100 - 3).toFixed(1) + '%,rgba(0,0,6,1) ' + (KEEP_BOT / AH * 100).toFixed(1) + '%)}' +
+      '.tt-pin-band{position:fixed;top:0;left:0;right:0;z-index:29;height:0;transform-origin:50% 0;transform:scaleY(0);background:' + WATERC + ';pointer-events:auto}';
+    document.head.appendChild(st);
+    var root = document.createElement('div'); root.className = 'tt-pin';
+    var art = document.createElement('div'); art.className = 'tt-pin-art'; root.appendChild(art);
+    var head = document.createElement('div'); head.className = 'hero tt-pin-head';      /* his logo and title, moved in with the art */
+    while (hero.firstChild) head.appendChild(hero.firstChild);
+    root.appendChild(head);
+    var veil = document.createElement('div'); veil.className = 'tt-pin-veil'; root.appendChild(veil);
+    var band = document.createElement('div'); band.className = 'tt-pin-band'; band.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(band); document.body.appendChild(root);
+
+    var G = null, lastW = 0, tick = 0, tlStyle = null, TL = false;
+    try { TL = !!(global.CSS && CSS.supports && CSS.supports('animation-timeline: scroll()')); } catch (e) {}
+    function geo() {
+      var W = root.offsetWidth, k = W / AW, H = AH * k;
+      var sh = (global.screen && global.screen.height) || global.innerHeight || 700;
+      var target = Math.max(150, Math.min(sh * QUARTER, H * .6));
+      var s1 = target / ((KEEP_BOT - KEEP_TOP) * k);
+      return { W: W, k: k, H: H, target: target, s1: s1, ty1: -KEEP_TOP * k * s1, clip1: (AH - KEEP_BOT) * k, D: Math.max(1, H - target) };
+    }
+    /* q: how far the shrink has gone (0..1); the visible bottom edge at q */
+    function at(q) {
+      var g = G, s = 1 + (g.s1 - 1) * q, ty = g.ty1 * q, clip = g.clip1 * q;
+      return { s: s, ty: ty, clip: clip, bottom: ty + s * (g.H - clip) };
+    }
+    /* the q that puts the bottom edge exactly where the reading's top has scrolled to, so they move together */
+    function qFor(p) {
+      var want = G.H - p * (G.H - G.target), lo = 0, hi = 1;
+      for (var i = 0; i < 22; i++) { var m = (lo + hi) / 2; if (at(m).bottom > want) lo = m; else hi = m; }
+      return (lo + hi) / 2;
+    }
+    function frame(q) {
+      var a = at(q);
+      return { tf: 'translateY(' + a.ty.toFixed(2) + 'px) scale(' + a.s.toFixed(4) + ')', clip: 'inset(0px 0px ' + a.clip.toFixed(2) + 'px 0px)', bottom: a.bottom };
+    }
+    function apply(p) {
+      var q = qFor(p), f = frame(q);
+      root.style.transform = q ? f.tf : '';
+      root.style.clipPath = q ? f.clip : '';
+      veil.style.opacity = q.toFixed(3);
+      band.style.transform = 'scaleY(' + (q > 0 ? f.bottom / G.H : 0).toFixed(4) + ')';
+    }
+    function layout() {
+      G = geo(); lastW = G.W;
+      band.style.height = G.H + 'px';
+      if (TL) {
+        if (!tlStyle) { tlStyle = document.createElement('style'); document.head.appendChild(tlStyle); }
+        var kr = '', kv = '', kb = '';
+        for (var i = 0; i <= 10; i++) {
+          var p = i / 10, q = qFor(p), f = frame(q), o = (i * 10) + '%';
+          kr += o + '{transform:' + f.tf + ';clip-path:' + f.clip + '}';
+          kv += o + '{opacity:' + q.toFixed(3) + '}';
+          kb += o + '{transform:scaleY(' + (i ? f.bottom / G.H : 0).toFixed(4) + ')}';
+          if (i === 0) kb += '0.5%{transform:scaleY(1)}';
+        }
+        var run = 'animation-timing-function:linear;animation-fill-mode:both;animation-duration:1ms;animation-duration:auto;' +
+                  'animation-timeline:scroll(root block);animation-range:0px ' + G.D.toFixed(1) + 'px;';
+        tlStyle.textContent = '@keyframes ttPin{' + kr + '}@keyframes ttVeil{' + kv + '}@keyframes ttBand{' + kb + '}' +
+          '.tt-pin{animation-name:ttPin;' + run + '}.tt-pin-veil{animation-name:ttVeil;' + run + '}.tt-pin-band{animation-name:ttBand;' + run + '}';
+      } else {
+        apply(Math.min(1, Math.max(0, global.pageYOffset || 0) / G.D));
+      }
+    }
+    if (!TL) global.addEventListener('scroll', function () {
+      if (tick) return;
+      tick = requestAnimationFrame(function () { tick = 0; apply(Math.min(1, Math.max(0, global.pageYOffset || 0) / G.D)); });
+    }, { passive: true });
+    global.addEventListener('resize', function () { if (root.offsetWidth !== lastW) layout(); });   /* Safari's bars changing height do not count */
+    layout();
+    PIN = { root: root, bottom: function () { return G ? G.target : 0; } };
+    return PIN;
+  }
+
+  global.CozTransitScene = { play: play, water: water, pin: pin, pinBottom: function () { return PIN ? PIN.bottom() : 0; } };
 })(window);
