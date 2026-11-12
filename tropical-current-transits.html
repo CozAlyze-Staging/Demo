@@ -107,7 +107,7 @@ h3{font-family:var(--head);font-weight:500;font-size:clamp(16px,4.5cqw,19.5px);l
       <a href="tropical-reading.html">&lsaquo; Back to Your Tropical Reading</a>
       <a href="tropical-birth-chart.html">Next: Your Birth Chart &rsaquo;</a>
     </nav>
-    <div class="stamp" aria-hidden="true">CURRENT TRANSITS · TT1.2 opens at the top · VO1.4 read aloud, music stops</div>
+    <div class="stamp" aria-hidden="true">CURRENT TRANSITS · TT1.3 · TS-A1.0 transits travel to the wheel · VO1.4 read aloud, music stops</div>
   </div>
  </div>
 </main>
@@ -124,6 +124,7 @@ h3{font-family:var(--head);font-weight:500;font-size:clamp(16px,4.5cqw,19.5px);l
 <script src="ascendant-library.js?v=4"></script>
 <script src="compare-current-timing.js?v=4"></script>
 <script src="coz-voice.js?v=6"></script>   <!-- VO1 (Oct 27 2026, staging only): the page read aloud -->
+<script src="coz-transit-scene.js?v=1"></script>   <!-- TS-A1.0 (Nov 11 2026, staging only): transits travel to the wheel -->
 <script>
 (function(){
   'use strict';
@@ -196,6 +197,8 @@ h3{font-family:var(--head);font-weight:500;font-size:clamp(16px,4.5cqw,19.5px);l
       '<p class="note">' + esc(NOTE) + '</p>';
     $('reading').innerHTML = html;
     $('status').hidden = true;
+    /* TS-A1.0 (Nov 11 2026, his ruling, staging only): each active transit comes up out of the water and travels to the wheel */
+    try { if (window.CozTransitScene) CozTransitScene.play(document.querySelector('.page'), d); } catch (e) {}
     /* GD1 r2: the transits are on screen: the dashboard door counts, for the chart run they were calculated from */
     try { (window.CozDoors ? CozDoors.mark : function (s, dr, r) { (window.__cozDoorsQ = window.__cozDoorsQ || []).push([s, dr, r]); })('tropical', 'timing', d.run); } catch (e) {}
     /* all closed when the page opens; one open at a time (the Compare reading's accordion behaviour) */
