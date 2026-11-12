@@ -4,15 +4,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Sample Compatibility Reading · CozAlyze</title>
-<!-- COMPATIBILITY SAMPLE · CXS1 (Nov 12 2026, staging preview only). Shows how a Compatibility reading will read and how it
-     is laid out, for the view chosen on compatibility.html (?view=vedic|western|both&name=<first name>[&time=unknown]).
-     Every word and number here is a fixed layout sample, not calculated from any chart, and the page says so at the top.
-     Section names come from the Compatibility proposal (Intimacy, Communication, Conflict & Repair, Money); the full
-     section list and the writer wait on the Compatibility spec and his rulings. Agreed content rules already applied:
-     the Guna points appear only inside the Vedic basis, kuta by kuta, with no percentage and no pass or fail; Kuja is
-     shown separately and never adds to the 36; Varna is named as a scoring part only; no health, fertility or
-     longevity claims. With an unknown birth time the basis notes that only whole-day results are used.
-     Tap-downs as on the Learn page; all closed when the page opens (his result-page ruling, Oct 25). -->
+<!-- COMPATIBILITY SAMPLE · CXS2 (Nov 12 2026, his rulings, staging preview only). How a Compatibility purchase reads, for
+     the view chosen on compatibility.html (?view=vedic|western|both&name=<first name>[&time=unknown]).
+     CXS2: the six approved sections (Love, Attraction & Intimacy / Emotional Connection & Trust / Communication &
+     Understanding / Conflict & Repair / Money & Everyday Partnership / Commitment & Shared Direction) with an Overview
+     first and Your Relationship Takeaway last, about 150 to 200 words each. Both = two separate complete readings
+     (never merged), opened one at a time with a Vedic / Western switch, under a short shared introduction.
+     Every reading is labelled an illustrative sample, not calculated. Each section names what a real reading draws on,
+     but no placement, aspect, score or chart finding is stated: the Astrological Basis shows the method only (the
+     eight kutas with their maximum points, Kuja kept outside the 36, no percentage, no pass or fail). With an unknown
+     birth time each basis says what is left out. Tap-downs all closed on open (his result-page ruling, Oct 25). -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@400;500&family=Montserrat:wght@300;400&display=swap" rel="stylesheet">
@@ -31,8 +32,10 @@
 .ln-item[open] summary .chev{transform:rotate(90deg)}
 .ln-item summary:focus-visible{outline:1px solid var(--gold);outline-offset:2px}
 .ln-body{padding:0 0 1.1rem}
-.ln-body p{font-size:1.0625rem;line-height:1.5;color:var(--text)}
-.ln-body p+p{margin-top:.75rem}
+.ln-body p{font-size:1.0625rem;line-height:1.55;color:var(--text)}
+.ln-body p+p{margin-top:.8rem}
+.ln-body .draws{font-size:.9375rem;line-height:1.45;color:var(--muted);font-style:italic}
+.cx-ill{display:block;font-family:var(--sans);font-weight:400;font-size:.875rem;color:var(--gold);margin-top:.35rem}
 .kt{width:100%;border-collapse:collapse;margin-top:.75rem;font-size:1rem}
 .kt td{padding:.55rem 0;border-bottom:1px solid var(--rule);color:var(--text);vertical-align:top}
 .kt td:last-child{text-align:right;white-space:nowrap;color:var(--cream)}
@@ -40,6 +43,7 @@
 .kt tr.total td{border-bottom:0;color:var(--cream);font-weight:400}
 .cx-sample{font-size:.9375rem;line-height:1.45;color:var(--gold);text-align:center;margin-top:.8rem}
 .cx-disc{font-size:.875rem;line-height:1.45;color:var(--muted);text-align:center;max-width:30rem}
+.acct-body>[hidden]{display:none!important}
 </style>
 </head>
 <body>
@@ -47,65 +51,59 @@
   <img class="acct-sky" src="acct-sky-top.jpg?v=1" alt="CozAlyze" width="1024" height="311">
   <main class="acct-main" id="main">
     <header class="acct-head">
-      <h1>Your Compatibility Reading</h1>
+      <h1 id="h1">Your Compatibility Reading</h1>
       <p class="sub" id="who">You and your partner</p>
-      <p class="sub" id="viewName" style="margin-top:.2rem"></p>
-      <p class="cx-sample">Sample reading for layout only. It isn’t calculated from these charts.</p>
+      <p class="cx-sample">Illustrative sample. Not calculated from your charts.</p>
       <div class="acct-div" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0 13.6 10.4 24 12 13.6 13.6 12 24 10.4 13.6 0 12 10.4 10.4Z"/></svg></div>
     </header>
     <div class="acct-body">
-      <section class="card ln-card" aria-labelledby="rTitle">
-        <h2 class="card-title ruled" id="rTitle">The Reading</h2>
-        <details class="ln-item"><summary><h3>Intimacy</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body">
-          <p>You and <span class="pn"></span> may feel an easy warmth together, the kind that turns into comfort quickly. You may show closeness through touch and shared routines, while <span class="pn"></span> may show it through words and attention.</p>
-          <p>Making room for both ways of being close tends to keep the connection steady.</p>
-        </div></details>
-        <details class="ln-item"><summary><h3>Communication</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body">
-          <p>Conversation may come naturally between you, with a shared sense of humor that softens hard topics. <span class="pnC"></span> may think out loud, while you may need time to sort your thoughts first.</p>
-          <p>Naming that difference early can save a lot of crossed wires.</p>
-        </div></details>
-        <details class="ln-item"><summary><h3>Conflict &amp; Repair</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body">
-          <p>Disagreements may flare quickly and cool just as fast. You may want to settle things right away, while <span class="pn"></span> may need a little distance before talking it through.</p>
-          <p>Agreeing ahead of time on how you’ll come back together can matter more than who was right.</p>
-        </div></details>
-        <details class="ln-item"><summary><h3>Money</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body">
-          <p>You may see money as security, while <span class="pn"></span> may see it as freedom to enjoy life now. Both views have something to offer.</p>
-          <p>A shared plan that honors saving and enjoying can keep money from becoming a sore spot.</p>
-        </div></details>
+      <section class="card" id="twoCard" hidden aria-labelledby="twoT">
+        <h2 class="card-title ruled" id="twoT">Two Perspectives</h2>
+        <p class="p-text" style="margin-top:.7rem">Your purchase includes two complete readings. Your Vedic reading compares your Moons first, then the deeper structure of both charts. Your Western reading lays your charts over each other to see how your personalities meet. Each reading stands on its own, so you can see what each system finds.</p>
+        <fieldset style="border:0;margin-top:1.1rem">
+          <legend class="sr-only">Reading</legend>
+          <div class="seg wide">
+            <label class="on"><input type="radio" name="sys" value="vedic" checked>Vedic</label>
+            <label><input type="radio" name="sys" value="western">Western</label>
+          </div>
+        </fieldset>
       </section>
+<section class="card ln-card" data-sys="vedic" aria-labelledby="vedicT">
+<h2 class="card-title ruled" id="vedicT">Your Vedic Compatibility Reading<span class="cx-ill">Illustrative sample · not calculated</span></h2>
+<details class="ln-item"><summary><h3>Overview</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body"><p>In Vedic astrology, compatibility starts with the Moon. The Moon shows the mind, the feelings and what each of you needs to feel at peace, so the tradition compares your two Moons first, through their signs and birth stars.</p><p>It then looks at both full charts: the seventh house of partnership and the planet that rules it, Venus and Jupiter, and the Navamsa, the chart Vedic astrologers read for marriage. The questions it asks are practical ones. Do your minds settle easily together? Do your natures pull in the same direction? Can this bond support the life each of you is here to build?</p></div></details>
+<details class="ln-item"><summary><h3>Love, Attraction &amp; Intimacy</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body"><p class="draws">A reading for your charts draws on Yoni, Kuja (Mars), and Venus and Mars in both charts.</p><p>Vedic tradition gives each birth star an animal nature, called Yoni, and reads physical attraction through how two of those natures meet. Some pairs fit easily. Others feel a strong pull with a little wariness underneath, like two animals that admire each other from a distance before coming close.</p><p>In a bond like this, attraction may begin with how <span class="pn"></span> carries themselves, a steadiness or quiet confidence that draws you in. You may bring warmth and spontaneity that helps <span class="pn"></span> relax and come forward. Over time, rhythm can matter as much as spark. One of you may want closeness often and openly, while the other shows desire in fewer, deeper moments.</p><p>Mars matters here too. Vedic astrologers check each chart for Kuja, a placement of Mars that can make desire and temper run hot. Where it appears, it asks both people for patience and honest talk about what each of you needs.</p><p>When you understand each other’s rhythm, intimacy may become one of the places where you feel most at home together.</p></div></details>
+<details class="ln-item"><summary><h3>Emotional Connection &amp; Trust</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body"><p class="draws">A reading for your charts draws on your two Moon signs, your birth stars (Tara) and your temperaments (Gana).</p><p>Because the Moon carries so much weight in Vedic astrology, this is the heart of a Vedic compatibility reading. Tara compares your birth stars to see how naturally your minds support each other. Gana compares your basic temperaments, which the tradition calls Deva, Manushya and Rakshasa, often translated as divine, human and fierce.</p><p>Two people with different temperaments can feel safe together, but they may build trust in different ways. One of you may trust through consistency: the same words, the same habits, the same kindness, day after day. The other may trust through depth, and feel secure only once something hard has been shared and survived together.</p><p>You may notice this when one of you is upset. The steadier partner may try to restore calm right away, while the more intense one needs the feeling named before anything can settle. Trouble starts when each person reads the other’s way of coping as not caring.</p><p>Trust here tends to grow from small, repeated moments. When each of you learns what makes the other feel safe and offers it without being asked, the bond can become a real refuge.</p></div></details>
+<details class="ln-item"><summary><h3>Communication &amp; Understanding</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body"><p class="draws">A reading for your charts draws on Graha Maitri, the friendship between the rulers of your Moon signs, and Mercury in both charts.</p><p>Vedic astrology has a simple way of asking whether two minds get along. Each Moon sign has a ruling planet, and Graha Maitri looks at whether those two planets are friends, neutral or at odds in the tradition. Friendly rulers tend to mean conversations that flow. Mixed rulers can mean two people who care about each other but arrive at ideas from different directions.</p><p>That difference may show up in everyday talk. You might reach a conclusion quickly and want to act on it, while <span class="pn"></span> turns the question over and asks one more thing first. To you, that can feel like doubt. To <span class="pn"></span>, your speed can feel like being rushed past something important.</p><p>Mercury in each chart adds detail: how each of you explains, listens and argues a point. A reading for your charts would show whether you share a style or balance each other.</p><p>Couples with different mental rhythms often do well with a little structure, such as saving big decisions for a calm moment and saying out loud when one of you needs more time.</p></div></details>
+<details class="ln-item"><summary><h3>Conflict &amp; Repair</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body"><p class="draws">A reading for your charts draws on Gana, Bhakoot (where your Moon signs sit from each other) and Kuja.</p><p>Every couple disagrees. Vedic matching looks at how disagreements are likely to feel and how easily the two of you find your way back. Gana shows whether your temperaments clash or cushion each other. Bhakoot looks at where your Moon signs fall from one another, which the tradition links to how smoothly a shared life runs.</p><p>Where temperaments differ, an argument may follow a pattern. One of you raises the issue sharply, and the other goes quiet to keep the peace. The quiet partner believes they are calming things down. The sharp partner feels shut out and pushes harder. Both are trying to protect the relationship, in opposite ways.</p><p>Repair tends to come easiest when you agree in advance on how you’ll come back together after a fight. That might be a pause of an agreed length, a walk before talking, or a rule that whoever cools down first reaches out.</p><p>Vedic tradition also recognizes cancellations, conditions in the charts that soften a difficult factor. A full reading names them where they apply, so a hard factor is never read alone.</p></div></details>
+<details class="ln-item"><summary><h3>Money &amp; Everyday Partnership</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body"><p class="draws">A reading for your charts draws on Bhakoot, the second and eleventh houses, and Jupiter in both charts.</p><p>Vedic astrology treats a marriage as a household, a shared life with duties as well as feelings. This section looks at how the two of you might run that household together, through Bhakoot, the second house of savings and family resources, the eleventh house of gains, and Jupiter, the planet of growth and good fortune.</p><p>Many couples split along a familiar line. One partner feels secure with savings in place and a plan for the year. The other feels secure when life is lived well now, with room for generosity, travel and pleasure. In daily life this may show up as small tensions over a purchase, or over who notices the bills first.</p><p>A saver can keep a household steady, and a spender can keep it from becoming joyless. Problems come when one person starts carrying all the worry or all the blame.</p><p>What helps most is clarity. Decide together what security means for you, give each person some money of their own, and share the everyday work of the home fairly. In Vedic terms, a household runs well when each person honors their part of the duty.</p></div></details>
+<details class="ln-item"><summary><h3>Commitment &amp; Shared Direction</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body"><p class="draws">A reading for your charts draws on the seventh house and its ruler in each chart, the Navamsa, and where each of your planets falls in the other’s chart.</p><p>Here Vedic compatibility looks past the Moon to the deeper structure of each chart. The seventh house shows what each of you seeks in a partner, and its ruling planet shows how you tend to commit. The Navamsa, the chart traditionally read for marriage, shows what each of you grows into within a lasting bond.</p><p>When those pictures line up, two people may feel that the relationship serves something larger than either of them: a family, a shared purpose, a way of life. When they differ, one of you may see commitment as a promise kept through every season, while the other sees it as a choice renewed by growing together.</p><p>Both views can hold a strong partnership if they are spoken. What does a good life together look like in ten years? What would each of you never give up? How will you support each other’s purpose as well as the relationship’s?</p><p>In the Vedic view, a relationship is strongest when it helps each person live out their dharma, the path they feel called to follow.</p></div></details>
+<details class="ln-item"><summary><h3>Your Relationship Takeaway</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body"><p>Through the Vedic lens, your relationship is read first as a meeting of two minds. Where your Moons agree, the bond may feel easy and familiar. Where they differ, the differences mark the places that ask for patience.</p><p>The thread running through this reading is pace. You may move toward things quickly while <span class="pn"></span> moves with care, in love, in conflict and in money. That contrast can wear you both down if each of you expects the other to match your speed. It can also become your strength, with one of you bringing momentum and the other bringing depth.</p><p>A good place to start is the conversation many couples put off: what each of you needs to feel safe, and what each of you is here to build. A bond that makes room for both can grow steadier with time.</p></div></details>
+</section>
+<section class="card ln-card" data-sys="vedic" aria-labelledby="vbT">
+<h2 class="card-title ruled" id="vbT">Vedic Astrological Basis</h2>
+<details class="ln-item"><summary><h3>Ashtakoota Matching</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body"><p>Eight factors, called kutas, compare your two Moons. Together they are worth 36 points. In your reading, each factor shows its own points here, one at a time, with no percentage and no pass or fail.</p><table class="kt" aria-label="The eight kutas and their points"><tr><td>Varna</td><td>up to 1</td></tr><tr><td>Vashya<small>mutual attraction</small></td><td>up to 2</td></tr><tr><td>Tara<small>birth star harmony</small></td><td>up to 3</td></tr><tr><td>Yoni<small>instinctive nature</small></td><td>up to 4</td></tr><tr><td>Graha Maitri<small>friendship of the Moon sign rulers</small></td><td>up to 5</td></tr><tr><td>Gana<small>temperament</small></td><td>up to 6</td></tr><tr><td>Bhakoot<small>Moon sign relationship</small></td><td>up to 7</td></tr><tr><td>Nadi</td><td>up to 8</td></tr><tr class="total"><td>All eight</td><td>up to 36</td></tr></table></div></details>
+<details class="ln-item"><summary><h3>Kuja (Mars)</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body"><p>Kuja is checked separately in each chart, along with the traditional cancellations. It never adds to or takes from the 36 points.</p></div></details>
+<details class="ln-item"><summary><h3>Beyond the Moon</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body"><p>The seventh house and its ruler in each chart, Venus and Jupiter, the Navamsa, and where each person’s planets fall in the other’s chart.</p></div></details>
+<div class="notime" hidden><details class="ln-item"><summary><h3>Birth Time</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body"><p>Without <span class="pnS"></span> birth time, only the factors that stay the same through the whole birth day are used. The rising sign, the houses and the Navamsa positions that need a birth time are left out.</p></div></details>
+</div></section>
+<section class="card ln-card" data-sys="western" aria-labelledby="westernT">
+<h2 class="card-title ruled" id="westernT">Your Western Compatibility Reading<span class="cx-ill">Illustrative sample · not calculated</span></h2>
+<details class="ln-item"><summary><h3>Overview</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body"><p>Western astrology reads compatibility by laying one birth chart over the other. This is called synastry. It looks at how each person’s planets connect with the other’s: where they harmonize, where they create friction, and where one person’s planets land in the other’s life.</p><p>It also reads each chart on its own terms, because how you love starts with who you are. The Western view is psychological. It asks what each of you brings, what you stir up in each other, and how you can grow because of it.</p></div></details>
+<details class="ln-item"><summary><h3>Love, Attraction &amp; Intimacy</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body"><p class="draws">A reading for your charts draws on Venus and Mars in each chart, the contacts between them, and your fifth and eighth houses.</p><p>In Western astrology, Venus shows what you find beautiful and how you give love, and Mars shows what you want and how you go after it. Attraction is read in the contacts between your Venus and Mars and <span class="pnS"></span>, and in where each of you lands in the other’s fifth house of romance and eighth house of deep intimacy.</p><p>Some couples feel chemistry right away, a pull that is hard to explain. Others feel it build slowly as trust grows. A reading for your charts would show which kind of spark you share, and whether it leans toward playfulness, passion or tenderness.</p><p>Everyday intimacy may look like this: one of you shows love by doing, through small favors, plans and practical care, while the other shows it through words and touch. Each of you can miss the other’s gestures entirely.</p><p>Learning each other’s language of love keeps attraction alive long after the early rush. Desire tends to stay strongest when both people feel seen for who they are as well as wanted.</p></div></details>
+<details class="ln-item"><summary><h3>Emotional Connection &amp; Trust</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body"><p class="draws">A reading for your charts draws on the Moon in each chart, Moon contacts between your charts, and Saturn.</p><p>The Moon in Western astrology describes your emotional needs: what comforts you, what unsettles you and how you react when you feel hurt. Emotional connection is read through how your two Moons get along and how each Moon is touched by the other person’s planets.</p><p>When one person’s Moon meets the other’s Sun or Venus, the bond can feel like recognition, as if you have known each other a long time. Contacts with Saturn work differently. They can bring loyalty and staying power, along with moments when one of you feels judged or held back.</p><p>Your emotional styles may show most under stress. One of you may want reassurance, a hand to hold and words that say you’re okay. The other may cope by becoming self-reliant and handling it alone, so as not to be a burden. Each of you can read the other’s way of coping as distance.</p><p>Trust grows when both needs are treated as real. That can be as simple as saying, “I need a little time, and I’ll come back to this tonight,” and then doing it.</p></div></details>
+<details class="ln-item"><summary><h3>Communication &amp; Understanding</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body"><p class="draws">A reading for your charts draws on Mercury in each chart, Mercury contacts between your charts, and the third house.</p><p>Mercury shows how you think and talk: fast or slow, direct or diplomatic, focused on facts or on feelings. In synastry, contacts between your two Mercurys, and between one Mercury and the other’s Moon or Mars, show how easily your words land with each other.</p><p>Some couples finish each other’s sentences. Others think in different languages, one sorting ideas into lists while the other reasons through stories and examples. Both can work, but the second kind takes more translation.</p><p>In daily life this may show up in how you plan. One of you may want the details settled now. The other may prefer to keep options open and decide as things unfold. A plan that feels responsible to one of you can feel rigid to the other.</p><p>Where Mercury meets Mars, debates can turn sharp, and you may both enjoy a good argument a little too much. Where it meets the Moon, words carry extra emotional weight. Paying attention to tone as well as content can save you a lot of misunderstanding.</p></div></details>
+<details class="ln-item"><summary><h3>Conflict &amp; Repair</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body"><p class="draws">A reading for your charts draws on squares and oppositions between your charts, especially those involving Mars, Saturn or Pluto.</p><p>Western astrology looks for friction in the tense angles between two charts, the squares and oppositions, especially where Mars, Saturn or Pluto are involved. Friction is part of most lasting relationships. It shows where you push each other to grow, and where you can hurt each other if you aren’t careful.</p><p>A common pattern looks like this. One of you raises something small, and the other hears a bigger criticism underneath it. The answer comes back stronger than expected, and soon you are arguing about the argument. Mars contacts tend to speed this up. Saturn contacts can make it colder, with one person withdrawing into silence or rules.</p><p>Repair, in Western terms, starts with awareness. When you know the pattern, you can name it in the moment: “We’re doing the thing again.” That small step can turn a fight back into a conversation.</p><p>Couples who handle conflict well tend to share one habit: they come back, own their part and try again.</p></div></details>
+<details class="ln-item"><summary><h3>Money &amp; Everyday Partnership</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body"><p class="draws">A reading for your charts draws on Venus and Saturn, your second and sixth houses, and where your planets fall in each other’s houses.</p><p>Money and daily life are where values become visible. Western astrology reads them through Venus, which shows what you value and enjoy, Saturn, which shows how you handle responsibility, and the second and sixth houses, the areas of money and daily routine.</p><p>When one person’s planets fall in the other’s second house, money may become an emotional topic between you, a way of showing care or of feeling controlled. When they fall in the sixth house, your routines may weave together closely, which can feel supportive or crowded.</p><p>You may notice your differences in ordinary choices: how clean the kitchen needs to be, how far ahead to plan a trip, whether a gift should be practical or a surprise. These small things often carry big feelings about being respected.</p><p>It helps to talk about money and chores as values as well as tasks. Ask what each choice means to the other person. A partnership runs more smoothly when each of you feels your way of caring for the home is noticed.</p></div></details>
+<details class="ln-item"><summary><h3>Commitment &amp; Shared Direction</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body"><p class="draws">A reading for your charts draws on Saturn and Jupiter contacts, the seventh house in each chart, and the North Node.</p><p>Western astrology reads commitment through Saturn, the planet of time and loyalty, and Jupiter, the planet of growth and shared hope. The seventh house in each chart shows what you seek in a partner, and contacts to the North Node can bring a sense that the relationship is moving you somewhere new.</p><p>Saturn contacts between two charts are often called the glue of long relationships. They can bring the feeling of being taken seriously, and also pressure, duty or a fear of getting it wrong. Jupiter contacts tend to bring optimism and a feeling that life gets bigger together.</p><p>The question for many couples is how to grow without growing apart. One of you may want to build something steady and lasting. The other may need room to change, explore or reinvent. Both wishes can live in one relationship when they are spoken.</p><p>Make time to talk about the future on purpose, before something forces the topic. Shared direction is something two people choose again and again.</p></div></details>
+<details class="ln-item"><summary><h3>Your Relationship Takeaway</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body"><p>Through the Western lens, your relationship is a meeting of two personalities, each with its own way of loving, talking and coping. The places where your charts flow show what comes easily between you. The places where they clash show where you may learn the most about yourselves.</p><p>The thread here is how differently you may express care. One of you may show it through actions and plans, the other through words and feeling. Under stress, those differences can look like distance. With understanding, they can become a balance, with each of you offering what the other finds harder to give.</p><p>The most useful thing you can do with this reading is talk about it together. Notice which patterns you recognize, and choose one to work on gently. Relationships change when two people decide, more than once, to understand each other a little better.</p></div></details>
+</section>
+<section class="card ln-card" data-sys="western" aria-labelledby="wbT">
+<h2 class="card-title ruled" id="wbT">Western Astrological Basis</h2>
+<details class="ln-item"><summary><h3>Synastry</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body"><p>The angles between your planets and <span class="pnS"></span>: conjunctions, sextiles, squares, trines and oppositions.</p></div></details>
+<details class="ln-item"><summary><h3>House Overlays</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body"><p>Where each of your planets falls in the other person’s houses, and what part of their life it touches.</p></div></details>
+<div class="notime" hidden><details class="ln-item"><summary><h3>Birth Time</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body"><p>Without <span class="pnS"></span> birth time, rising signs and house overlays are left out.</p></div></details>
+</div></section>
 
-      <section class="card ln-card" id="vedicBasis" aria-labelledby="vbTitle" hidden>
-        <h2 class="card-title ruled" id="vbTitle">Vedic Basis</h2>
-        <details class="ln-item"><summary><h3>Ashtakoota Matching</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body">
-          <p>Vedic astrology compares two Moons through eight factors, called kutas, worth 36 points in all.</p>
-          <table class="kt" aria-label="Sample kuta points">
-            <tr><td>Varna</td><td>1 of 1</td></tr>
-            <tr><td>Vashya<small>mutual attraction</small></td><td>2 of 2</td></tr>
-            <tr><td>Tara<small>birth star harmony</small></td><td>1½ of 3</td></tr>
-            <tr><td>Yoni<small>physical compatibility</small></td><td>3 of 4</td></tr>
-            <tr><td>Graha Maitri<small>friendship of the Moon sign rulers</small></td><td>5 of 5</td></tr>
-            <tr><td>Gana<small>temperament</small></td><td>6 of 6</td></tr>
-            <tr><td>Bhakoot<small>Moon sign relationship</small></td><td>0 of 7</td></tr>
-            <tr><td>Nadi</td><td>8 of 8</td></tr>
-            <tr class="total"><td>Total</td><td>26½ of 36</td></tr>
-          </table>
-          <p id="vedicNoTime" hidden style="margin-top:.75rem">Without <span class="pnS"></span> birth time, only the factors that stay the same through the whole birth day are counted.</p>
-        </div></details>
-        <details class="ln-item"><summary><h3>Kuja (Mars)</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body">
-          <p>Kuja is checked separately for each of you and never adds to or takes from the 36 points. In this sample it isn’t present in either chart.</p>
-        </div></details>
-      </section>
-
-      <section class="card ln-card" id="westBasis" aria-labelledby="wbTitle" hidden>
-        <h2 class="card-title ruled" id="wbTitle">Western Basis</h2>
-        <details class="ln-item"><summary><h3>How Your Charts Connect</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body">
-          <p>Your Venus trine <span class="pnS"></span> Moon</p>
-          <p>Your Moon conjunct <span class="pnS"></span> Sun</p>
-          <p>Your Mars square <span class="pnS"></span> Mercury</p>
-          <p><span class="pnSC"></span> Saturn opposite your Venus</p>
-          <p id="westNoTime" hidden>Without <span class="pnS"></span> birth time, rising signs and house overlays are left out.</p>
-        </div></details>
-      </section>
     </div>
   </main>
   <footer class="acct-foot">
@@ -114,7 +112,7 @@
   </footer>
   <img class="acct-cloud l" src="acct-cloud-left.webp?v=1" alt="" width="368" height="293">
   <img class="acct-cloud r" src="acct-cloud-right.webp?v=1" alt="" width="356" height="293">
-  <div class="stamp">COMPATIBILITY SAMPLE · CXS1 · staging preview</div>
+  <div class="stamp">COMPATIBILITY SAMPLE · CXS2 · staging preview</div>
 </div>
 <script>
 (function(){
@@ -122,19 +120,24 @@
   var view = { vedic: 1, western: 1, both: 1 }[q.get("view")] ? q.get("view") : "both";
   var raw = (q.get("name") || "").replace(/\s+/g, " ").trim().slice(0, 40);
   var name = /^[\p{L}\p{M}][\p{L}\p{M}' .’-]*$/u.test(raw) ? raw : "";
-  var noTime = q.get("time") === "unknown";
   function poss(n){ return /s$/i.test(n) ? n + "’" : n + "’s"; }
   function fill(sel, text){ document.querySelectorAll(sel).forEach(function (el) { el.textContent = text; }); }
   fill(".pn", name || "your partner");
   fill(".pnC", name || "Your partner");
   fill(".pnS", name ? poss(name) : "your partner’s");
-  fill(".pnSC", name ? poss(name) : "Your partner’s");
   document.getElementById("who").textContent = name ? "You and " + name : "You and your partner";
-  document.getElementById("viewName").textContent = { vedic: "Vedic View", western: "Western View", both: "Vedic and Western Views" }[view];
-  document.getElementById("vedicBasis").hidden = view === "western";
-  document.getElementById("westBasis").hidden = view === "vedic";
-  document.getElementById("vedicNoTime").hidden = !noTime;
-  document.getElementById("westNoTime").hidden = !noTime;
+  document.getElementById("h1").textContent = view === "both" ? "Your Compatibility Readings" : "Your Compatibility Reading";
+  if (q.get("time") === "unknown") document.querySelectorAll(".notime").forEach(function (el) { el.hidden = false; });
+  function show(sys){ document.querySelectorAll("[data-sys]").forEach(function (el) { el.hidden = el.getAttribute("data-sys") !== sys; }); }
+  var radios = Array.prototype.slice.call(document.querySelectorAll('input[name="sys"]'));
+  if (view === "both") {
+    document.getElementById("twoCard").hidden = false;
+    radios.forEach(function (r) { r.addEventListener("change", function () {
+      radios.forEach(function (x) { x.parentNode.classList.toggle("on", x.checked); });
+      show(r.value);
+    }); });
+    show("vedic");
+  } else show(view);
   /* "Always start at top" (Oct 27) */
   document.querySelectorAll(".ln-item").forEach(function (d) {
     d.addEventListener("toggle", function () { if (d.open && d.querySelector("summary").getBoundingClientRect().top < 0) d.scrollIntoView({ block: "start" }); });

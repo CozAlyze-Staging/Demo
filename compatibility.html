@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Your Compatibility Reading · CozAlyze</title>
 <!-- COMPATIBILITY · CX1 (Nov 12 2026, his rulings, staging preview only). Opened from the Compatibility card's Add on the
-     Add-ons page. The buyer chooses how to see the relationship: the Vedic view ($25), the Western view ($25) or both ($35).
+     Add-ons page. The buyer chooses how to see the relationship: the Vedic view ($25), the Western view ($25) or both ($45, CX1 r1:
+     two separate complete readings, never one merged interpretation).
      Compatibility stays an add-on after a first purchase, for the buyer and one romantic partner; the partner's details
      unlock only this reading. Look: the account pages' frame and styles (his ruling: reuse existing CozAlyze styling).
      Partner entry is the Birth Information form's own date, time and place logic, copied unchanged (the start page's
@@ -47,7 +48,7 @@
       <form id="birthForm" novalidate>
       <section class="card" aria-labelledby="viewTitle">
         <h2 class="card-title ruled" id="viewTitle">Choose Your View</h2>
-        <p class="help" style="margin-top:.6rem">See your relationship through Vedic astrology, Western astrology, or both.</p>
+        <p class="help" style="margin-top:.6rem">See your relationship through Vedic astrology, Western astrology, or both as two complete readings.</p>
         <fieldset id="viewSet" style="border:0;margin-top:1rem" aria-describedby="viewErr">
           <legend class="sr-only">View</legend>
           <div class="seg wide">
@@ -125,7 +126,7 @@
   </footer>
   <img class="acct-cloud l" src="acct-cloud-left.webp?v=1" alt="" width="368" height="293">
   <img class="acct-cloud r" src="acct-cloud-right.webp?v=1" alt="" width="356" height="293">
-  <div class="stamp">COMPATIBILITY · CX1 · staging preview</div>
+  <div class="stamp">COMPATIBILITY · CX1 r1 · staging preview</div>
 </div>
 <script>
 /* the start page's time zone resolver (index.html v19.85), unchanged: the local time is read only in the birthplace's
@@ -171,8 +172,8 @@ function cozResolveBirthTime(dateStr, h12, mi, ampm, tz){
   var GEOAPIFY_KEY = "c8e0278068f24dec92ad52b1b17253d9";   /* the start page's own place search key (index.html) */
   var MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
   var NAME_OK = /^[\p{L}\p{M}][\p{L}\p{M}' .’-]*$/u;
-  var PRICE = { vedic: 25, western: 25, both: 35 };                                   /* his ruling, Nov 12 */
-  var LABEL = { vedic: "Vedic view", western: "Western view", both: "Vedic and Western views" };
+  var PRICE = { vedic: 25, western: 25, both: 45 };                                   /* his ruling, Nov 12: both = two complete readings, $45 */
+  var LABEL = { vedic: "Vedic reading", western: "Western reading", both: "Vedic and Western readings" };
   function $(id){ return document.getElementById(id); }
   var form = $("birthForm"), status = $("birthStatus");
   var nameEl = $("bName"), dateEl = $("bDate"), timeEl = $("bTime"), placeEl = $("bPlace"), listEl = $("bPlaceList");
@@ -336,7 +337,7 @@ function cozResolveBirthTime(dateStr, h12, mi, ampm, tz){
     var v = view();
     views.forEach(function (r) { r.parentNode.classList.toggle("on", r.checked); });
     $("viewPrice").hidden = !v;
-    if (v) { $("viewAmt").textContent = "$" + PRICE[v]; $("viewWhat").textContent = v === "both" ? "Both views" : "One view"; }
+    if (v) { $("viewAmt").textContent = "$" + PRICE[v]; $("viewWhat").textContent = v === "both" ? "Two complete readings" : "One reading"; }
     $("oView").textContent = v ? LABEL[v] : "Choose a view";
     $("oTotal").textContent = "$" + (v ? PRICE[v] : 25);
     $("oWho").textContent = first() ? "You and " + first() : "You and your partner";

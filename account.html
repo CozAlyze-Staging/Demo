@@ -9,7 +9,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@400;500&family=Montserrat:wght@300;400&display=swap" rel="stylesheet">
 <script src="coz-saved.js?v=6"></script>
 <style>
-/* ACCOUNT · A2.2 (Oct 27 2026, his spec, staging only): Edit Profile and the four cards open the five account pages built
+/* ACCOUNT · A2.3 (Nov 12 2026, his ruling, staging only): the solid pill on the water keeps its place and look, relabelled
+   "Explore CozAlyze"; it opens explore.html (Learn, Refer & Earn, Add-ons). The bottom navigation and his art are unchanged.
+   ACCOUNT · A2.2 (Oct 27 2026, his spec, staging only): Edit Profile and the four cards open the five account pages built
    from his approved mockups (account-profile, account-birth, account-purchases, account-settings, account-privacy). They
    are ordinary links, so Back works and coz-nav.js watches the page change. Sign Out, Terms and Privacy unchanged.
    ACCOUNT · A2.1 (Oct 27 2026, his ruling) · CozAlyze-Staging. A2.0 brought into staging from CozAlyze/Test (nav/account.html, N3),
@@ -89,8 +91,8 @@ body{padding-bottom:env(safe-area-inset-bottom)}
     style="left:calc(83 * var(--K));top:calc(1358 * var(--K));width:calc(1040 * var(--K));height:calc(169 * var(--K))"></a>
   <a class="hot" href="account-privacy.html" aria-label="Privacy and Data"
     style="left:calc(83 * var(--K));top:calc(1547 * var(--K));width:calc(1040 * var(--K));height:calc(168 * var(--K))"></a>
-  <!-- ADD-ONS: opens the Add-ons preview with no reading selected -->
-  <a class="pill addons-acct" href="addons.html#/?from=a">Add-ons</a>
+  <!-- A2.3: the pill on the water (was Add-ons) opens Explore CozAlyze: Learn, Refer & Earn and Add-ons -->
+  <a class="pill addons-acct" href="explore.html">Explore CozAlyze</a>
   <!-- Sign Out (border x 287-919, y 1757-1841); Terms (x 475-549) and Privacy (x 644-732), text y 1884-1912.
        Tap areas meet halfway between them (y 1862) and use the empty space around them, so none overlaps. -->
   <button class="hot" type="button" data-need="signout" aria-label="Sign Out"
@@ -108,7 +110,7 @@ body{padding-bottom:env(safe-area-inset-bottom)}
     <a class="acct tap44" href="account.html" aria-label="Account" aria-current="page"
       style="left:calc(770 * var(--K));top:calc(2214 * var(--K) - 22px);width:calc(333 * var(--K))"></a>
   </nav>
-  <div class="stamp">ACCOUNT · A2.2 · staging</div>
+  <div class="stamp">ACCOUNT · A2.3 · staging</div>
 </main>
 <script>
 (function(){
