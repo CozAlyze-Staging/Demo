@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Refer &amp; Earn · CozAlyze</title>
+<!-- REFER & EARN · RF1 (Nov 12 2026, his rulings, staging preview only). The rules he locked: $5 cash for each new customer
+     whose first full reading is paid (Your Vedic $49, Your Tropical $49, Your Combined $75, or a package that includes
+     one); a customer counts once; Compatibility, add-ons and later upgrades never earn another reward; refunds,
+     chargebacks, self-referrals and duplicate accounts earn nothing; +$10 for every five qualifying customers; paid
+     monthly once the balance reaches $25, after the refund and chargeback window; smaller balances roll forward.
+     Look: the account pages' frame and styles (his ruling: reuse existing styling).
+     There is no account, referral tracking or payout service yet, so the link, the share buttons and the earnings say so
+     in the approved account wording; nothing is pretended. ?state=sample shows the earnings card filled with sample
+     numbers, labelled "Sample" on the card, for layout review only. The share message carries the reward disclosure the
+     FTC expects from paid referrers. No tax statement is made here (Abe to review the terms and classification).
+     Not linked from any page yet. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@400;500&family=Montserrat:wght@300;400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="account-area.css?v=2">
+<script src="account-area.js?v=1"></script>
+<script src="coz-saved.js?v=6"></script>
+<style>
+.rf-steps{list-style:none;counter-reset:s;margin-top:.9rem;display:flex;flex-direction:column;gap:.9rem}
+.rf-steps li{counter-increment:s;position:relative;padding-left:2.4rem;font-size:1.0625rem;line-height:1.45;color:var(--text)}
+.rf-steps li::before{content:counter(s);position:absolute;left:0;top:-.05rem;width:1.7rem;height:1.7rem;border:1px solid var(--line);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-family:var(--head);font-size:1rem;color:var(--gold)}
+.rf-link{margin-top:1rem;padding:.85rem 1rem;border:1px dashed var(--rule);border-radius:10px;font-size:1rem;line-height:1.45;color:var(--muted);text-align:center}
+.rf-acts{display:flex;gap:.75rem;margin-top:1rem}
+.rf-acts .btn{flex:1 1 0}
+.rf-msg{margin-top:1rem;font-size:1rem;line-height:1.5;color:var(--text);font-style:italic}
+.cx-line{display:flex;justify-content:space-between;gap:1rem;font-size:1.0625rem;line-height:1.45;color:var(--text);padding:.55rem 0}
+.cx-line+.cx-line{border-top:1px solid var(--rule)}
+.cx-line b{font-weight:400;color:var(--cream)}
+.rf-tag{display:inline-block;margin-left:.5rem;font-family:var(--sans);font-size:.8125rem;font-weight:400;color:var(--gold);border:1px solid var(--line);border-radius:999px;padding:.1rem .55rem;vertical-align:middle}
+.rf-rules{list-style:none;margin-top:.9rem;display:flex;flex-direction:column;gap:.7rem}
+.rf-rules li{font-size:1rem;line-height:1.45;color:var(--text);padding-left:1rem;position:relative}
+.rf-rules li::before{content:"";position:absolute;left:0;top:.6em;width:.32rem;height:.32rem;border-radius:50%;background:var(--gold)}
+</style>
+</head>
+<body>
+<div class="acct">
+  <img class="acct-sky" src="acct-sky-top.jpg?v=1" alt="CozAlyze" width="1024" height="311">
+  <main class="acct-main" id="main">
+    <header class="acct-head">
+      <h1>Refer &amp; Earn</h1>
+      <p class="sub">Earn $5 for every new customer you bring to CozAlyze.</p>
+      <div class="acct-div" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0 13.6 10.4 24 12 13.6 13.6 12 24 10.4 13.6 0 12 10.4 10.4Z"/></svg></div>
+    </header>
+    <div class="acct-body">
+      <section class="card" aria-labelledby="linkTitle">
+        <h2 class="card-title ruled" id="linkTitle">Your Referral Link</h2>
+        <p class="rf-link" id="rfLink">Your personal link will appear here once you can sign in to your CozAlyze account.</p>
+        <div class="rf-acts">
+          <button type="button" class="btn" data-needs-account>Copy Link</button>
+          <button type="button" class="btn" data-needs-account>Share</button>
+        </div>
+        <p class="help" style="margin-top:1rem">When you share, the message says you earn a reward:</p>
+        <p class="rf-msg">“Discover who you are on CozAlyze. I earn a $5 reward if you buy a full reading through my link.”</p>
+      </section>
+
+      <section class="card" aria-labelledby="howTitle">
+        <h2 class="card-title ruled" id="howTitle">How It Works</h2>
+        <ol class="rf-steps">
+          <li>Share your link with someone new to CozAlyze.</li>
+          <li>When they buy their first full reading, you earn $5.</li>
+          <li>Every fifth customer you refer adds a $10 bonus.</li>
+          <li>Once your balance reaches $25, it’s paid to you at the end of the month.</li>
+        </ol>
+      </section>
+
+      <section class="card" aria-labelledby="earnTitle">
+        <h2 class="card-title ruled" id="earnTitle">Your Earnings<span class="rf-tag" id="sampleTag" hidden>Sample</span></h2>
+        <p class="p-text" id="earnNone" style="margin-top:.8rem">Your earnings will show here once you can sign in to your CozAlyze account.</p>
+        <div id="earnSample" hidden>
+          <div class="cx-line"><span>Customers referred</span><b>3</b></div>
+          <div class="cx-line"><span>Waiting for the refund period</span><b>$5</b></div>
+          <div class="cx-line"><span>Balance</span><b>$10</b></div>
+          <div class="cx-line"><span>Next $10 bonus</span><b>2 more customers</b></div>
+          <div class="cx-line"><span>Next payout</span><b>At $25</b></div>
+        </div>
+        <button type="button" class="btn block" style="margin-top:1rem" data-needs-account>Set Up Payouts</button>
+      </section>
+
+      <section class="card" aria-labelledby="rulesTitle">
+        <h2 class="card-title ruled" id="rulesTitle">Program Rules</h2>
+        <ul class="rf-rules">
+          <li>Only new CozAlyze customers count. Their first full reading qualifies: Your Vedic Reading, Your Tropical Reading, Your Combined Reading, or a package that includes one.</li>
+          <li>Each customer counts once. Compatibility readings, add-ons and later upgrades don’t earn another reward.</li>
+          <li>Refunded or charged-back purchases, referring yourself, and duplicate accounts don’t earn rewards.</li>
+          <li>Rewards are paid in cash once a month after the refund period, when your balance reaches $25. Smaller balances carry over to the next month.</li>
+          <li>Whenever you share your link, say that you earn a reward.</li>
+        </ul>
+        <div class="p-act" style="justify-content:center"><button type="button" class="link tap" id="rfTerms">Program Terms</button></div>
+      </section>
+    </div>
+  </main>
+  <footer class="acct-foot">
+    <a class="back" href="account.html" id="rfBack"><svg viewBox="0 0 32 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M30 10H3M10 3 3 10l7 7"/></svg><span>Back</span></a>
+  </footer>
+  <img class="acct-cloud l" src="acct-cloud-left.webp?v=1" alt="" width="368" height="293">
+  <img class="acct-cloud r" src="acct-cloud-right.webp?v=1" alt="" width="356" height="293">
+  <div class="stamp">REFER &amp; EARN · RF1 · staging preview</div>
+</div>
+<script>
+(function(){
+  function $(id){ return document.getElementById(id); }
+  /* layout review only: ?state=sample fills the earnings card with sample numbers, labelled Sample */
+  var sample = new URLSearchParams(location.search).get("state") === "sample";
+  $("sampleTag").hidden = !sample; $("earnSample").hidden = !sample; $("earnNone").hidden = sample;
+  $("rfTerms").addEventListener("click", function (ev) { CozAcct.tell("The program terms aren’t published yet.", ev.currentTarget); });
+  $("rfBack").addEventListener("click", function (ev) {
+    var r = ""; try { r = document.referrer || ""; } catch (e) {}
+    if (r && r.indexOf(location.origin) === 0 && history.length > 1) { ev.preventDefault(); history.back(); }
+  });
+})();
+</script>
+<script src="coz-nav.js?v=2"></script>
+</body>
+</html>

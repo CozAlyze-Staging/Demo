@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Your Compatibility Reading · CozAlyze</title>
+<!-- COMPATIBILITY · CX1 (Nov 12 2026, his rulings, staging preview only). Opened from the Compatibility card's Add on the
+     Add-ons page. The buyer chooses how to see the relationship: the Vedic view ($25), the Western view ($25) or both ($35).
+     Compatibility stays an add-on after a first purchase, for the buyer and one romantic partner; the partner's details
+     unlock only this reading. Look: the account pages' frame and styles (his ruling: reuse existing CozAlyze styling).
+     Partner entry is the Birth Information form's own date, time and place logic, copied unchanged (the start page's
+     rules: number-pad date, clock-style time, Geoapify place search with the birthplace's historical time zone).
+     Unknown birth time: allowed, per the agreed Compatibility rulings (only results that hold for the whole birth
+     day are used). Continue to Payment checks the form and says plainly that this is a preview: no payment, no unlock,
+     nothing saved. It then offers the sample reading page, a layout sample that is not calculated from any chart.
+     The partner-consent line is draft wording pending the privacy document and Abe. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@400;500&family=Montserrat:wght@300;400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="account-area.css?v=2">
+<script src="account-area.js?v=1"></script>
+<script src="coz-saved.js?v=6"></script>
+<style>
+.cx-price{display:flex;align-items:baseline;justify-content:space-between;gap:1rem;margin-top:1rem}
+.cx-price .amt{font-family:var(--head);font-weight:500;font-size:1.75rem;color:var(--cream)}
+.cx-price .what{font-size:1.0625rem;color:var(--text);text-align:right}
+.cx-line{display:flex;justify-content:space-between;gap:1rem;font-size:1.0625rem;line-height:1.45;color:var(--text);padding:.55rem 0}
+.cx-line+.cx-line{border-top:1px solid var(--rule)}
+.cx-line b{font-weight:400;color:var(--cream)}
+.cx-check{display:flex;gap:.75rem;align-items:flex-start;font-size:1rem;line-height:1.45;color:var(--text);margin-top:1.4rem;cursor:pointer}
+.cx-check input{flex:none;width:1.35rem;height:1.35rem;margin-top:.1rem;accent-color:var(--gold)}
+.cx-check[aria-invalid="true"]{color:var(--rose)}
+.cx-time[disabled-look]{opacity:.45}
+.cx-next{display:flex;justify-content:center;margin-top:1rem}
+</style>
+</head>
+<body>
+<div class="acct">
+  <img class="acct-sky" src="acct-sky-top.jpg?v=1" alt="CozAlyze" width="1024" height="311">
+  <main class="acct-main" id="main">
+    <header class="acct-head">
+      <h1>Your Compatibility Reading</h1>
+      <p class="sub">Your chart and one other person’s, read together.</p>
+      <div class="acct-div" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0 13.6 10.4 24 12 13.6 13.6 12 24 10.4 13.6 0 12 10.4 10.4Z"/></svg></div>
+    </header>
+    <div class="acct-body">
+      <form id="birthForm" novalidate>
+      <section class="card" aria-labelledby="viewTitle">
+        <h2 class="card-title ruled" id="viewTitle">Choose Your View</h2>
+        <p class="help" style="margin-top:.6rem">See your relationship through Vedic astrology, Western astrology, or both.</p>
+        <fieldset id="viewSet" style="border:0;margin-top:1rem" aria-describedby="viewErr">
+          <legend class="sr-only">View</legend>
+          <div class="seg wide">
+            <label><input type="radio" name="view" value="vedic">Vedic</label>
+            <label><input type="radio" name="view" value="western">Western</label>
+            <label><input type="radio" name="view" value="both">Both</label>
+          </div>
+        </fieldset>
+        <p class="err" id="viewErr"></p>
+        <div class="cx-price" id="viewPrice" hidden><span class="amt" id="viewAmt"></span><span class="what" id="viewWhat"></span></div>
+      </section>
+
+      <section class="card" aria-labelledby="themTitle" style="margin-top:1rem">
+        <h2 class="card-title ruled" id="themTitle">Their Birth Details</h2>
+        <p class="help" style="margin:.6rem 0 1.2rem">For you and a romantic partner. Use the details recorded at their birth.</p>
+        <div class="field">
+          <label class="label" for="bName">First Name</label>
+          <input class="input" id="bName" type="text" autocomplete="off" autocapitalize="words" spellcheck="false" maxlength="40" aria-describedby="bNameErr">
+          <p class="err" id="bNameErr"></p>
+        </div>
+        <div class="field">
+          <label class="label" for="bDate">Birth Date</label>
+          <input class="input" id="bDate" type="text" inputmode="numeric" autocomplete="off" placeholder="MM / DD / YYYY" maxlength="14" aria-describedby="bDateErr">
+          <p class="err" id="bDateErr"></p>
+        </div>
+        <div class="field">
+          <label class="label" for="bTime">Birth Time</label>
+          <div class="row2 cx-time" id="timeRow">
+            <input class="input grow" id="bTime" type="text" inputmode="numeric" autocomplete="off" placeholder="HH : MM" maxlength="7" aria-describedby="bTimeHelp bTimeErr">
+            <fieldset class="ampm" id="bAmPm" aria-describedby="bTimeErr">
+              <legend class="sr-only">AM or PM</legend>
+              <div class="seg">
+                <label><input type="radio" name="ampm" value="AM">AM</label>
+                <label><input type="radio" name="ampm" value="PM">PM</label>
+              </div>
+            </fieldset>
+          </div>
+          <p class="help" id="bTimeHelp">Use the local time at their birthplace.</p>
+          <p class="err" id="bTimeErr"></p>
+          <div class="opt" style="padding-bottom:0">
+            <div class="what"><p class="name"><label for="noTime">I don’t know their birth time</label></p>
+              <p class="help" id="noTimeHelp">The reading then uses only what holds true for their whole birth day.</p></div>
+            <input class="switch" type="checkbox" role="switch" id="noTime" aria-describedby="noTimeHelp">
+          </div>
+        </div>
+        <div class="field">
+          <label class="label" for="bPlace">Birthplace</label>
+          <div class="with-icon">
+            <input class="input" id="bPlace" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="bPlaceList"
+              autocomplete="off" autocapitalize="words" spellcheck="false" placeholder="Search city or town" aria-describedby="bPlaceHelp bPlaceErr">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/></svg>
+          </div>
+          <ul class="places" id="bPlaceList" role="listbox" aria-label="Places" hidden></ul>
+          <p class="help" id="bPlaceHelp">Select a location from the search results.</p>
+          <p class="err" id="bPlaceErr"></p>
+        </div>
+        <label class="cx-check" id="consentRow"><input type="checkbox" id="consent">
+          <span>I have this person’s permission to use their birth details for this reading.</span></label>
+      </section>
+
+      <section class="card" aria-labelledby="orderTitle" style="margin-top:1rem">
+        <h2 class="card-title ruled" id="orderTitle">Your Order</h2>
+        <div class="cx-line"><span>Reading</span><b id="oView">Choose a view</b></div>
+        <div class="cx-line"><span>For</span><b id="oWho">You and your partner</b></div>
+        <div class="cx-line"><span>Total</span><b id="oTotal">$25</b></div>
+        <button class="btn-gold gap" type="submit" id="payBtn">Continue to Payment</button>
+        <p class="status" id="birthStatus" role="status"></p>
+        <div class="cx-next" id="sampleRow" hidden><a class="btn" id="sampleLink" href="compatibility-sample.html">See a Sample Reading</a></div>
+      </section>
+      </form>
+    </div>
+  </main>
+  <footer class="acct-foot">
+    <a class="back" href="addons.html" id="cxBack"><svg viewBox="0 0 32 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M30 10H3M10 3 3 10l7 7"/></svg><span>Back to Add-ons</span></a>
+  </footer>
+  <img class="acct-cloud l" src="acct-cloud-left.webp?v=1" alt="" width="368" height="293">
+  <img class="acct-cloud r" src="acct-cloud-right.webp?v=1" alt="" width="356" height="293">
+  <div class="stamp">COMPATIBILITY · CX1 · staging preview</div>
+</div>
+<script>
+/* the start page's time zone resolver (index.html v19.85), unchanged: the local time is read only in the birthplace's
+   IANA zone with the offset in force on that date; no zone = no time (it throws) */
+function wallInTz(ms, tz){
+  const p = new Intl.DateTimeFormat('en-US', { timeZone: tz, hourCycle:'h23',
+    year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }).formatToParts(new Date(ms));
+  const g = t => +p.find(x => x.type === t).value;
+  return Date.UTC(g('year'), g('month')-1, g('day'), g('hour'), g('minute'));
+}
+function cozResolveBirthTime(dateStr, h12, mi, ampm, tz){
+  if (!tz) throw new Error('NO_TIMEZONE');
+  let h = h12 % 12; if (ampm === 'PM') h += 12;
+  const [Y,M,D] = dateStr.split('-').map(Number);
+  const want = Date.UTC(Y, M-1, D, h, mi);
+  const offAt = ms => (wallInTz(ms, tz) - ms) / 60000;
+  const cands = [];
+  const seen = {};
+  [-86400000, 0, 86400000].forEach(d => {
+    const off = offAt(want + d);
+    const utc = want - off * 60000;
+    if (!seen[utc] && offAt(utc) === off && wallInTz(utc, tz) === want){ seen[utc] = 1; cands.push({ utc: utc, offsetMinutes: off }); }
+  });
+  let r;
+  if (cands.length === 1){
+    r = { utc: new Date(cands[0].utc), offsetMinutes: cands[0].offsetMinutes, ambiguous: false, nonexistent: false, resolution: 'unique' };
+  } else if (cands.length >= 2){
+    cands.sort((a, b) => a.utc - b.utc);
+    r = { utc: new Date(cands[0].utc), offsetMinutes: cands[0].offsetMinutes, ambiguous: true, nonexistent: false,
+          resolution: 'ambiguous local time (clocks fell back); earlier instant used',
+          alternate_utc: new Date(cands[1].utc).toISOString() };
+  } else {
+    const offAfter = offAt(want + 3 * 3600000);
+    const utc = want - offAfter * 60000;
+    r = { utc: new Date(utc), offsetMinutes: offAfter, ambiguous: false, nonexistent: true,
+          resolution: 'nonexistent local time (clocks sprang forward); post-transition instant used' };
+  }
+  r.timezone = tz;
+  return r;
+}
+
+(function(){
+  var GEOAPIFY_KEY = "c8e0278068f24dec92ad52b1b17253d9";   /* the start page's own place search key (index.html) */
+  var MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  var NAME_OK = /^[\p{L}\p{M}][\p{L}\p{M}' .’-]*$/u;
+  var PRICE = { vedic: 25, western: 25, both: 35 };                                   /* his ruling, Nov 12 */
+  var LABEL = { vedic: "Vedic view", western: "Western view", both: "Vedic and Western views" };
+  function $(id){ return document.getElementById(id); }
+  var form = $("birthForm"), status = $("birthStatus");
+  var nameEl = $("bName"), dateEl = $("bDate"), timeEl = $("bTime"), placeEl = $("bPlace"), listEl = $("bPlaceList");
+  var radios = Array.prototype.slice.call(form.querySelectorAll('input[name="ampm"]'));
+  var place = null, placeText = "";
+  function pad2(n){ return (n < 10 ? "0" : "") + n; }
+  function say(text, kind){ status.textContent = text || ""; status.className = "status" + (kind ? " " + kind : ""); if (text !== PREVIEW) $("sampleRow").hidden = true; }
+  function fieldErr(input, errId, text){
+    $(errId).textContent = text || "";
+    if (text) input.setAttribute("aria-invalid", "true"); else input.removeAttribute("aria-invalid");
+  }
+  var PREVIEW = "Preview only. No payment is taken, nothing is unlocked and nothing is saved.";
+
+  /* ---------- Birth Date: MM / DD / YYYY on the number pad ---------- */
+  function maskDate(raw){
+    var d = String(raw).replace(/\D/g, ""), i = 0, mo = "", da = "", yr = "";
+    if (d.length > i) {
+      if (d[i] >= "2") { mo = "0" + d[i]; i += 1; }                                        /* 8 shows 08 */
+      else if (d[i] === "1" && d.length > i + 1 && d[i + 1] > "2") { mo = "01"; i += 1; }   /* 1 then 5: January, 5 starts the day */
+      else { mo = d.slice(i, i + 2); i += mo.length; }
+    }
+    if (mo.length === 2 && d.length > i) {
+      if (d[i] >= "4") { da = "0" + d[i]; i += 1; }                                        /* a day digit 4-9 is that day */
+      else { da = d.slice(i, i + 2); i += da.length; }
+    }
+    if (da.length === 2 && d.length > i) yr = d.slice(i, i + 4);
+    return [mo, da, yr].filter(Boolean).join(" / ");
+  }
+  function isLeap(y){ return (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0; }
+  function daysIn(m, y){ return m === 2 ? (isLeap(y) ? 29 : 28) : [31,28,31,30,31,30,31,31,30,31,30,31][m - 1]; }
+  /* the start page's rules and messages (DT1): two-digit years 77 = 1977, 04 = 2004; years from 1900; no future dates */
+  function readDate(){
+    var m = /^(\d{2}) \/ (\d{2}) \/ (\d{2,4})$/.exec(dateEl.value.trim());
+    if (!m) return { err: "Enter the birth date as MM / DD / YYYY." };
+    var mo = +m[1], da = +m[2], ys = m[3], y = +ys;
+    if (ys.length === 2) { if (ys[0] === "1" || ys[0] === "2") return { err: "Type the year in four digits." }; y = ys[0] === "0" ? 2000 + y : 1900 + y; }
+    else if (ys.length !== 4) return { err: "Type the year in four digits." };
+    if (mo < 1 || mo > 12) return { err: "Enter a month from 01 to 12." };
+    var now = new Date();
+    if (y > now.getFullYear()) return { err: y + " hasn’t happened yet." };
+    if (y < 1900) return { err: "Type a year from 1900 on." };
+    if (da < 1 || da > daysIn(mo, y)) return { err: (mo === 2 ? "February " + y : MONTHS[mo - 1]) + " has " + daysIn(mo, y) + " days." };
+    if (y * 10000 + mo * 100 + da > now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate()) return { err: "That date hasn’t happened yet." };
+    return { iso: y + "-" + pad2(mo) + "-" + pad2(da), y: y, mo: mo, da: da };
+  }
+  dateEl.addEventListener("input", function () { var v = maskDate(dateEl.value); if (v !== dateEl.value) dateEl.value = v; fieldErr(dateEl, "bDateErr", ""); say(""); });
+  dateEl.addEventListener("blur", function () {                                             /* 08 / 20 / 77 becomes 08 / 20 / 1977 */
+    var m = /^(\d{2} \/ \d{2} \/ )(\d{2})$/.exec(dateEl.value.trim());
+    if (m && m[2][0] !== "1" && m[2][0] !== "2") dateEl.value = m[1] + (m[2][0] === "0" ? "20" : "19") + m[2];
+  });
+
+  /* ---------- Birth Time: typed as it reads on a clock (the start page's DT4 rules) ---------- */
+  var TIMES = new Map();
+  for (var h = 1; h <= 12; h++) {
+    TIMES.set(String(h), [h, 0]); if (h < 10) TIMES.set("0" + h, [h, 0]);
+    for (var mi = 0; mi < 60; mi++) { TIMES.set(h + pad2(mi), [h, mi]); if (h < 10) TIMES.set("0" + h + pad2(mi), [h, mi]); }
+  }
+  var STARTS = new Set([""]);
+  TIMES.forEach(function (v, k) { for (var i = 1; i <= k.length; i++) STARTS.add(k.slice(0, i)); });
+  function clockOf(s){
+    if (!s) return "";
+    if (s.charAt(0) === "0") return s.length <= 2 ? s : s.slice(0, 2) + ":" + s.slice(2);
+    if (s.length === 1) return s;
+    if (s.length === 2) return TIMES.has(s) ? s : s.charAt(0) + ":" + s.charAt(1);
+    return s.slice(0, -2) + ":" + s.slice(-2);
+  }
+  var tdig = "";
+  function showTime(){ timeEl.value = clockOf(tdig).replace(":", " : "); }
+  timeEl.addEventListener("input", function () {
+    var d = timeEl.value.replace(/\D/g, "").slice(0, 4);
+    if (STARTS.has(d)) tdig = d;                         /* a number that cannot make a time is not taken */
+    showTime(); fieldErr(timeEl, "bTimeErr", ""); say("");
+  });
+  function ampm(){ var r = radios.filter(function (x) { return x.checked; })[0]; return r ? r.value : null; }
+  function setAmPm(v){ radios.forEach(function (r) { r.checked = r.value === v; r.parentNode.classList.toggle("on", r.checked); }); }
+  radios.forEach(function (r) { r.addEventListener("change", function () { setAmPm(ampm()); $("bAmPm").removeAttribute("aria-invalid"); fieldErr(timeEl, "bTimeErr", ""); say(""); }); });
+
+  /* ---------- Birthplace: the start page's place search ---------- */
+  var searchSeq = 0, searchTimer = null, items = [], active = -1;
+  function placeLabel(L){ return [L.name, L.country].filter(Boolean).join(", "); }
+  function normalize(data){
+    if (Array.isArray(data.features)) {
+      return data.features.map(function (f) {
+        var p = f.properties || {}, c = (f.geometry && f.geometry.coordinates) || [];
+        return { formatted: p.formatted || [p.city, p.state, p.country].filter(Boolean).join(", "),
+                 lat: typeof p.lat === "number" ? p.lat : c[1], lon: typeof p.lon === "number" ? p.lon : c[0],
+                 city: p.city || p.name || p.county || p.state, country: p.country,
+                 tz: p.timezone && p.timezone.name ? p.timezone.name : null, placeId: p.place_id || null };
+      });
+    }
+    if (Array.isArray(data.results)) {
+      return data.results.map(function (r) {
+        return { formatted: r.formatted, lat: r.lat, lon: r.lon, city: r.city || r.state, country: r.country,
+                 tz: r.timezone && r.timezone.name ? r.timezone.name : null, placeId: r.place_id || null };
+      });
+    }
+    return [];
+  }
+  function closeList(){ listEl.hidden = true; listEl.innerHTML = ""; placeEl.setAttribute("aria-expanded", "false"); placeEl.removeAttribute("aria-activedescendant"); items = []; active = -1; }
+  function hint(text){ listEl.innerHTML = ""; var li = document.createElement("li"); li.className = "hint"; li.setAttribute("role", "presentation"); li.textContent = text; listEl.appendChild(li); listEl.hidden = false; placeEl.setAttribute("aria-expanded", "false"); items = []; active = -1; }
+  function render(list){
+    listEl.innerHTML = ""; items = list; active = -1;
+    list.forEach(function (it, i) {
+      var li = document.createElement("li"); li.id = "bPlaceOpt" + i; li.setAttribute("role", "option"); li.setAttribute("aria-selected", "false");
+      li.textContent = it.formatted;
+      li.addEventListener("pointerdown", function (ev) { ev.preventDefault(); });   /* keeps the field focused while choosing */
+      li.addEventListener("click", function () { choose(i); });
+      listEl.appendChild(li);
+    });
+    listEl.hidden = false; placeEl.setAttribute("aria-expanded", "true");
+  }
+  function mark(i){
+    active = i;
+    Array.prototype.forEach.call(listEl.children, function (li, j) { li.setAttribute("aria-selected", j === i ? "true" : "false"); });
+    if (i >= 0) { placeEl.setAttribute("aria-activedescendant", "bPlaceOpt" + i); try { listEl.children[i].scrollIntoView({ block: "nearest" }); } catch (e) {} }
+    else placeEl.removeAttribute("aria-activedescendant");
+  }
+  function choose(i){
+    var it = items[i]; if (!it) return;
+    place = { label: it.formatted, city: it.city || it.formatted.split(",")[0], country: it.country || "", lat: it.lat, lon: it.lon, tz: it.tz || null, placeId: it.placeId || null };
+    placeEl.value = it.formatted; placeText = placeEl.value;
+    closeList(); fieldErr(placeEl, "bPlaceErr", ""); say("");
+  }
+  function search(text){
+    var mine = ++searchSeq;
+    hint("Searching…");
+    fetch("https://api.geoapify.com/v1/geocode/autocomplete?text=" + encodeURIComponent(text) + "&limit=5&apiKey=" + GEOAPIFY_KEY)
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function (data) {
+        if (mine !== searchSeq || placeEl.value.trim() !== text) return;                   /* an older search answering late */
+        var list = normalize(data).filter(function (it) { return isFinite(it.lat) && isFinite(it.lon); });
+        if (!list.length) hint("No places match “" + text + "”.");
+        else render(list);
+      }, function () {
+        if (mine !== searchSeq) return;
+        hint("Places can’t be searched right now. Check your connection and try again.");
+      });
+  }
+  placeEl.addEventListener("input", function () {
+    if (placeEl.value !== placeText) place = null;   /* changed text: the earlier choice no longer counts */
+    fieldErr(placeEl, "bPlaceErr", ""); say("");
+    clearTimeout(searchTimer); searchSeq++;
+    var text = placeEl.value.trim();
+    if (text.length < 3) { closeList(); return; }
+    searchTimer = setTimeout(function () { search(text); }, 300);
+  });
+  placeEl.addEventListener("keydown", function (ev) {
+    if (listEl.hidden || !items.length) { if (ev.key === "Escape" && !listEl.hidden) closeList(); return; }
+    if (ev.key === "ArrowDown") { ev.preventDefault(); mark(Math.min(items.length - 1, active + 1)); }
+    else if (ev.key === "ArrowUp") { ev.preventDefault(); mark(Math.max(0, active - 1)); }
+    else if (ev.key === "Enter" && active >= 0) { ev.preventDefault(); choose(active); }
+    else if (ev.key === "Escape") { ev.preventDefault(); closeList(); }
+  });
+  placeEl.addEventListener("blur", function () { setTimeout(function () { if (document.activeElement !== placeEl) closeList(); }, 150); });
+
+  /* ---------- the view and the order ---------- */
+  var views = Array.prototype.slice.call(form.querySelectorAll('input[name="view"]'));
+  function view(){ var r = views.filter(function (x) { return x.checked; })[0]; return r ? r.value : null; }
+  function first(){ var n = nameEl.value.replace(/\s+/g, " ").trim(); return n ? n.split(" ")[0] : ""; }
+  function order(){
+    var v = view();
+    views.forEach(function (r) { r.parentNode.classList.toggle("on", r.checked); });
+    $("viewPrice").hidden = !v;
+    if (v) { $("viewAmt").textContent = "$" + PRICE[v]; $("viewWhat").textContent = v === "both" ? "Both views" : "One view"; }
+    $("oView").textContent = v ? LABEL[v] : "Choose a view";
+    $("oTotal").textContent = "$" + (v ? PRICE[v] : 25);
+    $("oWho").textContent = first() ? "You and " + first() : "You and your partner";
+  }
+  views.forEach(function (r) { r.addEventListener("change", function () { $("viewErr").textContent = ""; $("viewSet").removeAttribute("aria-invalid"); order(); say(""); }); });
+  nameEl.addEventListener("input", function () { fieldErr(nameEl, "bNameErr", ""); order(); say(""); });
+
+  /* ---------- unknown birth time ---------- */
+  var noTime = $("noTime");
+  noTime.addEventListener("change", function () {
+    var off = noTime.checked;
+    timeEl.disabled = off; radios.forEach(function (r) { r.disabled = off; });
+    $("timeRow").style.opacity = off ? ".45" : "";
+    if (off) { tdig = ""; showTime(); setAmPm(null); fieldErr(timeEl, "bTimeErr", ""); $("bAmPm").removeAttribute("aria-invalid"); }
+    say("");
+  });
+  $("consent").addEventListener("change", function () { $("consentRow").removeAttribute("aria-invalid"); say(""); });
+
+  /* ---------- Continue to Payment: check everything, then say it is a preview ---------- */
+  function check(){
+    var firstBad = null;
+    function bad(input, errId, text){ fieldErr(input, errId, text); if (text && !firstBad) firstBad = input; }
+    if (!view()) { $("viewErr").textContent = "Choose Vedic, Western or Both."; $("viewSet").setAttribute("aria-invalid", "true"); if (!firstBad) firstBad = views[0]; }
+    var nm = nameEl.value.replace(/\s+/g, " ").trim();
+    bad(nameEl, "bNameErr", !nm ? "Enter their first name." : !NAME_OK.test(nm) ? "Use letters, spaces, apostrophes, hyphens or periods." : "");
+    var d = readDate(); bad(dateEl, "bDateErr", d.err || "");
+    var t = null, ap = null;
+    if (!noTime.checked) {
+      t = TIMES.get(tdig) || null; ap = ampm();
+      var terr = "";
+      if (!t) terr = "Enter the birth time as HH : MM, or turn on “I don’t know their birth time.”";
+      else if (!ap) { terr = "Choose AM or PM."; $("bAmPm").setAttribute("aria-invalid", "true"); }
+      bad(timeEl, "bTimeErr", terr);
+    }
+    var perr = !place ? "Select a location from the search results." :
+               !place.tz ? "We could not determine the time zone of that birthplace. Please choose the birthplace again." : "";
+    if (!perr && d.iso && t && ap) {
+      try { cozResolveBirthTime(d.iso, t[0], t[1], ap, place.tz); }
+      catch (e) { perr = "We could not determine the time zone of that birthplace. Please choose the birthplace again."; }
+    }
+    bad(placeEl, "bPlaceErr", perr);
+    if (!$("consent").checked) { $("consentRow").setAttribute("aria-invalid", "true"); if (!firstBad) firstBad = $("consent"); }
+    return firstBad;
+  }
+  form.addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    closeList();
+    var b = check();
+    if (b) { say("Check the details marked above.", "bad"); try { b.focus(); } catch (e) {} return; }
+    say(PREVIEW, "ok");
+    $("sampleLink").href = "compatibility-sample.html?view=" + view() + "&name=" + encodeURIComponent(first()) + (noTime.checked ? "&time=unknown" : "");
+    $("sampleRow").hidden = false;
+  });
+
+  /* Back: the page it was opened from (the Add-ons page keeps its state in its address) */
+  $("cxBack").addEventListener("click", function (ev) {
+    var r = ""; try { r = document.referrer || ""; } catch (e) {}
+    if (r && r.indexOf(location.origin) === 0 && history.length > 1) { ev.preventDefault(); history.back(); }
+  });
+  order();
+})();
+</script>
+<script src="coz-nav.js?v=2"></script>
+</body>
+</html>

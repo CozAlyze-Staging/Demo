@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sample Compatibility Reading · CozAlyze</title>
+<!-- COMPATIBILITY SAMPLE · CXS1 (Nov 12 2026, staging preview only). Shows how a Compatibility reading will read and how it
+     is laid out, for the view chosen on compatibility.html (?view=vedic|western|both&name=<first name>[&time=unknown]).
+     Every word and number here is a fixed layout sample, not calculated from any chart, and the page says so at the top.
+     Section names come from the Compatibility proposal (Intimacy, Communication, Conflict & Repair, Money); the full
+     section list and the writer wait on the Compatibility spec and his rulings. Agreed content rules already applied:
+     the Guna points appear only inside the Vedic basis, kuta by kuta, with no percentage and no pass or fail; Kuja is
+     shown separately and never adds to the 36; Varna is named as a scoring part only; no health, fertility or
+     longevity claims. With an unknown birth time the basis notes that only whole-day results are used.
+     Tap-downs as on the Learn page; all closed when the page opens (his result-page ruling, Oct 25). -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@400;500&family=Montserrat:wght@300;400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="account-area.css?v=2">
+<script src="account-area.js?v=1"></script>
+<script src="coz-saved.js?v=6"></script>
+<style>
+.ln-card{padding-bottom:.6rem}
+.ln-item{border-top:1px solid var(--rule)}
+.ln-card .card-title.ruled+.ln-item{border-top:0}
+.ln-item summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:1rem;
+  min-height:44px;padding:.7rem 0;-webkit-tap-highlight-color:transparent}
+.ln-item summary::-webkit-details-marker{display:none}
+.ln-item summary h3{font-family:var(--head);font-weight:500;font-size:1.1875rem;line-height:1.25;color:var(--cream)}
+.ln-item summary .chev{color:var(--gold);font-size:1.35rem;line-height:1;flex:none;transition:transform .15s}
+.ln-item[open] summary .chev{transform:rotate(90deg)}
+.ln-item summary:focus-visible{outline:1px solid var(--gold);outline-offset:2px}
+.ln-body{padding:0 0 1.1rem}
+.ln-body p{font-size:1.0625rem;line-height:1.5;color:var(--text)}
+.ln-body p+p{margin-top:.75rem}
+.kt{width:100%;border-collapse:collapse;margin-top:.75rem;font-size:1rem}
+.kt td{padding:.55rem 0;border-bottom:1px solid var(--rule);color:var(--text);vertical-align:top}
+.kt td:last-child{text-align:right;white-space:nowrap;color:var(--cream)}
+.kt small{display:block;color:var(--muted);font-size:.875rem;margin-top:.15rem}
+.kt tr.total td{border-bottom:0;color:var(--cream);font-weight:400}
+.cx-sample{font-size:.9375rem;line-height:1.45;color:var(--gold);text-align:center;margin-top:.8rem}
+.cx-disc{font-size:.875rem;line-height:1.45;color:var(--muted);text-align:center;max-width:30rem}
+</style>
+</head>
+<body>
+<div class="acct">
+  <img class="acct-sky" src="acct-sky-top.jpg?v=1" alt="CozAlyze" width="1024" height="311">
+  <main class="acct-main" id="main">
+    <header class="acct-head">
+      <h1>Your Compatibility Reading</h1>
+      <p class="sub" id="who">You and your partner</p>
+      <p class="sub" id="viewName" style="margin-top:.2rem"></p>
+      <p class="cx-sample">Sample reading for layout only. It isn’t calculated from these charts.</p>
+      <div class="acct-div" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0 13.6 10.4 24 12 13.6 13.6 12 24 10.4 13.6 0 12 10.4 10.4Z"/></svg></div>
+    </header>
+    <div class="acct-body">
+      <section class="card ln-card" aria-labelledby="rTitle">
+        <h2 class="card-title ruled" id="rTitle">The Reading</h2>
+        <details class="ln-item"><summary><h3>Intimacy</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body">
+          <p>You and <span class="pn"></span> may feel an easy warmth together, the kind that turns into comfort quickly. You may show closeness through touch and shared routines, while <span class="pn"></span> may show it through words and attention.</p>
+          <p>Making room for both ways of being close tends to keep the connection steady.</p>
+        </div></details>
+        <details class="ln-item"><summary><h3>Communication</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body">
+          <p>Conversation may come naturally between you, with a shared sense of humor that softens hard topics. <span class="pnC"></span> may think out loud, while you may need time to sort your thoughts first.</p>
+          <p>Naming that difference early can save a lot of crossed wires.</p>
+        </div></details>
+        <details class="ln-item"><summary><h3>Conflict &amp; Repair</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body">
+          <p>Disagreements may flare quickly and cool just as fast. You may want to settle things right away, while <span class="pn"></span> may need a little distance before talking it through.</p>
+          <p>Agreeing ahead of time on how you’ll come back together can matter more than who was right.</p>
+        </div></details>
+        <details class="ln-item"><summary><h3>Money</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body">
+          <p>You may see money as security, while <span class="pn"></span> may see it as freedom to enjoy life now. Both views have something to offer.</p>
+          <p>A shared plan that honors saving and enjoying can keep money from becoming a sore spot.</p>
+        </div></details>
+      </section>
+
+      <section class="card ln-card" id="vedicBasis" aria-labelledby="vbTitle" hidden>
+        <h2 class="card-title ruled" id="vbTitle">Vedic Basis</h2>
+        <details class="ln-item"><summary><h3>Ashtakoota Matching</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body">
+          <p>Vedic astrology compares two Moons through eight factors, called kutas, worth 36 points in all.</p>
+          <table class="kt" aria-label="Sample kuta points">
+            <tr><td>Varna</td><td>1 of 1</td></tr>
+            <tr><td>Vashya<small>mutual attraction</small></td><td>2 of 2</td></tr>
+            <tr><td>Tara<small>birth star harmony</small></td><td>1½ of 3</td></tr>
+            <tr><td>Yoni<small>physical compatibility</small></td><td>3 of 4</td></tr>
+            <tr><td>Graha Maitri<small>friendship of the Moon sign rulers</small></td><td>5 of 5</td></tr>
+            <tr><td>Gana<small>temperament</small></td><td>6 of 6</td></tr>
+            <tr><td>Bhakoot<small>Moon sign relationship</small></td><td>0 of 7</td></tr>
+            <tr><td>Nadi</td><td>8 of 8</td></tr>
+            <tr class="total"><td>Total</td><td>26½ of 36</td></tr>
+          </table>
+          <p id="vedicNoTime" hidden style="margin-top:.75rem">Without <span class="pnS"></span> birth time, only the factors that stay the same through the whole birth day are counted.</p>
+        </div></details>
+        <details class="ln-item"><summary><h3>Kuja (Mars)</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body">
+          <p>Kuja is checked separately for each of you and never adds to or takes from the 36 points. In this sample it isn’t present in either chart.</p>
+        </div></details>
+      </section>
+
+      <section class="card ln-card" id="westBasis" aria-labelledby="wbTitle" hidden>
+        <h2 class="card-title ruled" id="wbTitle">Western Basis</h2>
+        <details class="ln-item"><summary><h3>How Your Charts Connect</h3><span class="chev" aria-hidden="true">›</span></summary><div class="ln-body">
+          <p>Your Venus trine <span class="pnS"></span> Moon</p>
+          <p>Your Moon conjunct <span class="pnS"></span> Sun</p>
+          <p>Your Mars square <span class="pnS"></span> Mercury</p>
+          <p><span class="pnSC"></span> Saturn opposite your Venus</p>
+          <p id="westNoTime" hidden>Without <span class="pnS"></span> birth time, rising signs and house overlays are left out.</p>
+        </div></details>
+      </section>
+    </div>
+  </main>
+  <footer class="acct-foot">
+    <p class="cx-disc">AI-generated personalized astrology reading. For entertainment purposes only.</p>
+    <a class="back" href="compatibility.html" id="cxBack"><svg viewBox="0 0 32 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M30 10H3M10 3 3 10l7 7"/></svg><span>Back</span></a>
+  </footer>
+  <img class="acct-cloud l" src="acct-cloud-left.webp?v=1" alt="" width="368" height="293">
+  <img class="acct-cloud r" src="acct-cloud-right.webp?v=1" alt="" width="356" height="293">
+  <div class="stamp">COMPATIBILITY SAMPLE · CXS1 · staging preview</div>
+</div>
+<script>
+(function(){
+  var q = new URLSearchParams(location.search);
+  var view = { vedic: 1, western: 1, both: 1 }[q.get("view")] ? q.get("view") : "both";
+  var raw = (q.get("name") || "").replace(/\s+/g, " ").trim().slice(0, 40);
+  var name = /^[\p{L}\p{M}][\p{L}\p{M}' .’-]*$/u.test(raw) ? raw : "";
+  var noTime = q.get("time") === "unknown";
+  function poss(n){ return /s$/i.test(n) ? n + "’" : n + "’s"; }
+  function fill(sel, text){ document.querySelectorAll(sel).forEach(function (el) { el.textContent = text; }); }
+  fill(".pn", name || "your partner");
+  fill(".pnC", name || "Your partner");
+  fill(".pnS", name ? poss(name) : "your partner’s");
+  fill(".pnSC", name ? poss(name) : "Your partner’s");
+  document.getElementById("who").textContent = name ? "You and " + name : "You and your partner";
+  document.getElementById("viewName").textContent = { vedic: "Vedic View", western: "Western View", both: "Vedic and Western Views" }[view];
+  document.getElementById("vedicBasis").hidden = view === "western";
+  document.getElementById("westBasis").hidden = view === "vedic";
+  document.getElementById("vedicNoTime").hidden = !noTime;
+  document.getElementById("westNoTime").hidden = !noTime;
+  /* "Always start at top" (Oct 27) */
+  document.querySelectorAll(".ln-item").forEach(function (d) {
+    d.addEventListener("toggle", function () { if (d.open && d.querySelector("summary").getBoundingClientRect().top < 0) d.scrollIntoView({ block: "start" }); });
+  });
+  document.getElementById("cxBack").addEventListener("click", function (ev) {
+    var r = ""; try { r = document.referrer || ""; } catch (e) {}
+    if (r && r.indexOf(location.origin) === 0 && history.length > 1) { ev.preventDefault(); history.back(); }
+  });
+})();
+</script>
+<script src="coz-nav.js?v=2"></script>
+</body>
+</html>
