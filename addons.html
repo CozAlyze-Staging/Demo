@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Add-ons · CozAlyze</title>
 <!--
+  ADD-ONS · D1.7 (Nov 12 2026, his request): Add on Your Vedic Reading, Your Tropical Reading, See Yourself Through Another
+  Perspective and Your Combined Reading opens its order preview (checkout.html), as Compatibility opens its own. The
+  simulation step that Add used to make now happens from that page's Back to Add-ons, after Continue to Payment.
   ADD-ONS · D1.6 (Nov 12 2026, his ruling): opened from Explore CozAlyze (addons.html#/?from=e), Not Now returns there;
   it opens as from Account does (Your Vedic Reading simulated).
   ADD-ONS · D1.5 (Nov 12 2026, his rulings, staging only): Compatibility is $25 for one view (Vedic or Western) and $45 for
@@ -226,12 +229,14 @@ h1{font-family:var(--head);font-weight:500;font-size:max(30px,calc(98 * var(--K)
     });
     h += '<section class="panel"><div class="div" aria-hidden="true">' + STAR + '</div>' +
       '<a class="pill solid" href="' + back(st) + '">Not Now</a>' +
-      '<div class="stamp">ADD-ONS · D1.6 · NO PAYMENT</div></section></main>';
+      '<div class="stamp">ADD-ONS · D1.7 · NO PAYMENT</div></section></main>';
     app.innerHTML = h;
     Array.prototype.forEach.call(app.querySelectorAll("[data-add]"), function(b){
       b.addEventListener("click", function(){
-        if (b.getAttribute("data-add") === "x") { location.href = "compatibility.html"; return; }   /* D1.5: Compatibility opens its own preview flow */
-        step(st, b.getAttribute("data-add"));
+        var a = b.getAttribute("data-add");
+        if (a === "x") { location.href = "compatibility.html"; return; }   /* D1.5: Compatibility opens its own preview flow */
+        /* D1.7: every other Add opens its order preview; Back to Add-ons there continues this simulation */
+        location.href = "checkout.html?add=" + a + "&own=" + st.own + "&from=" + st.from + (st.id ? "&id=" + st.id : "");
       });
     });
     Array.prototype.forEach.call(app.querySelectorAll(".more"), function(b){

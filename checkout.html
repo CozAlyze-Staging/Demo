@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Your Order · CozAlyze</title>
+<!-- CHECKOUT PREVIEW · CO1 (Nov 12 2026, his request, staging preview only). Add on the Add-ons page for Your Vedic Reading,
+     Your Tropical Reading, See Yourself Through Another Perspective or Your Combined Reading opens this page, the same
+     way Compatibility opens its own (checkout.html?add=v|t|c&own=<owned>&from=<add-ons from>[&id=<saved record>]).
+     It shows what is being added, its price under the approved package totals (upgrade credit, the $10 off second
+     perspective), what is included (the Add-ons page's approved lists, copied unchanged), and the birth details the
+     reading would be written from: the saved chart it was opened from, else the chart in use on this device. These are
+     the customer's own details (own chart only), shown read only; corrections go through Birth Information.
+     Continue to Payment says plainly that this is a preview (no payment, nothing unlocked, nothing saved), then offers
+     Back to Add-ons, which continues the Add-ons simulation exactly as Add did before ("Simulated: ... added"). -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@400;500&family=Montserrat:wght@300;400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="account-area.css?v=2">
+<script src="account-area.js?v=1"></script>
+<script src="coz-saved.js?v=6"></script>
+<style>
+.cx-price{display:flex;align-items:baseline;justify-content:space-between;gap:1rem;margin-top:1rem}
+.cx-price .amt{font-family:var(--head);font-weight:500;font-size:1.75rem;color:var(--cream)}
+.cx-price .what{font-size:1rem;color:var(--gold);text-align:right}
+.cx-line{display:flex;justify-content:space-between;gap:1rem;font-size:1.0625rem;line-height:1.45;color:var(--text);padding:.55rem 0}
+.cx-line+.cx-line{border-top:1px solid var(--rule)}
+.cx-line b{font-weight:400;color:var(--cream);text-align:right}
+.inc h3{font-weight:400;font-size:1rem;color:var(--cream);margin-top:1.1rem}
+.inc ul{list-style:none;margin-top:.5rem;display:flex;flex-direction:column;gap:.45rem}
+.inc li{font-size:1rem;line-height:1.45;color:var(--text);padding-left:1rem;position:relative}
+.inc li::before{content:"";position:absolute;left:0;top:.6em;width:.3rem;height:.3rem;border-radius:50%;background:var(--gold)}
+.cx-next{display:flex;justify-content:center;margin-top:1rem}
+</style>
+</head>
+<body>
+<div class="acct">
+  <img class="acct-sky" src="acct-sky-top.jpg?v=1" alt="CozAlyze" width="1024" height="311">
+  <main class="acct-main" id="main">
+    <header class="acct-head">
+      <h1 id="coTitle">Your Order</h1>
+      <p class="sub" id="coSub"></p>
+      <div class="acct-div" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0 13.6 10.4 24 12 13.6 13.6 12 24 10.4 13.6 0 12 10.4 10.4Z"/></svg></div>
+    </header>
+    <div class="acct-body">
+      <section class="card" aria-labelledby="rdTitle">
+        <h2 class="card-title ruled" id="rdTitle">Your Reading</h2>
+        <div class="cx-price"><span class="amt" id="coAmt"></span><span class="what" id="coSave"></span></div>
+        <div class="inc" id="coInc"></div>
+      </section>
+      <section class="card" aria-labelledby="bdTitle">
+        <h2 class="card-title ruled" id="bdTitle">Your Birth Details</h2>
+        <div id="coBirth" style="margin-top:.4rem"></div>
+        <p class="help" style="margin-top:.9rem">Your reading is written from these details. To correct them, go to <a class="link" href="account-birth.html" style="font-size:inherit">Birth Information</a>.</p>
+      </section>
+      <section class="card" aria-labelledby="odTitle">
+        <h2 class="card-title ruled" id="odTitle">Your Order</h2>
+        <div class="cx-line"><span>Reading</span><b id="oWhat"></b></div>
+        <div class="cx-line"><span>Total</span><b id="oTotal"></b></div>
+        <button class="btn-gold gap" type="button" id="payBtn">Continue to Payment</button>
+        <p class="status" id="coStatus" role="status"></p>
+        <div class="cx-next" id="nextRow" hidden><a class="btn" id="nextLink" href="addons.html">Back to Add-ons</a></div>
+      </section>
+    </div>
+  </main>
+  <footer class="acct-foot">
+    <a class="back" href="addons.html" id="coBack"><svg viewBox="0 0 32 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M30 10H3M10 3 3 10l7 7"/></svg><span>Back to Add-ons</span></a>
+  </footer>
+  <img class="acct-cloud l" src="acct-cloud-left.webp?v=1" alt="" width="368" height="293">
+  <img class="acct-cloud r" src="acct-cloud-right.webp?v=1" alt="" width="356" height="293">
+  <div class="stamp">CHECKOUT · CO1 · staging preview</div>
+</div>
+<script>
+(function(){
+  function $(id){ return document.getElementById(id); }
+  function esc(s){ return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  var NAME = { v: "Your Vedic Reading", t: "Your Tropical Reading", c: "Your Combined Reading" };
+  var TOTAL = { "": 0, v: 49, t: 49, c: 75, vt: 88, vc: 94, tc: 94, vtc: 113 };   /* the approved package totals (Oct 15) */
+  var INC = {
+    v: [["Your Vedic Reading, six parts", ["1. Your Essential Nature & Guiding Planet", "2. Your Mind, Intuition & Spiritual Patterning",
+          "3. Relationships, Desire & Karmic Exchange", "4. Dharma, Work & Life Direction", "5. Rahu & Ketu \u2014 Growth, Release & Balance", "6. Your Essential Takeaway"]],
+        ["Also on your Vedic dashboard", ["Your Ascendant \u2013 Lagna", "Your Current Life Cycle", "Your Birth Chart"]]],
+    t: [["Your Tropical Reading, six parts", ["1. At Your Core", "2. Love, Desire & Creativity", "3. Work, Money & Expression",
+          "4. Wisdom, Purpose & Legacy", "5. Challenges & Resilience", "6. Your Essential Takeaway"]],
+        ["Also on your Tropical dashboard", ["Your Ascendant (your Rising Sign)", "Your Current Transits", "Your Birth Chart"]]],
+    c: [["Your Combined Reading", ["Shared Themes", "Different Emphases", "Your Integrated View"]],
+        ["Also on your Compare dashboard", ["Your Ascendants: your Tropical and Vedic Ascendant readings, with How They Work Together", "Your Current Timing", "Your Birth Charts, Vedic and Tropical"]],
+        ["", ["It does not include either six-part individual reading."]]],
+    x: [["", ["Your chart and one other person\u2019s, read together."]]]
+  };
+  function key(own){ return ["v", "t", "c"].filter(function (k) { return own.indexOf(k) >= 0; }).join(""); }
+  var q = new URLSearchParams(location.search);
+  var add = /^[vtc]$/.test(q.get("add") || "") ? q.get("add") : "v";
+  var own = key((q.get("own") || "").replace(/[^vtc]/g, "").replace(add, ""));
+  var from = /^(v|t|c|ca|vs|ts|s|a|p|e)$/.test(q.get("from") || "") ? q.get("from") : "s";
+  var id = /^[A-Za-z0-9_-]{1,80}$/.test(q.get("id") || "") ? q.get("id") : "";
+  var price = TOTAL[key(own + add)] - TOTAL[own];
+  var other = (add === "v" && own.indexOf("t") >= 0) || (add === "t" && own.indexOf("v") >= 0);
+  var save = !own ? "Base price" : (add === "v" || add === "t") && own.length === 1 && own !== "c" ? "$10 off" : "Preview price";   /* the Add-ons marks */
+
+  $("coTitle").textContent = other ? "See Yourself Through Another Perspective" : NAME[add];
+  $("coSub").textContent = other ? NAME[add] + ", from the same birth details." :
+    add === "c" ? "Your own chart read through both the Vedic and Tropical systems." : "The complete six-part " + (add === "v" ? "Vedic" : "Tropical") + " reading of your chart.";
+  $("rdTitle").textContent = NAME[add];
+  $("coAmt").textContent = "$" + price;
+  $("coSave").textContent = save;
+  $("coInc").innerHTML = (INC[add] || []).map(function (g) {
+    return (g[0] ? "<h3>" + esc(g[0]) + "</h3>" : "") + "<ul>" + g[1].map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ul>";
+  }).join("");
+  $("oWhat").textContent = NAME[add];
+  $("oTotal").textContent = "$" + price;
+
+  /* the customer's own birth details: the saved chart this was opened from, else the chart in use on this device */
+  var MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  function line(b){
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(b.birthDate || ""), L = b.location || {};
+    return [m ? MONTHS[+m[2] - 1] + " " + (+m[3]) + ", " + m[1] : "", b.birthTime || "", [L.name, L.country].filter(Boolean).join(", ")].filter(Boolean).join(" · ");
+  }
+  function showBirth(b){
+    if (!b || !b.birthDate) { $("coBirth").innerHTML = '<p class="p-text">Your reading will use the birth details on your CozAlyze account.</p>'; return; }
+    $("coBirth").innerHTML = (b.name ? '<div class="cx-line"><span>Name</span><b>' + esc(b.name) + '</b></div>' : "") +
+      '<div class="cx-line"><span>Born</span><b>' + esc(line(b)) + '</b></div>';
+  }
+  function current(){ try { var b = JSON.parse(localStorage.getItem("emergeBirthData") || "null"); return b && typeof b === "object" ? b : null; } catch (e) { return null; } }
+  if (id && window.CozAcct && CozAcct.charts) {
+    CozAcct.charts().then(function (list) {
+      var g = list.filter(function (x) { return x.id === id || (x.chart && x.chart.id === id) || (x.compare && x.compare.id === id); })[0];
+      showBirth(g && g.birth ? g.birth : current());
+    }, function () { showBirth(current()); });
+  } else showBirth(current());
+
+  /* the Add-ons page as it was, and as it continues after this add (Add's old simulation step) */
+  var base = "addons.html#/?from=" + from + (id ? "&id=" + id : "");
+  $("coBack").href = base + "&own=" + own;
+  $("nextLink").href = base + "&own=" + key(own + add) + "&new=" + add;
+  $("coBack").addEventListener("click", function (ev) {
+    var r = ""; try { r = document.referrer || ""; } catch (e) {}
+    if (r && r.indexOf(location.origin) === 0 && history.length > 1) { ev.preventDefault(); history.back(); }
+  });
+  $("payBtn").addEventListener("click", function () {
+    $("coStatus").textContent = "Preview only. No payment is taken, nothing is unlocked and nothing is saved.";
+    $("coStatus").className = "status ok";
+    $("nextRow").hidden = false;
+  });
+})();
+</script>
+<script src="coz-nav.js?v=2"></script>
+</body>
+</html>
